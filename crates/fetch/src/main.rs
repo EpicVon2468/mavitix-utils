@@ -10,55 +10,68 @@ use mavitix_utils::{
 pub fn main() {
 	let utsname: UTSName = get_uname();
 	let info: FetchInfo = FetchInfo {
-		username: match passwd::get_username() {
-			Some(value) => value,
-			None => match get_var("USER") {
-				Ok(value) => value,
-				Err(_) => "<unknown>".to_owned(),
-			},
+		username: 'username: {
+			match passwd::get_username() {
+				Some(value) => break 'username value,
+				None => (),
+			};
+			match get_var("USER") {
+				Ok(value) => break 'username value,
+				Err(_) => (),
+			};
+			"<unknown>".to_owned()
 		},
 		hostname: utsname.nodename,
 		kernel: utsname.release,
 		terminal: 'term: {
 			match get_var("LC_TERMINAL") {
-				Ok(value) => value,
-				Err(_) => {
-					match get_var("ALACRITTY_WINDOW_ID") {
-						Ok(_) => break 'term "alacritty".to_owned(),
-						Err(_) => (),
-					};
-					match get_var("KITTY_INSTALLATION_DIR") {
-						Ok(_) => break 'term "kitty".to_owned(),
-						Err(_) => (),
-					};
-					match get_var("KONSOLE_VERSION") {
-						Ok(_) => break 'term "konsole".to_owned(),
-						Err(_) => (),
-					};
-					"<unknown>".to_owned()
-				},
-			}
+				Ok(value) => break 'term value,
+				Err(_) => (),
+			};
+			match get_var("ALACRITTY_WINDOW_ID") {
+				Ok(_) => break 'term "alacritty".to_owned(),
+				Err(_) => (),
+			};
+			// Kitty is PythonSlop™ (read: low-quality (read: Python), vibecoded).
+			// match get_var("KITTY_INSTALLATION_DIR") {
+			// 	Ok(_) => break 'term "kitty".to_owned(),
+			// 	Err(_) => (),
+			// };
+			match get_var("KONSOLE_VERSION") {
+				Ok(_) => break 'term "konsole".to_owned(),
+				Err(_) => (),
+			};
+			"<unknown>".to_owned()
 		},
 		shell: match get_var("SHELL") {
 			Ok(value) => value,
 			Err(_) => "<unknown>".to_owned(),
 		},
-		editor: match get_var("VISUAL") {
-			Ok(value) => value,
-			Err(_) => match get_var("EDITOR") {
-				Ok(value) => value,
-				Err(_) => "<unknown>".to_owned(),
-			},
+		editor: 'editor: {
+			match get_var("VISUAL") {
+				Ok(value) => break 'editor value,
+				Err(_) => (),
+			}
+			match get_var("EDITOR") {
+				Ok(value) => break 'editor value,
+				Err(_) => (),
+			};
+			"<unknown>".to_owned()
 		},
-		locale: match get_var("LANG") {
-			Ok(value) => value,
-			Err(_) => match get_var("LANGUAGE") {
-				Ok(value) => value,
-				Err(_) => match get_var("LC_ALL") {
-					Ok(value) => value,
-					Err(_) => "C".to_owned(),
-				},
-			},
+		locale: 'locale: {
+			match get_var("LC_ALL") {
+				Ok(value) => break 'locale value,
+				Err(_) => (),
+			};
+			match get_var("LANG") {
+				Ok(value) => break 'locale value,
+				Err(_) => (),
+			};
+			match get_var("LANGUAGE") {
+				Ok(value) => break 'locale value,
+				Err(_) => (),
+			};
+			"C".to_owned()
 		},
 		..Default::default()
 	};
