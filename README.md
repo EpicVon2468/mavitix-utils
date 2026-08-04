@@ -19,10 +19,10 @@ MSRV: N/A (nightly, see: [`rust-toolchain.toml`](https://github.com/EpicVon2468/
 [Release-Crates]: https://img.shields.io/crates/v/mavitix-utils?logo=rust
 [Release-Crates-1]: https://crates.io/crates/mavitix-utils/
 
-[Release-GitHub]: https://img.shields.io/github/v/release/EpicVon2468/mavitix-utils?logo=github&label=github
+[Release-GitHub]: https://img.shields.io/github/v/release/EpicVon2468/mavitix--utils?logo=github&label=github
 [Release-GitHub-1]: https://github.com/EpicVon2468/mavitix-utils/releases/latest/
 
-[Repository]: https://img.shields.io/badge/git-EpicVon2468/mavitix-utils-blue?logo=github
+[Repository]: https://img.shields.io/badge/git-EpicVon2468/mavitix--utils-blue?logo=github
 [Repository-1]: https://github.com/EpicVon2468/mavitix-utils/
 
 [Licence]: https://img.shields.io/badge/licence-MIT%20OR%20Apache--2.0-blue

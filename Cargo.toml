@@ -1,6 +1,19 @@
 [package]
 name = "mavitix-utils"
-version = "0.0.0"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[workspace.package]
+version = "0.0.0-git"
 authors = [
 	"Mavity The Madity",
 ]
@@ -10,17 +23,52 @@ description = "Foo bar baz"
 homepage = "https://github.com/EpicVon2468/mavitix-utils/"
 repository = "https://github.com/EpicVon2468/mavitix-utils/"
 license = "MIT OR Apache-2.0"
-exclude = [
-	".github/",
-]
 
-[package.metadata.dist]
-dist = true
-# https://github.com/axodotdev/cargo-dist/issues/745
-#features = [
-#]
+[workspace]
+members = ["crates/*", "."]
+default-members = ["crates/fetch", "."]
+resolver = "3"
 
-# The profile that 'dist' will build with
-[profile.dist]
-inherits = "release"
-lto = "fat"
+[workspace.lints.clippy]
+pedantic = "warn"
+nursery = "warn"
+suspicious = "warn"
+as_conversions = "warn"
+min_ident_chars = "warn"
+pattern_type_mismatch = "warn"
+use_self = "warn"
+unused_trait_names = "warn"
+create_dir = "warn"
+exit = "warn"
+float_cmp = "warn"
+float_fmp_const = "warn"
+while_float = "warn"
+integer_division = "warn"
+integer_division_remainder_used = "warn"
+unreadable_literal = "warn"
+unnecessary_literal_bound = "warn"
+missing_const_for_fn = "warn"
+needless_collect = "warn"
+needless_for_each = "warn"
+as_underscore = "warn"
+branches_sharing_code = "warn"
+infinite_loop = "warn"
+linkedlist = "warn"
+pub_use = "warn"
+wildcard_imports = "warn"
+uninlined_format_args = "warn"
+equatable_if_let = "warn"
+enum_glob_use = "warn"
+panic = "warn"
+panic_in_result_fn = "warn"
+undocumented_unsafe_blocks = "forbid"
+multiple_unsafe_ops_per_block = "forbid"
+missing_safety_doc = "forbid"
+tabs_in_doc_comments = "allow"
+unnecessary_semicolon = "allow"
+default_trait_access = "allow"
+upper_case_acronyms = "allow"
+borrowed_box = "allow"
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "forbid"
