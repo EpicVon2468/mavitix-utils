@@ -12,6 +12,40 @@ pub struct utsname {
 	pub domainname: [c_char; UTSNAME_LENGTH],
 }
 
+macro_rules! utsname_conv {
+	($fn_name:ident, $field:ident $(,)?) => {
+		pub fn $fn_name(&self) -> String {
+			let ptr: *const c_char = self.$field.as_ptr();
+			assert!(
+				!ptr.is_null(),
+				concat!(
+					"uname(2) returned null for the '",
+					stringify!($field),
+					"' field.",
+				),
+			);
+			// SAFETY: uname(2) returns well-formed C strings.
+			let cstr: &CStr = unsafe { CStr::from_ptr(ptr) };
+			match $crate::cstr_clone(cstr).into_string() {
+				Ok(value) => value,
+				Err(_) => {
+					std::hint::cold_path();
+					unreachable!("uname(2) returns well-formed C strings.");
+				},
+			}
+		}
+	};
+}
+
+impl utsname {
+	utsname_conv!(get_sysname, sysname);
+	utsname_conv!(get_nodename, nodename);
+	utsname_conv!(get_release, release);
+	utsname_conv!(get_version, version);
+	utsname_conv!(get_machine, machine);
+	utsname_conv!(get_domainname, domainname);
+}
+
 const impl Default for utsname {
 	fn default() -> Self {
 		Self {
@@ -32,55 +66,11 @@ unsafe extern "C" {
 	pub fn uname(buf: *mut utsname) -> c_int;
 }
 
-pub fn get_uname_raw() -> utsname {
+pub fn get_uname() -> utsname {
 	let mut dest: utsname = Default::default();
 	// SAFETY:
 	unsafe {
 		uname(&raw mut dest);
 	};
 	dest
-}
-
-#[inline]
-pub fn get_uname() -> UnixTimesharingSystemName {
-	UnixTimesharingSystemName::from(get_uname_raw())
-}
-
-pub struct UnixTimesharingSystemName {
-	pub sysname: String,
-	pub nodename: String,
-	pub release: String,
-	pub version: String,
-	pub machine: String,
-	pub domainname: String,
-}
-
-impl From<utsname> for UnixTimesharingSystemName {
-	fn from(value: utsname) -> Self {
-		macro_rules! map_field {
-			($field:ident $(,)?) => {
-				match crate::cstr_clone(CStr::from_ptr(value.$field.as_ptr())).into_string() {
-					Ok(value) => value,
-					Err(_) => {
-						std::hint::cold_path();
-						unreachable!("uname(2) returns well-formed C strings.");
-					},
-				}
-			};
-		}
-		Self {
-			// SAFETY:
-			sysname: unsafe { map_field!(sysname) },
-			// SAFETY:
-			nodename: unsafe { map_field!(nodename) },
-			// SAFETY:
-			release: unsafe { map_field!(release) },
-			// SAFETY:
-			version: unsafe { map_field!(version) },
-			// SAFETY:
-			machine: unsafe { map_field!(machine) },
-			// SAFETY:
-			domainname: unsafe { map_field!(domainname) },
-		}
-	}
 }

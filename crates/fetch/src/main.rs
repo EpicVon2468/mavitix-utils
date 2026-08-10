@@ -1,14 +1,16 @@
 #![feature(derive_const, const_default, const_trait_impl)]
 
-use std::env::var as get_var;
+use std::env::{consts::ARCH, var as get_var};
 
 use mavitix_utils::{
+	bold,
+	const_println,
 	passwd,
-	uname::{UnixTimesharingSystemName as UTSName, get_uname},
+	uname::{get_uname, utsname},
 };
 
 pub fn main() {
-	let utsname: UTSName = get_uname();
+	let utsname: utsname = get_uname();
 	let info: FetchInfo = FetchInfo {
 		username: 'username: {
 			if let Some(value) = passwd::get_username() {
@@ -19,8 +21,8 @@ pub fn main() {
 			};
 			"<unknown>".to_owned()
 		},
-		hostname: utsname.nodename,
-		kernel: utsname.release,
+		hostname: utsname.get_nodename(),
+		kernel: utsname.get_release(),
 		terminal: 'term: {
 			if let Ok(value) = get_var("LC_TERMINAL") {
 				break 'term value;
@@ -81,12 +83,6 @@ pub struct FetchInfo {
 	pub locale: String,
 }
 
-macro_rules! bold {
-	($value:expr $(,)?) => {
-		concat!("\x1B[1m", $value, "\x1B[22m")
-	};
-}
-
 pub fn do_print(info: FetchInfo) {
 	{
 		let hostname: String = info.hostname;
@@ -98,10 +94,7 @@ pub fn do_print(info: FetchInfo) {
 			String::from_utf8_unchecked(vec![b'-'; len])
 		});
 	};
-	println!(
-		concat!(bold!("Architecture:"), " {}"),
-		std::env::consts::ARCH,
-	);
+	const_println!(concat!(bold!("Architecture:"), ' '), ARCH);
 	println!(concat!(bold!("Kernel:"), " Linux {}"), info.kernel);
 	println!(concat!(bold!("Terminal:"), " {}"), info.terminal);
 	println!(concat!(bold!("Shell:"), " {}"), info.shell);

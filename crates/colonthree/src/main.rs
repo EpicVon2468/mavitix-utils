@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use mavitix_utils::{cli::ArgIter, main};
+use mavitix_utils::{cli::ArgIter, const_println, main};
 
 pub mod cli;
 
@@ -12,7 +12,7 @@ pub fn main_impl() -> Result<()> {
 		let (first, second, rest): (char, char, String) = ArgIter::destructure(arg);
 		match (first, second) {
 			('-', 'V') => {
-				println!(env!("CARGO_PKG_VERSION"));
+				const_println!(env!("CARGO_PKG_VERSION"));
 				return Ok(());
 			},
 			('-', '-') => {
@@ -20,13 +20,13 @@ pub fn main_impl() -> Result<()> {
 				match arg.split_once('=') {
 					None => match arg {
 						"version" => {
-							println!(concat!(":3 v", env!("CARGO_PKG_VERSION")));
+							const_println!(concat!(":3 v", env!("CARGO_PKG_VERSION")));
 							return Ok(());
 						},
 						_ => panic!(),
 					},
 					_ => panic!(),
-				}
+				};
 			},
 			_ => panic!(),
 		}

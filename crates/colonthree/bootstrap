@@ -1,0 +1,10 @@
+#! /usr/bin/env bash
+
+if [ -z "$CARGO" ]; then
+	CARGO="cargo"
+fi
+
+# FIXME: Not working on glibc
+# Tried to switch to using x86_64-unknown-linux-musl, but libunwind.a was linked against glibc, and seemingly wanted to be re-compiled with -fPIE and -fPIC?
+# Also tested with disabling the optimsation flags from the root workspace's Cargo.toml, still nothing.
+RUSTFLAGS="$RUSTFLAGS -C target-feature=+crt-static" $CARGO build --release -p colonthree

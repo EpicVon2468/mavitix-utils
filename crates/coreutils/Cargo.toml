@@ -1,0 +1,91 @@
+cargo-features = [
+	"different-binary-name",
+]
+
+[package]
+name = "coreutils"
+version = "0.0.0-git"
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "mavitix-whoami"
+path = "src/whoami.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-printenv"
+path = "src/printenv.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-arch"
+path = "src/arch.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-logname"
+path = "src/logname.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-unlink"
+path = "src/unlink.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-false"
+path = "src/false.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-true"
+path = "src/true.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[dependencies.mavitix-utils]
+version = "0.0.0-git"
+path = "../.."
+
+[lints]
+workspace = true

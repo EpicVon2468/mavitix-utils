@@ -3,6 +3,7 @@
 use std::ffi::{CStr, CString};
 
 pub mod cli;
+pub mod login;
 pub mod passwd;
 pub mod uname;
 
@@ -27,6 +28,45 @@ macro_rules! main {
 			}
 		}
 	};
+}
+
+#[macro_export]
+macro_rules! bold {
+	($value:expr $(,)?) => {
+		concat!("\x1B[1m", $value, "\x1B[22m")
+	};
+}
+
+#[macro_export]
+macro_rules! italic {
+	($value:expr $(,)?) => {
+		concat!("\x1B[4m", $value, "\x1B[24m")
+	};
+}
+
+// SANITY(const-hack + unusual): Me?  Abuse potentially triple-buffered I/O streams?  Noooo...
+#[macro_export]
+macro_rules! const_println {
+	($($value:expr),* $(,)?) => {{
+		use std::io::Write as _;
+
+		let mut stdout: std::io::BufWriter<_> = std::io::BufWriter::new(std::io::stdout().lock());
+		$({
+			let Ok(_) = stdout.write(const { $value.as_bytes() }) else {
+				std::hint::cold_path();
+				std::process::exit(1);
+			};
+		})*;
+		let Ok(_) = stdout.write(const { &[b'\n'] }) else {
+			std::hint::cold_path();
+			std::process::exit(1);
+		};
+		let Ok(_) = stdout.flush() else {
+			std::hint::cold_path();
+			std::process::exit(1);
+		};
+		drop(stdout);
+	}};
 }
 
 #[inline(always)]

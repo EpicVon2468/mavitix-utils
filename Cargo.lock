@@ -17,7 +17,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "mavitix-fetch"
+name = "coreutils"
+version = "0.0.0-git"
+dependencies = [
+ "mavitix-utils",
+]
+
+[[package]]
+name = "fetch"
 version = "0.0.0-git"
 dependencies = [
  "mavitix-utils",

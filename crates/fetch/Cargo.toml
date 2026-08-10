@@ -1,5 +1,5 @@
 [package]
-name = "mavitix-fetch"
+name = "fetch"
 version = "0.0.0-git"
 authors.workspace = true
 edition.workspace = true
