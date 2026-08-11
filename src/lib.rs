@@ -1,11 +1,16 @@
 #![feature(const_default, const_trait_impl)]
 
-use std::ffi::{CStr, CString};
+use std::ffi::{CStr, CString, c_void};
 
 pub mod cli;
 pub mod login;
 pub mod passwd;
 pub mod uname;
+
+const _: () = cfg_select! {
+	target_os = "linux" => (),
+	_ => compile_error!("Unsupported OS!"),
+};
 
 #[macro_export]
 macro_rules! main {
@@ -78,4 +83,13 @@ pub fn cstr_clone(value: &CStr) -> CString {
 	};
 	value.clone_into(&mut dest);
 	dest
+}
+
+// SAFETY: The function declarations given below are in line with the header files of `libc`.
+#[link(name = "c")]
+unsafe extern "C" {
+
+	pub fn malloc(size: usize) -> *mut c_void;
+
+	pub fn memcpy(dest: *mut c_void, src: *const c_void, n: usize) -> *mut c_void;
 }

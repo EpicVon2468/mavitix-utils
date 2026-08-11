@@ -1,7 +1,7 @@
 use std::{
 	env::args_os,
 	hint::cold_path,
-	io::{BufWriter, StdoutLock, Write as _, stdout},
+	io::{BufWriter, Error, StdoutLock, Write as _, stdout},
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 };
@@ -9,7 +9,13 @@ use std::{
 use mavitix_utils::{bold, const_println, passwd::get_username};
 
 pub fn main() {
+	let mut seen_double_dash: bool = false;
 	for os_arg in args_os().skip(1) {
+		if seen_double_dash {
+			cold_path();
+			eprintln!("whoami: unexpected argument {os_arg:?}!");
+			exit(1);
+		};
 		let arg: &[u8] = os_arg.as_bytes();
 		match arg {
 			b"-h" | b"--help" => {
@@ -33,10 +39,11 @@ pub fn main() {
 				));
 				return;
 			},
+			b"--" => seen_double_dash = true,
 			_ => {
 				cold_path();
 				eprintln!(
-					"whoami: unexpected or invalid {} {os_arg:?}!",
+					"whoami: unexpected {} {os_arg:?}!",
 					if arg[0] == b'-' { "option" } else { "argument" },
 				);
 				exit(1);
@@ -49,14 +56,16 @@ pub fn main() {
 		exit(1);
 	};
 	let mut stdout: BufWriter<StdoutLock> = BufWriter::new(stdout().lock());
-	let Ok(_) = stdout.write(username.as_bytes()) else {
+	let Ok(_): Result<_, Error> = stdout.write(username.as_bytes()) else {
 		cold_path();
 		exit(1);
 	};
-	let Ok(_) = stdout.write(const { &[b'\n'] }) else {
+	let Ok(_): Result<_, Error> = stdout.write(const { &[b'\n'] }) else {
 		cold_path();
 		exit(1);
 	};
-	let _ = stdout.flush();
-	drop(stdout);
+	let Ok(_): Result<_, Error> = stdout.flush() else {
+		cold_path();
+		exit(1);
+	};
 }

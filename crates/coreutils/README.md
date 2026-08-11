@@ -7,6 +7,7 @@ The source code of the GNU coreutils has not been inspected during creation for 
 The following extensions have been added:
 
 - Support for multiple files per invocation in `mavitix-unlink`.
+- Support for `-h` as an alias for `--help` in all programs.
 
 Many utilities from the coreutils may not be featured in this package for complexity reasons.<br>
 The currently implemented utilities are as follows:
@@ -18,3 +19,7 @@ The currently implemented utilities are as follows:
 - `unlink(1)`
 - `false(1)`
 - `true(1)`
+- `tty(1)`
+- `yes(1)`
+
+FIXME: Some issues in compat around how GNU coreutils handle `--help` & `--version`.

@@ -83,6 +83,36 @@ doc = true
 proc-macro = false
 harness = true
 
+[[bin]]
+name = "mavitix-tty"
+path = "src/tty.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-yes"
+path = "src/yes.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-pwd"
+path = "src/pwd.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
 [dependencies.mavitix-utils]
 version = "0.0.0-git"
 path = "../.."

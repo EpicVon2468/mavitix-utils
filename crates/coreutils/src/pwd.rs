@@ -1,26 +1,19 @@
-use std::{
-	env::{args_os, consts::ARCH},
-	hint::cold_path,
-	os::unix::ffi::OsStrExt as _,
-	process::exit,
-};
+use std::{env::args_os, hint::cold_path, os::unix::ffi::OsStrExt as _, process::exit};
 
 use mavitix_utils::{bold, const_println};
 
 pub fn main() {
 	let mut seen_double_dash: bool = false;
 	for os_arg in args_os().skip(1) {
-		if seen_double_dash {
-			cold_path();
-			eprintln!("arch: unexpected argument {os_arg:?}!");
-			exit(1);
-		};
 		let arg: &[u8] = os_arg.as_bytes();
+		if seen_double_dash {
+			continue;
+		};
 		match arg {
 			b"-h" | b"--help" => {
 				const_println!(concat!(
 					"Usage:\n\t",
-					bold!("arch"),
+					bold!("pwd"),
 					" [",
 					bold!("-h"),
 					'|',
@@ -33,7 +26,7 @@ pub fn main() {
 			},
 			b"--version" => {
 				const_println!(concat!(
-					"arch (Mavitix coreutils) ",
+					"pwd (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
 				return;
@@ -41,13 +34,11 @@ pub fn main() {
 			b"--" => seen_double_dash = true,
 			_ => {
 				cold_path();
-				eprintln!(
-					"arch: unexpected {} {os_arg:?}!",
-					if arg[0] == b'-' { "option" } else { "argument" },
-				);
+				eprintln!("pwd: unexpected or invalid option {os_arg:?}!");
 				exit(1);
 			},
 		};
 	}
-	const_println!(ARCH);
+	// TODO: `getcwd(3)`
+	// https://www.gnu.org/savannah-checkouts/gnu/coreutils/manual/html_node/pwd-invocation.html
 }

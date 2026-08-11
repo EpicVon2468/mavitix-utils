@@ -35,14 +35,14 @@ pub fn main() {
 					italic!("FILE"),
 					"...\n\nWritten by Mavity The Madity.",
 				));
-				exit(0);
+				return;
 			},
 			b"--version" => {
 				const_println!(concat!(
 					"unlink (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
-				exit(0);
+				return;
 			},
 			b"--" => seen_double_dash = true,
 			_ => {
@@ -62,10 +62,8 @@ pub fn main() {
 			let ptr: *const c_char = unsafe { transmute(file.as_bytes().as_ptr()) };
 			// SAFETY: Soundness is guaranteed, errors are handled below.
 			if unsafe { unlink(ptr) } == -1 {
-				eprintln!(
-					"unlink: couldn't unlink file {file:?}; {}",
-					Error::last_os_error(),
-				);
+				let err: Error = Error::last_os_error();
+				eprintln!("unlink: couldn't unlink file {file:?}; {err}");
 				exit_err = true;
 			};
 		}

@@ -10,7 +10,13 @@ use std::{
 use mavitix_utils::{bold, const_println, login::getlogin};
 
 pub fn main() {
+	let mut seen_double_dash: bool = false;
 	for os_arg in args_os().skip(1) {
+		if seen_double_dash {
+			cold_path();
+			eprintln!("logname: unexpected argument {os_arg:?}!");
+			exit(1);
+		};
 		let arg: &[u8] = os_arg.as_bytes();
 		match arg {
 			b"-h" | b"--help" => {
@@ -34,10 +40,11 @@ pub fn main() {
 				));
 				return;
 			},
+			b"--" => seen_double_dash = true,
 			_ => {
 				cold_path();
 				eprintln!(
-					"logname: unexpected or invalid {} {os_arg:?}!",
+					"logname: unexpected {} {os_arg:?}!",
 					if arg[0] == b'-' { "option" } else { "argument" },
 				);
 				exit(1);
@@ -47,10 +54,8 @@ pub fn main() {
 	// SAFETY: Soundness is guaranteed, errors are handled below.
 	let ptr: *mut c_char = unsafe { getlogin() };
 	if ptr.is_null() {
-		eprintln!(
-			"logname: couldn't get user login name; {}",
-			Error::last_os_error(),
-		);
+		let err: Error = Error::last_os_error();
+		eprintln!("logname: couldn't get user login name; {err}");
 		exit(1);
 	};
 	let mut stdout: BufWriter<StdoutLock> = BufWriter::new(stdout().lock());
