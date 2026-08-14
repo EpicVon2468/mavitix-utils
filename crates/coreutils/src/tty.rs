@@ -63,6 +63,7 @@ pub fn main() {
 			},
 		}
 	}
+	// SAFETY: Trusted compile-time fileno.
 	let name: *mut c_char = unsafe { ttyname(0) };
 	if name.is_null() {
 		let err: Error = Error::last_os_error();

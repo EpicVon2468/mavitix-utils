@@ -29,12 +29,14 @@ pub fn main() {
 				// as `yes(1)` runs in an endless loop until a signal is sent to kill the process.
 				//
 				// Can't use `alloca` because it's a builtin :(
-				let dest: *mut u8 = unsafe { malloc(len * size_of::<u8>()) } as *mut u8;
-				if dest.is_null() {
-					// SANITY(unusual):
-					// If `malloc` isn't working, you have bigger problems than `yes` not working.
-					cold_path();
-					unreachable!("yes: `malloc` failed to allocate memory!");
+				let dest: *mut u8 = match unsafe { malloc::<u8>(len) } {
+					Some(dest) => dest,
+					None => {
+						// SANITY(unusual):
+						// If `malloc` isn't working, you have bigger problems.
+						cold_path();
+						unreachable!("yes: `malloc` failed to allocate memory!");
+					},
 				};
 				// SAFETY: `malloc` returns well-formed pointers.
 				unsafe {

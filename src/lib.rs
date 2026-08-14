@@ -1,6 +1,6 @@
-#![feature(const_default, const_trait_impl)]
+#![feature(const_default, const_trait_impl, ffi_const)]
 
-use std::ffi::{CStr, CString, c_void};
+use std::ffi::{CStr, CString, c_int, c_void};
 
 pub mod cli;
 pub mod login;
@@ -85,11 +85,36 @@ pub fn cstr_clone(value: &CStr) -> CString {
 	dest
 }
 
+pub unsafe fn malloc<T>(size: usize) -> Option<*mut T> {
+	// SAFETY: Callers manage returned memory.
+	let mem: *mut T = unsafe { raw_malloc(size * size_of::<T>()) } as *mut T;
+	if mem.is_null() { None } else { Some(mem) }
+}
+
+pub unsafe fn realloc<T>(buf: *mut T, size: usize) -> bool {
+	// SAFETY: Callers manage everything, not my problem.
+	unsafe { raw_realloc(buf as *mut c_void, size * size_of::<T>()) }.is_null()
+}
+
+pub fn errno() -> c_int {
+	// SAFETY: `__errno_location()` is always set.
+	unsafe { *__errno_location() }
+}
+
 // SAFETY: The function declarations given below are in line with the header files of `libc`.
 #[link(name = "c")]
 unsafe extern "C" {
 
-	pub fn malloc(size: usize) -> *mut c_void;
+	#[link_name = "malloc"]
+	pub fn raw_malloc(size: usize) -> *mut c_void;
+
+	#[link_name = "realloc"]
+	pub fn raw_realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
 
 	pub fn memcpy(dest: *mut c_void, src: *const c_void, n: usize) -> *mut c_void;
+
+	pub fn free(ptr: *mut c_void);
+
+	#[unsafe(ffi_const)]
+	pub safe fn __errno_location() -> *mut c_int;
 }
