@@ -4,14 +4,11 @@ if [ -z "$CARGO" ]; then
 	CARGO="cargo"
 fi
 
-# export CARGO="$(echo $CARGO | sed 's/ -Z \{0,\}build-std//g')"
-export RUSTFLAGS="$(echo $RUSTFLAGS | sed 's/linux-gnu/linux-musl/g')"
 # https://rust-lang.github.io/rfcs/3874-build-std-always.html#panic-strategies
 # https://rust-lang.github.io/rfcs/3874-build-std-always.html#avoid-building-panic_unwind-unnecessarily
-export RUSTFLAGS="$RUSTFLAGS -C panic=abort"
+export RUSTFLAGS="$(echo $RUSTFLAGS | sed -e 's/linux-gnu/linux-musl/g') -C panic=abort -C target-feature=+crt-static -C link-self-contained=yes -C link-arg=-fno-autolink"
 export CARGO="$CARGO -Z build-std=panic_abort,std,core,alloc"
 
-# FIXME: Not working on glibc
-# Tried to switch to using x86_64-unknown-linux-musl, but libunwind.a was linked against glibc, and seemingly wanted to be re-compiled with -fPIE and -fPIC?
-# Also tested with disabling the optimsation flags from the root workspace's Cargo.toml, still nothing.
-RUSTFLAGS="$RUSTFLAGS -C target-feature=+crt-static" $CARGO build --release -p colonthree "$@"
+echo "RUSTFLAGS=$RUSTFLAGS"
+
+$CARGO build -p colonthree --target "$(uname -m)-unknown-linux-musl" "$@"

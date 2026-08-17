@@ -2,7 +2,6 @@
 
 use std::ffi::{CStr, CString, c_int, c_void};
 
-pub mod cli;
 pub mod login;
 pub mod passwd;
 pub mod uname;
