@@ -1,0 +1,74 @@
+# IndentPPDirectives: AfterHash
+UseTab: Always
+IndentWidth: 4
+TabWidth: 4
+PointerAlignment: Right
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseExpressionOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLambdasOnASingleLine: Empty
+AllowShortNamespacesOnASingleLine: false
+BreakBeforeBraces: Attach
+BreakAfterAttributes: Always
+BreakAfterOpenBracketBracedList: true
+BreakAfterOpenBracketFunction: true
+BreakAfterOpenBracketIf: true
+BreakAfterOpenBracketLoop: true
+BreakAfterOpenBracketSwitch: true
+BreakBeforeCloseBracketBracedList: true
+BreakBeforeCloseBracketFunction: true
+BreakBeforeCloseBracketIf: true
+BreakBeforeCloseBracketLoop: true
+BreakBeforeCloseBracketSwitch: true
+BreakBeforeReturnType: None
+BreakBeforeTemplateCloser: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: AfterColon
+CompactNamespaces: false
+Cpp11BracedListStyle: Block
+EmptyLineBeforeAccessModifier: Always
+IncludeBlocks: Preserve
+IndentAccessModifiers: false
+IndentCaseLabels: true
+IndentExportBlock: true
+IndentExternBlock: Indent
+InsertNewlineAtEOF: true
+KeepEmptyLines:
+    AtEndOfFile: true
+    AtStartOfBlock: false
+    AtStartOfFile: false
+LineEnding: LF
+NumericLiteralCase:
+    ExponentLetter: Lower
+    HexDigit: Upper
+    Prefix: Lower
+PackConstructorInitializers: CurrentLine
+PackParameters:
+    BinPack: OnePerLine
+ReferenceAlignment: Right
+RemoveEmptyLinesInUnwrappedLines: true
+SkipMacroDefinitionBody: true
+SpaceAfterCStyleCast: true
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeEnumUnderlyingTypeColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+# Needs clang 24
+#SpacesInBlockComments: Always
+SpacesInContainerLiterals: false
+SpacesInSquareBrackets: false
+FixNamespaceComments: true
+AccessModifierOffset: -4
+SeparateDefinitionBlocks: Always
+SortUsingDeclarations: LexicographicNumeric
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBraces: Never

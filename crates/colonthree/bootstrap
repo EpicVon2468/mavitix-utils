@@ -1,14 +1,11 @@
 #! /usr/bin/env bash
 
-if [ -z "$CARGO" ]; then
-	CARGO="cargo"
-fi
-
 # https://rust-lang.github.io/rfcs/3874-build-std-always.html#panic-strategies
 # https://rust-lang.github.io/rfcs/3874-build-std-always.html#avoid-building-panic_unwind-unnecessarily
 export RUSTFLAGS="$(echo $RUSTFLAGS | sed -e 's/linux-gnu/linux-musl/g') -C panic=abort -C target-feature=+crt-static -C link-self-contained=yes -C link-arg=-fno-autolink"
-export CARGO="$CARGO -Z build-std=panic_abort,std,core,alloc"
+export CARGO="${CARGO:-cargo} -Z build-std=panic_abort,std,core,alloc"
 
-echo "RUSTFLAGS=$RUSTFLAGS"
+echo "RUSTFLAGS='$RUSTFLAGS'"
+echo "CARGO='$CARGO'"
 
-$CARGO build -p colonthree --target "$(uname -m)-unknown-linux-musl" "$@"
+$CARGO build -p colonthree --target "$(uname -m)-unknown-linux-musl" $@

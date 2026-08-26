@@ -25,14 +25,19 @@ authors = [
 	"Mavity The Madity",
 ]
 edition = "2024"
-rust-version = "1.99.0"
+rust-version = "1.100.0"
 description = "Foo bar baz"
 homepage = "https://github.com/EpicVon2468/mavitix-utils/"
 repository = "https://github.com/EpicVon2468/mavitix-utils/"
 license = "MIT OR Apache-2.0"
 
 [workspace]
-members = ["crates/*", "."]
+members = [
+	"crates/colonthree",
+	"crates/coreutils",
+	"crates/fetch",
+	".",
+]
 default-members = ["."]
 resolver = "3"
 

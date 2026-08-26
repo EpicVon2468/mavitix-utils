@@ -1,0 +1,29 @@
+#! /usr/bin/env bash
+
+set -e
+
+rm -rf target/release; mkdir -p target/release
+
+ASFLAGS+=" -mnaked-reg -O2"
+
+architecture="$(uname -m)"
+tuple="$architecture-unknown-linux-none"
+
+if [ "$architecture" = "x86_64" ]; then
+	ASFLAGS+=" --64 -mintel64 -msyntax=intel -mmnemonic=intel"
+	${AS:-as} $ASFLAGS src/start_main_x86-64.S -o target/release/start_main.o
+elif [ "$architecture" = "aarch64" ]; then
+	${AS:-as} $ASFLAGS src/start_main_aarch64.S -o target/release/start_main.o
+fi
+
+RUSTFLAGS+=" -C opt-level=3 -C codegen-units=1 -C debug-assertions=no -C panic=immediate-abort -C link-arg=-nostdlib"
+
+core_dir="$(rustc --print sysroot)/lib/rustlib/src/rust/library/core"
+
+${CARGO:-cargo} clean --manifest-path "$core_dir/Cargo.toml"
+${CARGO:-cargo} build --release -Z build-std=core --target "$tuple" --manifest-path "$core_dir/Cargo.toml"
+
+# Cargo specifies this internally, causing a fit from rustc in the line(s) above if we specify it.
+RUSTFLAGS+=" --edition=2024 --crate-type=cdylib --emit=obj --target $tuple --extern core=$core_dir/../target/$tuple/release/libcore.rlib"
+
+rustc $RUSTFLAGS src/stdlib.rs -o target/release/stdlib.o

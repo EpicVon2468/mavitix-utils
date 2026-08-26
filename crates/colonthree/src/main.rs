@@ -1,4 +1,11 @@
-use anyhow::{Result, bail};
+#![feature(
+	io_error_more,
+	io_error_input_output_error,
+	derive_const,
+	const_default
+)]
+
+use anyhow::{bail, Result};
 
 use mavitix_utils::{const_println, main};
 
@@ -8,11 +15,19 @@ pub mod errors;
 pub mod pkg;
 
 use crate::{
-	cli::{Install, MarkInstalled, PkgEdit, Remove, Subcommand, UserConfig},
+	cli::{Install, MarkInstalled, PkgEdit, Remove, StdoutMode, Subcommand, UserConfig},
 	cli_parser::ArgIter,
 	errors::CLIError,
 };
 
+pub const PKG_DIR: &'static str = match option_env!("COLONTHREE_PKG_DIR") {
+	Some(value) => value,
+	None => "/var/lib/colonthree",
+};
+
+pub const PKG_DIR_LEN: usize = PKG_DIR.len();
+
+// Macro to handle error messages + exit status.
 main!(main_impl());
 
 pub fn main_impl() -> Result<()> {
@@ -24,7 +39,7 @@ pub fn main_impl() -> Result<()> {
 			let arg: &str = &arg;
 			arg
 		} {
-			"-v" => {
+			"-V" => {
 				const_println!(env!("CARGO_PKG_VERSION"));
 				return Ok(());
 			},
@@ -119,14 +134,10 @@ fn cli_install(config: &mut Install, args: &mut ArgIter, arg: String) -> Result<
 			match arg.split_once('=') {
 				// no '=', therefore a flag
 				None => match arg {
-					// "version" => {
-					// 	const_println!(concat!(
-					// 		env!("CARGO_BIN_NAME"),
-					// 		" v",
-					// 		env!("CARGO_PKG_VERSION"),
-					// 	));
-					// 	return Ok(());
-					// },
+					"impure" => config.impure = true,
+					"verbose" => config.stdout_mode = StdoutMode::Verbose,
+					"quiet" => config.stdout_mode = StdoutMode::Quiet,
+					"silent" => config.stdout_mode = StdoutMode::Silent,
 					invalid => bail!(CLIError::UnknownArgument {
 						arg_name: String::from(invalid),
 					}),
