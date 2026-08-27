@@ -9,3 +9,7 @@ language-servers = [ "clangd" ]
 indent = { tab-width = 4, unit = "\t"}
 formatter = { command = "clang-format" }
 auto-format = true
+
+[language-server.clangd]
+command = "clangd"
+args = [ "--malloc-trim" ]

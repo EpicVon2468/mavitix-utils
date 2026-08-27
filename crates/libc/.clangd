@@ -1,0 +1,25 @@
+CompileFlags:
+  Add: [-nostdlib, -isystemcrates/libc/include]
+  Remove: [-I, --include, -isystem, -internal-externc-isystem, -internal-isystem]
+Index:
+  StandardLibrary: false
+Style:
+  AngledHeaders: [".*"]
+Diagnostics:
+  UnusedIncludes: None
+Hover:
+  ShowAKA: true
+
+---
+If:
+  PathMatch: [.*\.h]
+CompileFlags:
+  Add: [-std=c23, -xc-header]
+  Remove: [-x]
+
+---
+If:
+  PathMatch: [.*\.c]
+CompileFlags:
+  Add: [-std=c23, -xc]
+  Remove: [-x]

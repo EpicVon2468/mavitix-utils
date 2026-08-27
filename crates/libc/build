@@ -2,7 +2,7 @@
 
 set -e
 
-rm -rf target/release; mkdir -p target/release
+rm -rf target; mkdir -p target/release
 
 ASFLAGS+=" -mnaked-reg -O2"
 
@@ -16,14 +16,51 @@ elif [ "$architecture" = "aarch64" ]; then
 	${AS:-as} $ASFLAGS src/start_main_aarch64.S -o target/release/start_main.o
 fi
 
+if [ -n "$CARGO" ]; then
+	CARGO="$(echo $CARGO | sed -e 's/ \{0,\}-Z \{0,\}build-std\(=[A-Za-z]*\(,[A-Za-z]\{1,\}\)\{0,\}\)\{0,1\}//g')"
+else
+	CARGO="cargo"
+fi
+
+CARGO+=" -Z build-std-features=compiler-builtins-mem"
+
 RUSTFLAGS+=" -C opt-level=3 -C codegen-units=1 -C debug-assertions=no -C panic=immediate-abort -C link-arg=-nostdlib"
 
-core_dir="$(rustc --print sysroot)/lib/rustlib/src/rust/library/core"
+# core_dir="$(rustc --print sysroot)/lib/rustlib/src/rust/library/core"
+# builtins_dir="$core_dir/../compiler-builtins/compiler-builtins"
+# release_dir="$PWD/target/$tuple/release"
+# target_libdir="$(rustc --target $tuple --print target-libdir)"
 
-${CARGO:-cargo} clean --manifest-path "$core_dir/Cargo.toml"
-${CARGO:-cargo} build --release -Z build-std=core --target "$tuple" --manifest-path "$core_dir/Cargo.toml"
+# mkdir -p "$target_libdir"
+
+# # -Z build-std=core \
+# CARGO_TARGET_DIR="$PWD/target" RUSTC_BOOTSTRAP=1 $CARGO rustc \
+# 	--release \
+# 	--target "$tuple" \
+# 	--manifest-path "$core_dir/Cargo.toml" \
+# 	--lib \
+# 	-- \
+# 	--emit=metadata="$target_libdir/libcore.rmeta"
+
+# cp "$release_dir/libcore.rlib" "$target_libdir/libcore.rlib"
+
+# echo "build: 'core' done."
+# CARGO_TARGET_DIR="$PWD/target" RUSTC_BOOTSTRAP=1 $CARGO rustc \
+# 	--release \
+# 	-Z build-std=compiler_builtins \
+# 	--target "$tuple" \
+# 	--manifest-path "$builtins_dir/Cargo.toml" \
+# 	--features "mem" \
+# 	--lib \
+# 	-v \
+# 	-- \
+# 	--emit=metadata="$target_libdir/libcompiler_builtins.rmeta"
+
+# cp "$release_dir/libcompiler_builtins.rlib" "$target_libdir/libcompiler_builtins.rlib"
+
+# echo "build: 'compiler-builtins' done."
 
 # Cargo specifies this internally, causing a fit from rustc in the line(s) above if we specify it.
-RUSTFLAGS+=" --edition=2024 --crate-type=cdylib --emit=obj --target $tuple --extern core=$core_dir/../target/$tuple/release/libcore.rlib"
+RUSTFLAGS+=" --edition=2024 --crate-type=cdylib --emit=obj" #--target $tuple"
 
-rustc $RUSTFLAGS src/stdlib.rs -o target/release/stdlib.o
+rustc $RUSTFLAGS --crate-name=stdlib src/stdlib.rs -o target/release/stdlib.o

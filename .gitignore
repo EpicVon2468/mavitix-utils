@@ -5,5 +5,11 @@
 .DS_store
 Thumbs.db
 
+# Artefacts
+*.pch
+*.o
+*.elf
+*.bin
+
 # Misc
 **/.direnv/
