@@ -1,7 +1,7 @@
 #pragma once
+#include <internal/__defs.h>
 
 #define __STDC_VERSION_STDDEF_H__ 202311L
-#define __MAVITIX_LIBC__ 1
 
 #ifdef __PTRDIFF_TYPE__
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
@@ -43,18 +43,11 @@ typedef typeof_unqual(nullptr) nullptr_t;
 #define unreachable() __builtin_unreachable()
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 
-#if __STDC_VERSION__ >= 202311L
-/* C23 attribute. */
-[[noreturn]]
-#else
-/* C11 keyword; Deprecated in C23. */
-_Noreturn
-#endif
-#if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
-__attribute__((always_inline))
-#endif
+#warning Using mavitix-libc function as a fallback for `unreachable()`!
+#warning This build may be non-portable against other libc implementations!
+
 /* We're >= C11 here, so `inline` is a valid keyword (available since C99). */
-extern inline void __mavitix_unreachable_impl(void);
+__NORETURN__ extern inline void __mavitix_unreachable_impl(void);
 #define unreachable() __mavitix_unreachable_impl()
 
 #endif /* unreachable(void) */

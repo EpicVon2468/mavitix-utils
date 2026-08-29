@@ -1,7 +1,7 @@
 #pragma once
+#include <internal/__defs.h>
 
 #define __STDC_VERSION_STDINT_H__ 202311L
-#define __MAVITIX_LIBC__ 1
 
 #ifdef __INT8_TYPE__
 typedef __INT8_TYPE__ int8_t;

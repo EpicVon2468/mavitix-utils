@@ -1,4 +1,5 @@
 #pragma once
+#include <internal/__defs.h>
 
 #define __MAVITIX_LIBC__ 1
 

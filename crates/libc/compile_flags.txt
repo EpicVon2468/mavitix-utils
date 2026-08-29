@@ -1,0 +1,10 @@
+-nostdlib
+-nostdinc
+-isysteminclude
+-std=c23
+-Wpedantic
+-Wextra
+-Wall
+-Werror
+-Wundef
+-Wno-error=cpp

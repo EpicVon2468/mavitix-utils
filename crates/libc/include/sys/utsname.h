@@ -1,4 +1,5 @@
 #pragma once
+#include <internal/__defs.h>
 
 #define __MAVITIX_LIBC__ 1
 
@@ -13,4 +14,4 @@ struct utsname {
 	char domainname[65];
 };
 
-extern int uname(struct utsname *__name);
+extern int uname(struct utsname *name);

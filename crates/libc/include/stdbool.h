@@ -1,7 +1,7 @@
 #pragma once
+#include <internal/__defs.h>
 
 #define __bool_true_false_are_defined 1
-#define __MAVITIX_LIBC__ 1
 
 /*
  * Technically __STDC_VERSION__ isn't defined in C89, but if the symbol is

@@ -1,6 +1,6 @@
-CompileFlags:
-  Add: [-nostdlib, -isystemcrates/libc/include]
-  Remove: [-I, --include, -isystem, -internal-externc-isystem, -internal-isystem]
+#CompileFlags:
+#  Add: [-nostdlib, -isysteminclude]
+#  Remove: [-I, --include, -isystem, -internal-externc-isystem, -internal-isystem]
 Index:
   StandardLibrary: false
 Style:
@@ -22,4 +22,11 @@ If:
   PathMatch: [.*\.c]
 CompileFlags:
   Add: [-std=c23, -xc]
+  Remove: [-x]
+
+---
+If:
+  PathMatch: [.*\.S]
+CompileFlags:
+  Add: [-xassembler-with-cpp]
   Remove: [-x]

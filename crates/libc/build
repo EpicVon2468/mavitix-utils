@@ -2,7 +2,10 @@
 
 set -e
 
-rm -rf target; mkdir -p target/release
+rm -rf target
+mkdir -p target/release
+mkdir -p target/release/tmp
+mkdir -p target/release/artefacts
 
 ASFLAGS+=" -mnaked-reg -O2"
 
@@ -11,10 +14,20 @@ tuple="$architecture-unknown-linux-none"
 
 if [ "$architecture" = "x86_64" ]; then
 	ASFLAGS+=" --64 -mintel64 -msyntax=intel -mmnemonic=intel"
-	${AS:-as} $ASFLAGS src/start_main_x86-64.S -o target/release/start_main.o
-elif [ "$architecture" = "aarch64" ]; then
-	${AS:-as} $ASFLAGS src/start_main_aarch64.S -o target/release/start_main.o
+	architecture="x86-64"
 fi
+
+CPPFLAGS+=" -fdirectives-only -E -nostdlib -nostdinc -std=c23"
+CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wno-error=cpp"
+
+${CPP:-cpp} $CPPFLAGS "src/start_main_$architecture.S" -o target/release/tmp/start_main.s
+${AS:-as} $ASFLAGS target/release/tmp/start_main.s -o target/release/artefacts/start_main.o
+
+${CPP:-cpp} $CPPFLAGS src/stddef.S -o target/release/tmp/stddef.s
+${AS:-as} $ASFLAGS target/release/tmp/stddef.s -o target/release/artefacts/stddef.o
+
+CFLAGS+=" -isysteminclude -nostdlib -nostdinc -std=c23 -O3 -Wl,-O3"
+CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wno-error=cpp"
 
 if [ -n "$CARGO" ]; then
 	CARGO="$(echo $CARGO | sed -e 's/ \{0,\}-Z \{0,\}build-std\(=[A-Za-z]*\(,[A-Za-z]\{1,\}\)\{0,\}\)\{0,1\}//g')"
@@ -24,7 +37,8 @@ fi
 
 CARGO+=" -Z build-std-features=compiler-builtins-mem"
 
-RUSTFLAGS+=" -C opt-level=3 -C codegen-units=1 -C debug-assertions=no -C panic=immediate-abort -C link-arg=-nostdlib"
+RUSTFLAGS+=" -C debug-assertions=no -C panic=immediate-abort -C link-arg=-nostdlib"
+RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3"
 
 # core_dir="$(rustc --print sysroot)/lib/rustlib/src/rust/library/core"
 # builtins_dir="$core_dir/../compiler-builtins/compiler-builtins"
@@ -61,6 +75,6 @@ RUSTFLAGS+=" -C opt-level=3 -C codegen-units=1 -C debug-assertions=no -C panic=i
 # echo "build: 'compiler-builtins' done."
 
 # Cargo specifies this internally, causing a fit from rustc in the line(s) above if we specify it.
-RUSTFLAGS+=" --edition=2024 --crate-type=cdylib --emit=obj" #--target $tuple"
+RUSTFLAGS+=" --edition=2024 --crate-type=cdylib -C relocation-model=pic -C relro-level=partial --emit=obj --out-dir=target/release/artefacts" #--target $tuple"
 
-rustc $RUSTFLAGS --crate-name=stdlib src/stdlib.rs -o target/release/stdlib.o
+rustc $RUSTFLAGS --crate-name=stdlib src/stdlib.rs

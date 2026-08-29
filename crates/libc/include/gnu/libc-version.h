@@ -1,6 +1,5 @@
 #pragma once
-
-#define __MAVITIX_LIBC__ 1
+#include <internal/__defs.h>
 
 /*
  * Fun fact!  Linux Standard Base Core says you need these extensions to be
@@ -20,5 +19,5 @@
  * > these functions.
  */
 
-extern const char *gnu_get_libc_release(void);
-extern const char *gnu_get_libc_version(void);
+__THROW__ extern const char *gnu_get_libc_release(void);
+__THROW__ extern const char *gnu_get_libc_version(void);

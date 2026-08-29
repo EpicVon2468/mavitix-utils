@@ -1,6 +1,5 @@
 #pragma once
-
-#define __MAVITIX_LIBC__ 1
+#include <internal/__defs.h>
 
 #define and &&
 #define and_eq &=
