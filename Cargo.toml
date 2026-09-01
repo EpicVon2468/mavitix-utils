@@ -15,7 +15,7 @@ workspace = true
 [profile.release]
 opt-level = 3
 strip = true
-lto = true
+lto = "fat"
 incremental = false
 codegen-units = 1
 

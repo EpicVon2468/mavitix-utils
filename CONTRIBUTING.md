@@ -28,3 +28,5 @@ The above prohibitions also apply to translations, communications, etc.
   - Proofread your code!
   - Proofread everything!
   - Seriously, just give what you've written a once-over before you commit or make a pull request; It takes very little time, and can catch bugs, typos, errors, etc.
+- Favour tabulators over spaces for indentation.  For YAML or markdown files, this may not be achievable; In such cases, use spaces.
+- For code-based files, favour a trailing newline where possible (especially for headers).  POSIX requires this by its definiton of a file, and some tooling may require files with trailing newlines to work.

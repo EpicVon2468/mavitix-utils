@@ -1,0 +1,23 @@
+#! /usr/bin/env bash
+
+set -e
+
+RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native"; export RUSTFLAGS
+cargo clean
+cargo build --release -p coreutils $@
+
+if [ -z "$PREFIX" ]; then
+	PREFIX="/usr/local"
+fi
+
+echo "Installing into $PREFIX..."
+
+sudo mkdir -p "$PREFIX/bin"
+
+for executable in ../../target/release/mavitix-* ; do
+	if [ "${executable: -2}" = ".d" ]; then continue; fi
+	name="$(basename $executable)"
+	dest="$PREFIX/bin/$name"
+	sudo mv "$executable" "$dest"
+	sudo ln -sf "$dest" "$PREFIX/bin/${name#mavitix-}"
+done

@@ -1,13 +1,13 @@
 use std::{
 	env::args_os,
-	ffi::{CStr, c_char, c_int},
-	hint::cold_path,
-	io::{BufWriter, Error, StdoutLock, Write as _, stdout},
+	ffi::{c_char, c_int, CStr},
+	hint::{cold_path, unreachable_unchecked},
+	io::{stdout, BufWriter, Error, StdoutLock, Write as _},
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 };
 
-use mavitix_utils::{bold, const_println};
+use mavitix_utils::{bold, const_println, errno};
 
 // 1 if standard input is a non-terminal file (i.e. `tty < /dev/full`)
 // 2 if given incorrect arguments (i.e. `tty foo`)
@@ -66,35 +66,37 @@ pub fn main() {
 	// SAFETY: Trusted compile-time fileno.
 	let name: *mut c_char = unsafe { ttyname(0) };
 	if name.is_null() {
-		let err: Error = Error::last_os_error();
-		match err.raw_os_error() {
+		match errno() {
+			// SAFETY: From `ttyname(3)`: "The function `ttyname()` returns a pointer to a pathname on success.  On error, NULL is returned, and errno is set to indicate the error."
+			0 => unsafe { unreachable_unchecked() },
 			// EBADF
-			Some(9) => {
+			9 => {
 				// SANITY(unreachable):
 				// The value passed to `ttyname` is a known safe file descriptor constant (`STDIN_FILENO`).
 				cold_path();
-				unreachable!("tty: {err}");
+				unreachable!("tty: unreachable; bad file descriptor");
 			},
 			// ENODEV
-			Some(19) => {
-				eprintln!("tty: {err}");
+			19 => {
+				eprintln!("tty: no such device");
 				exit(4);
 			},
-			// ENOTTY
-			Some(25) => {
+			25 => {
 				eprintln!("tty: not a tty");
 				exit(1);
 			},
-			_ => {
+			unexpected => {
 				// SANITY(unreachable): `ttyname(3)` does not specify any other errors.
 				cold_path();
-				unreachable!("tty: {err}");
+				let error: Error = Error::from_raw_os_error(unexpected as _);
+				unreachable!("tty: unexpected error; {error}");
 			},
 		};
 	};
 	if silent {
 		return;
 	};
+	// TODO: Use `puts(3)` instead?
 	// SAFETY: From `ttyname(3)`: "... ttyname() returns a pointer to the null-terminated pathname ..."
 	let cstr: &CStr = unsafe { CStr::from_ptr(name) };
 	let mut stdout: BufWriter<StdoutLock> = BufWriter::new(stdout().lock());

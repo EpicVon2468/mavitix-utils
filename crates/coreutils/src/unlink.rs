@@ -1,6 +1,6 @@
 use std::{
 	env::args_os,
-	ffi::{OsStr, c_char, c_int},
+	ffi::{c_char, c_int, OsStr},
 	hint::cold_path,
 	io::Error,
 	mem::transmute,
@@ -53,6 +53,7 @@ pub fn main() {
 		};
 	}
 	if files.is_empty() {
+		cold_path();
 		eprintln!("unlink: missing operand(s).");
 		exit(1);
 	} else {

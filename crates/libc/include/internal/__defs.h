@@ -1,6 +1,10 @@
 #pragma once
 #define __MAVITIX_LIBC__ 1
 
+#define _POSIX_SOURCE 1
+#define _POSIX_C_SOURCE 202405L
+#define _XOPEN_SOURCE 800
+
 #if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
 #define __THROW__ __attribute__((nothrow))
 #define __USED__ __attribute__((used))

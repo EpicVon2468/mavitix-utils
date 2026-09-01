@@ -76,5 +76,7 @@ RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units
 
 # Cargo specifies this internally, causing a fit from rustc in the line(s) above if we specify it.
 RUSTFLAGS+=" --edition=2024 --crate-type=cdylib -C relocation-model=pic -C relro-level=partial --emit=obj --out-dir=target/release/artefacts" #--target $tuple"
+RUSTFLAGS+=" -Funsafe_op_in_unsafe_fn -Wclippy::pedantic -Wclippy::nursery -Wclippy::suspicious -Wclippy::as_conversions -Wclippy::min_ident_chars -Wclippy::pattern_type_mismatch -Wclippy::use_self -Wclippy::unused_trait_names -Wclippy::create_dir -Fclippy::exit -Wclippy::float_cmp -Wclippy::float_cmp_const -Wclippy::while_float -Wclippy::integer_divison -Wclippy::integer_division_remainder_used -Wclippy::unreadable_literal -Wclippy::unnecessary_literal_bound -Wclippy::missing_const_for_fn -Wclippy::needless_collect -Wclippy::needless_for_each -Wclippy::as_underscore -Wclippy:branches_sharing_code -Wclippy::infinite_loop -Wclippy::linkedlist -Wclippy::pub_use -Wclippy::wildcard_imports -Wclippy::uninlined_format_args -Wclippy::equatable_if_let -Wclippy::enum_glob_use -Fclippy::panic -Fclippy::panic_in_result_fn -Fclippy::undocumented_unsafe_blocks -Fclippy::multiple_unsafe_ops_per_block -Fclippy::missing_safety_doc -Aclippy::tabs_in_doc_comments -Aclippy::unnecessary_semicolon -Aclippy::default_trait_access -Aclippy::upper_case_acronyms -Aclippy::borrowed_box"
 
-rustc $RUSTFLAGS --crate-name=stdlib src/stdlib.rs
+rustc $RUSTFLAGS src/stdlib.rs
+rustc $RUSTFLAGS src/sys/utsname.rs
