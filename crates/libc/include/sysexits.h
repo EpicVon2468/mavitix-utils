@@ -1,8 +1,6 @@
 #pragma once
 #include <internal/__defs.h>
 
-#define __MAVITIX_LIBC__ 1
-
 #define EX_OK 0
 #define EX_USAGE 64
 #define EX__BASE 64

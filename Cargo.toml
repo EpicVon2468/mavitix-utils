@@ -5,7 +5,6 @@ authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 description.workspace = true
-homepage.workspace = true
 repository.workspace = true
 license.workspace = true
 
@@ -27,7 +26,6 @@ authors = [
 edition = "2024"
 rust-version = "1.100.0"
 description = "Foo bar baz"
-homepage = "https://github.com/EpicVon2468/mavitix-utils/"
 repository = "https://github.com/EpicVon2468/mavitix-utils/"
 license = "MIT OR Apache-2.0"
 

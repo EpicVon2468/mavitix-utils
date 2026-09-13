@@ -1,23 +1,24 @@
 use std::{
 	env::args_os,
-	ffi::{CStr, c_char},
+	ffi::c_char,
 	hint::cold_path,
-	io::{BufWriter, Error, StdoutLock, Write as _, stdout},
+	io::Error,
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 };
 
-use mavitix_utils::{bold, const_println, login::getlogin};
+use mavitix_utils::{bold, const_println, login::getlogin, puts, unbuffer};
 
 pub fn main() {
+	#[cfg(any(target_env = "gnu", feature = "libc-is-buffered"))]
+	unbuffer!();
 	let mut seen_double_dash: bool = false;
 	for os_arg in args_os().skip(1) {
-		if seen_double_dash {
-			cold_path();
-			eprintln!("logname: unexpected argument {os_arg:?}!");
+		let arg: &[u8] = os_arg.as_bytes();
+		if seen_double_dash || arg[0] != b'-' {
+			eprintln!("logname: unexpected operand {os_arg:?}");
 			exit(1);
 		};
-		let arg: &[u8] = os_arg.as_bytes();
 		match arg {
 			b"-h" | b"--help" => {
 				const_println!(concat!(
@@ -42,11 +43,7 @@ pub fn main() {
 			},
 			b"--" => seen_double_dash = true,
 			_ => {
-				cold_path();
-				eprintln!(
-					"logname: unexpected {} {os_arg:?}!",
-					if arg[0] == b'-' { "option" } else { "argument" },
-				);
+				eprintln!("logname: unexpected option {os_arg:?}");
 				exit(1);
 			},
 		};
@@ -58,20 +55,13 @@ pub fn main() {
 		eprintln!("logname: couldn't get user login name; {err}");
 		exit(1);
 	};
-	let mut stdout: BufWriter<StdoutLock> = BufWriter::new(stdout().lock());
-	// SAFETY:
-	let login: &CStr = unsafe { CStr::from_ptr(ptr) };
-	let Ok(_): Result<usize, Error> = stdout.write(login.to_bytes()) else {
+	// SAFETY: `ptr` has been validated as well-formed and non-null.
+	if unsafe { puts(ptr.cast_const()) } == -1 {
+		let error: Error = Error::last_os_error();
 		cold_path();
+		eprintln!("logname: failed to print user login name; {error}");
 		exit(1);
 	};
-	let Ok(_): Result<usize, Error> = stdout.write(const { &[b'\n'] }) else {
-		cold_path();
-		exit(1);
-	};
-	let Ok(_): Result<(), Error> = stdout.flush() else {
-		cold_path();
-		exit(1);
-	};
-	drop(stdout);
+	// SAFETY + SANITY(dangling + ptr):
+	// `ptr` is not freed because it is a statically allocated resource managed by `libc`.
 }

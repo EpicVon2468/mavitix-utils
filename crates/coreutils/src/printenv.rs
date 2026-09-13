@@ -2,7 +2,7 @@ use std::{
 	env::{args, var_os as get_var, vars_os},
 	ffi::OsString,
 	hint::cold_path,
-	io::{BufWriter, StdoutLock, Write as _, stdout},
+	io::{stdout, BufWriter, StdoutLock, Write as _},
 	process::exit,
 };
 
@@ -60,8 +60,7 @@ pub fn main() {
 			"-0" | "--null" => use_null = true,
 			"--" => seen_double_dash = true,
 			unexpected => {
-				cold_path();
-				eprintln!("printenv: unexpected or invalid option {unexpected:?}!");
+				eprintln!("printenv: unexpected option {unexpected:?}");
 				exit(1);
 			},
 		};
@@ -85,6 +84,10 @@ pub fn main() {
 		let mut exit_err: bool = false;
 		let mut stdout: BufWriter<StdoutLock> = BufWriter::new(stdout().lock());
 		for var_name in named_env_vars {
+			// FIXME:
+			// Isn't this a standard violation on Rust's part?
+			// There's nothing which says an environment variable has to be valid string data,
+			// in fact, there are more explicit confirmations it can be non-valid string data than denials.
 			let Some(value): Option<OsString> = get_var(&var_name) else {
 				exit_err = true;
 				// SANITY(unusual): GNU printenv seems to print all variables it can, and just return `1` if any were not present.

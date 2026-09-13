@@ -1,7 +1,6 @@
 use std::{
 	env::args_os,
 	ffi::{c_char, c_int, OsStr},
-	hint::cold_path,
 	io::Error,
 	mem::transmute,
 	os::unix::ffi::OsStrExt as _,
@@ -46,15 +45,13 @@ pub fn main() {
 			},
 			b"--" => seen_double_dash = true,
 			_ => {
-				cold_path();
-				eprintln!("unlink: unexpected or invalid option {os_arg:?}!");
+				eprintln!("unlink: unexpected option {os_arg:?}");
 				exit(1);
 			},
 		};
 	}
 	if files.is_empty() {
-		cold_path();
-		eprintln!("unlink: missing operand(s).");
+		eprintln!("unlink: missing operand(s)");
 		exit(1);
 	} else {
 		let mut exit_err: bool = false;

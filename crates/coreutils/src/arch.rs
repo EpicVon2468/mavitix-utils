@@ -1,6 +1,5 @@
 use std::{
 	env::{args_os, consts::ARCH},
-	hint::cold_path,
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 };
@@ -10,12 +9,11 @@ use mavitix_utils::{bold, const_println};
 pub fn main() {
 	let mut seen_double_dash: bool = false;
 	for os_arg in args_os().skip(1) {
-		if seen_double_dash {
-			cold_path();
-			eprintln!("arch: unexpected argument {os_arg:?}!");
+		let arg: &[u8] = os_arg.as_bytes();
+		if seen_double_dash || arg[0] != b'-' {
+			eprintln!("arch: unexpected operand {os_arg:?}");
 			exit(1);
 		};
-		let arg: &[u8] = os_arg.as_bytes();
 		match arg {
 			b"-h" | b"--help" => {
 				const_println!(concat!(
@@ -40,11 +38,7 @@ pub fn main() {
 			},
 			b"--" => seen_double_dash = true,
 			_ => {
-				cold_path();
-				eprintln!(
-					"arch: unexpected {} {os_arg:?}!",
-					if arg[0] == b'-' { "option" } else { "argument" },
-				);
+				eprintln!("arch: unexpected option {os_arg:?}");
 				exit(1);
 			},
 		};

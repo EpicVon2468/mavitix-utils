@@ -9,9 +9,13 @@ authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 description.workspace = true
-homepage.workspace = true
 repository.workspace = true
 license.workspace = true
+
+[features]
+# Informs the coreutils that the libc being linked against uses buffered stdout.
+# This is assumed on glibc, but other libcs with buffered stdout may exist.
+libc-is-buffered = []
 
 [[bin]]
 name = "mavitix-whoami"
@@ -64,6 +68,16 @@ proc-macro = false
 harness = true
 
 [[bin]]
+name = "mavitix-link"
+path = "src/link.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
 name = "mavitix-false"
 path = "src/false.rs"
 test = true
@@ -106,6 +120,16 @@ harness = true
 [[bin]]
 name = "mavitix-pwd"
 path = "src/pwd.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-users"
+path = "src/users.rs"
 test = true
 doctest = true
 bench = true

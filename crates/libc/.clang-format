@@ -34,7 +34,10 @@ IncludeBlocks: Preserve
 IndentAccessModifiers: false
 IndentCaseLabels: true
 IndentExportBlock: true
-IndentExternBlock: Indent
+# Normally I'd want this as 'Indent', but since we're exposing headers which
+# may be called from C++, we have to conditionally wrap everything in extern "C",
+# and that would mean indenting all code inside that, which just looks bad.
+IndentExternBlock: NoIndent
 InsertNewlineAtEOF: true
 KeepEmptyLines:
     AtEndOfFile: true

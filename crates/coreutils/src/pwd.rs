@@ -1,24 +1,47 @@
+#![feature(const_trait_impl, const_convert)]
+
 use std::{
 	env::args_os,
-	ffi::{c_char, c_int, c_void},
+	ffi::{c_char, c_void},
 	hint::{cold_path, unreachable_unchecked},
 	io::Error,
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
+	ptr::null_mut,
+	str::FromStr,
 };
 
-use mavitix_utils::{bold, const_println, errno, free, malloc, realloc};
+use mavitix_utils::{bold, const_println, errno, free, malloc, puts, realloc, unbuffer};
 
-const PATH_MAX: usize = 4096;
+const PATH_MAX: usize = match option_env!("PATH_MAX") {
+	Some(value) => match <usize as FromStr>::from_str(value) {
+		Ok(value) => value,
+		Err(_) => 4096,
+	},
+	None => 4096,
+};
 
-// GNU pwd ignores 'non option arguments' ???
+macro_rules! puts {
+	($buf:expr $(,)?) => {{
+		if unsafe { puts($buf) } == -1 {
+			cold_path();
+			exit(1);
+		};
+	}};
+}
+
+// GNU pwd ignores 'non option operands' ???
 // https://www.gnu.org/savannah-checkouts/gnu/coreutils/manual/html_node/pwd-invocation.html
+// https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/utilities/pwd.html
 pub fn main() {
+	#[cfg(any(target_env = "gnu", feature = "libc-is-buffered"))]
+	unbuffer!();
 	let mut use_physical: bool = false;
 	let mut seen_double_dash: bool = false;
 	for os_arg in args_os().skip(1) {
 		let arg: &[u8] = os_arg.as_bytes();
-		if seen_double_dash {
+		if seen_double_dash || arg[0] != b'-' {
+			eprintln!("pwd: ignoring non-option operand(s)");
 			continue;
 		};
 		match arg {
@@ -55,8 +78,7 @@ pub fn main() {
 			b"-P" | b"--physical" => use_physical = true,
 			b"--" => seen_double_dash = true,
 			_ => {
-				cold_path();
-				eprintln!("pwd: unexpected or invalid option {os_arg:?}");
+				eprintln!("pwd: unexpected option {os_arg:?}");
 				exit(1);
 			},
 		};
@@ -64,23 +86,24 @@ pub fn main() {
 	// TODO:
 	// Add a compile-time configuration to use `pathconf(3)` instead?
 	// See also: the example code in https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/functions/getcwd.html
-	let mut size: usize = 256;
-	macro_rules! malloc {
-		($(,)?) => {
-			match unsafe { malloc::<c_char>(size) } {
-				Some(buf) => buf,
-				None => {
-					// SANITY(unusual):
-					// If `malloc` isn't working, you have bigger problems.
-					cold_path();
-					let error: Error = Error::last_os_error();
-					unreachable!("pwd: failed to allocate memory; {error}");
-				},
-			}
-		};
-	}
+	let mut size: usize = const {
+		match option_env!("__MAVITIX_DEFAULT_PATH_BUF") {
+			Some(value) => match <usize as FromStr>::from_str(value) {
+				Ok(value) => value,
+				Err(_) => 256,
+			},
+			None => 256,
+		}
+	};
 	// SAFETY: The allocated memory is well-managed.
-	let mut buf: *mut c_char = malloc!();
+	let buf: *mut c_char = match unsafe { malloc::<c_char>(size) } {
+		Some(buf) => buf,
+		None => {
+			cold_path();
+			let error: Error = Error::last_os_error();
+			unreachable!("pwd: failed to allocate memory; {error}");
+		},
+	};
 	macro_rules! free {
 		($(,)?) => {{
 			// SAFETY: About to terminate; End of lifetime.
@@ -150,13 +173,32 @@ pub fn main() {
 		break;
 	}
 	if use_physical {
-		// TODO: `realpath(3)`.
-	} else {
-		if unsafe { puts(buf.cast_const()) } == -1 {
-			cold_path();
-			exit(1);
+		// SAFETY: The returned buffer is well-formed.
+		let dest: *const c_char = unsafe { realpath(buf, null_mut()) }.cast_const();
+		if dest.is_null() {
+			match errno() {
+				// EIO
+				5 => {
+					free!();
+					eprintln!("pwd: an I/O error occurred whilst reading the filesystem");
+					exit(1);
+				},
+				unexpected => {
+					cold_path();
+					free!();
+					let error: Error = Error::from_raw_os_error(unexpected as _);
+					unreachable!("pwd: unexpected error; {error}");
+				},
+			};
 		};
+		puts!(dest);
+		unsafe {
+			free(dest as *mut c_void);
+		};
+	} else {
+		puts!(buf.cast_const());
 	};
+	free!();
 }
 
 // SAFETY: The function declarations given below are in line with the header files of `libc`.
@@ -165,5 +207,4 @@ unsafe extern "C" {
 
 	pub fn getcwd(buf: *mut c_char, size: usize) -> *mut c_char;
 	pub fn realpath(path: *const c_char, resolved_path: *mut c_char) -> *mut c_char;
-	pub fn puts(s: *const c_char) -> c_int;
 }

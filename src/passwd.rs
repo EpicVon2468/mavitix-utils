@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString, c_char};
+use std::ffi::{c_char, CStr, CString};
 
 // This seems to be accurate for all my targets.
 // It's more favourable than taking a dependency on the `libc` crate.
@@ -114,22 +114,29 @@ pub fn get_passwd() -> Option<*mut passwd> {
 	let uid: uid_t = geteuid();
 	// SAFETY:
 	let passwd: *mut passwd = unsafe { getpwuid(uid) };
-	if passwd.is_null() { None } else { Some(passwd) }
+	if passwd.is_null() {
+		None
+	} else {
+		Some(passwd)
+	}
 }
 
-pub fn get_username() -> Option<String> {
-	let passwd: *mut passwd = match get_passwd() {
-		Some(value) => value,
-		None => return None,
-	};
+pub fn get_raw_username() -> Option<*mut c_char> {
+	let passwd: *mut passwd = get_passwd()?;
 	// SAFETY: `get_passwd()` returns `None` if `passwd` is `NULL`, therefore reading is not UB.
 	let passwd: passwd = unsafe { passwd.read() };
 	let pw_name: *mut c_char = passwd.pw_name;
 	if pw_name.is_null() {
-		return None;
-	};
+		None
+	} else {
+		Some(pw_name)
+	}
+}
+
+pub fn get_username() -> Option<String> {
+	let pw_name: *mut c_char = get_raw_username()?;
 	// SAFETY: `passwd->pw_name` is generally well-formed.
-	let user: CString = crate::cstr_clone(unsafe { CStr::from_ptr(passwd.pw_name) });
+	let user: CString = crate::cstr_clone(unsafe { CStr::from_ptr(pw_name) });
 	match user.into_string() {
 		Ok(value) => Some(value),
 		Err(_) => None,

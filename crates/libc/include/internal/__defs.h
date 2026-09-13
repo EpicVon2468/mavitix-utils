@@ -6,7 +6,7 @@
 #define _XOPEN_SOURCE 800
 
 #if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
-#define __THROW__ __attribute__((nothrow))
+#define __NOTHROW__ __attribute__((nothrow))
 #define __USED__ __attribute__((used))
 #endif
 

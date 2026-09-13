@@ -1,22 +1,24 @@
 use std::{
 	env::args_os,
+	ffi::c_char,
 	hint::cold_path,
-	io::{BufWriter, Error, StdoutLock, Write as _, stdout},
+	io::Error,
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 };
 
-use mavitix_utils::{bold, const_println, passwd::get_username};
+use mavitix_utils::{bold, const_println, passwd::get_raw_username, puts, unbuffer};
 
 pub fn main() {
+	#[cfg(any(target_env = "gnu", feature = "libc-is-buffered"))]
+	unbuffer!();
 	let mut seen_double_dash: bool = false;
 	for os_arg in args_os().skip(1) {
-		if seen_double_dash {
-			cold_path();
-			eprintln!("whoami: unexpected argument {os_arg:?}!");
+		let arg: &[u8] = os_arg.as_bytes();
+		if seen_double_dash || arg[0] != b'-' {
+			eprintln!("whoami: unexpected operand {os_arg:?}");
 			exit(1);
 		};
-		let arg: &[u8] = os_arg.as_bytes();
 		match arg {
 			b"-h" | b"--help" => {
 				const_println!(concat!(
@@ -41,31 +43,22 @@ pub fn main() {
 			},
 			b"--" => seen_double_dash = true,
 			_ => {
-				cold_path();
-				eprintln!(
-					"whoami: unexpected {} {os_arg:?}!",
-					if arg[0] == b'-' { "option" } else { "argument" },
-				);
+				eprintln!("whoami: unexpected option {os_arg:?}");
 				exit(1);
 			},
 		};
 	}
-	let Some(username): Option<String> = get_username() else {
+	let Some(username): Option<*mut c_char> = get_raw_username() else {
 		cold_path();
-		eprintln!("Could not determine username!");
+		eprintln!("whoami: could not get username");
 		exit(1);
 	};
-	let mut stdout: BufWriter<StdoutLock> = BufWriter::new(stdout().lock());
-	let Ok(_): Result<_, Error> = stdout.write(username.as_bytes()) else {
+	// SAFETY: The returned buffer is well-formed.
+	if unsafe { puts(username.cast_const()) } == -1 {
+		let error: Error = Error::last_os_error();
 		cold_path();
+		eprintln!("whoami: could not print username; {error}");
 		exit(1);
 	};
-	let Ok(_): Result<_, Error> = stdout.write(const { &[b'\n'] }) else {
-		cold_path();
-		exit(1);
-	};
-	let Ok(_): Result<_, Error> = stdout.flush() else {
-		cold_path();
-		exit(1);
-	};
+	// TODO: Do we need to free here?  Does the kernel handle dellocation?
 }

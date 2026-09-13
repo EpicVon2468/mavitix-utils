@@ -3,6 +3,10 @@
 
 #define __STDC_VERSION_STDDEF_H__ 202311L
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __PTRDIFF_TYPE__
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
 #elif defined(__x86_64__) || defined(__amd64__) || defined(__aarch64__)
@@ -65,3 +69,7 @@ __NORETURN__ extern inline void __mavitix_unreachable_impl(void);
  */
 #define offsetof(type, member_designator) ((size_t) ( (char *)&((type *)(0))->member_designator - (char *)0 ))
 #endif /* offsetof(type, member_designator) */
+
+#ifdef __cplusplus
+}
+#endif

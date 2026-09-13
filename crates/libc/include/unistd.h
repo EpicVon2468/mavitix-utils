@@ -6,6 +6,10 @@
  * https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/basedefs/unistd.h.html
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _POSIX_VERSION 202405L
 #define _POSIX2_VERSION 202405L
 #define _XOPEN_VERSION 800
@@ -55,3 +59,7 @@ extern int unlinkat(int fd, const char *path, int flags);
 
 extern char *optarg;
 extern int opterr, optind, optopt;
+
+#ifdef __cplusplus
+}
+#endif

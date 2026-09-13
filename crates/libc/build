@@ -1,82 +1,118 @@
 #! /usr/bin/env bash
 
-set -e
+set -ex
 
 rm -rf target
 mkdir -p target/release
 mkdir -p target/release/tmp
 mkdir -p target/release/artefacts
 
-ASFLAGS+=" -mnaked-reg -O2"
+if [ -z "$CPP" ]; then CPP="cpp"; fi
+if [ -z "$AS" ]; then AS="as"; fi
+if [ -z "$CC" ]; then CC="cc"; fi
+if [ -z "$LD" ]; then LD="ld"; fi
+if [ -z "$AR" ]; then AR="ar"; fi
+if [ -z "$RANLIB" ]; then RANLIB="ranlib"; fi
 
-architecture="$(uname -m)"
-tuple="$architecture-unknown-linux-none"
+case "$($CC --version)" in
+	*"clang"*)
+		CC_TYPE="clang"
+		;;
+	*"gcc"*)
+		CC_TYPE="gcc"
+		;;
+	*)
+		CC_TYPE="unknown"
+		;;
+esac
 
-if [ "$architecture" = "x86_64" ]; then
+ASFLAGS+=" -mnaked-reg -O2 -g"
+
+architecture="$(uname -m | sed -e 's/x86_64/x86-64/g')"
+
+if [ "$architecture" = "x86-64" ]; then
 	ASFLAGS+=" --64 -mintel64 -msyntax=intel -mmnemonic=intel"
-	architecture="x86-64"
 fi
 
 CPPFLAGS+=" -fdirectives-only -E -nostdlib -nostdinc -std=c23"
-CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wno-error=cpp"
+CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs"
 
-${CPP:-cpp} $CPPFLAGS "src/start_main_$architecture.S" -o target/release/tmp/start_main.s
-${AS:-as} $ASFLAGS target/release/tmp/start_main.s -o target/release/artefacts/start_main.o
+$CPP $CPPFLAGS "src/start_main_$architecture.S" -o target/release/tmp/start_main.s
+$AS $ASFLAGS target/release/tmp/start_main.s -o target/release/artefacts/start_main.o
 
-${CPP:-cpp} $CPPFLAGS src/stddef.S -o target/release/tmp/stddef.s
-${AS:-as} $ASFLAGS target/release/tmp/stddef.s -o target/release/artefacts/stddef.o
+$CPP $CPPFLAGS src/stddef.S -o target/release/tmp/stddef.s
+$AS $ASFLAGS target/release/tmp/stddef.s -o target/release/artefacts/stddef.o
 
-CFLAGS+=" -isysteminclude -nostdlib -nostdinc -std=c23 -O3 -Wl,-O3"
-CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wno-error=cpp"
+CFLAGS+=" -isysteminclude -nostdlib -nostdinc -std=c23 -O3 -m64 -march=native -mtune=native -fpic -g"
+CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs -Wunknown-pragmas"
+case "$CC_TYPE" in
+	"clang")
+		CFLAGS+=" -Wno-error=#warnings -Wno-error=unused-command-line-argument"
+		CFLAGS+=" -fno-knr-functions -fno-digraphs -fno-trigraphs"
+		;;
+	"gcc")
+		;;
+	*)
+		;;
+esac
 
-if [ -n "$CARGO" ]; then
-	CARGO="$(echo $CARGO | sed -e 's/ \{0,\}-Z \{0,\}build-std\(=[A-Za-z]*\(,[A-Za-z]\{1,\}\)\{0,\}\)\{0,1\}//g')"
-else
-	CARGO="cargo"
-fi
-
-CARGO+=" -Z build-std-features=compiler-builtins-mem"
+$CC $CFLAGS src/gnu/libc-version.c -c -o target/release/artefacts/libc-version.o
 
 RUSTFLAGS+=" -C debug-assertions=no -C panic=immediate-abort -C link-arg=-nostdlib"
-RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3"
-
-# core_dir="$(rustc --print sysroot)/lib/rustlib/src/rust/library/core"
-# builtins_dir="$core_dir/../compiler-builtins/compiler-builtins"
-# release_dir="$PWD/target/$tuple/release"
-# target_libdir="$(rustc --target $tuple --print target-libdir)"
-
-# mkdir -p "$target_libdir"
-
-# # -Z build-std=core \
-# CARGO_TARGET_DIR="$PWD/target" RUSTC_BOOTSTRAP=1 $CARGO rustc \
-# 	--release \
-# 	--target "$tuple" \
-# 	--manifest-path "$core_dir/Cargo.toml" \
-# 	--lib \
-# 	-- \
-# 	--emit=metadata="$target_libdir/libcore.rmeta"
-
-# cp "$release_dir/libcore.rlib" "$target_libdir/libcore.rlib"
-
-# echo "build: 'core' done."
-# CARGO_TARGET_DIR="$PWD/target" RUSTC_BOOTSTRAP=1 $CARGO rustc \
-# 	--release \
-# 	-Z build-std=compiler_builtins \
-# 	--target "$tuple" \
-# 	--manifest-path "$builtins_dir/Cargo.toml" \
-# 	--features "mem" \
-# 	--lib \
-# 	-v \
-# 	-- \
-# 	--emit=metadata="$target_libdir/libcompiler_builtins.rmeta"
-
-# cp "$release_dir/libcompiler_builtins.rlib" "$target_libdir/libcompiler_builtins.rlib"
-
-# echo "build: 'compiler-builtins' done."
-
-# Cargo specifies this internally, causing a fit from rustc in the line(s) above if we specify it.
-RUSTFLAGS+=" --edition=2024 --crate-type=cdylib -C relocation-model=pic -C relro-level=partial --emit=obj --out-dir=target/release/artefacts" #--target $tuple"
-RUSTFLAGS+=" -Funsafe_op_in_unsafe_fn -Wclippy::pedantic -Wclippy::nursery -Wclippy::suspicious -Wclippy::as_conversions -Wclippy::min_ident_chars -Wclippy::pattern_type_mismatch -Wclippy::use_self -Wclippy::unused_trait_names -Wclippy::create_dir -Fclippy::exit -Wclippy::float_cmp -Wclippy::float_cmp_const -Wclippy::while_float -Wclippy::integer_divison -Wclippy::integer_division_remainder_used -Wclippy::unreadable_literal -Wclippy::unnecessary_literal_bound -Wclippy::missing_const_for_fn -Wclippy::needless_collect -Wclippy::needless_for_each -Wclippy::as_underscore -Wclippy:branches_sharing_code -Wclippy::infinite_loop -Wclippy::linkedlist -Wclippy::pub_use -Wclippy::wildcard_imports -Wclippy::uninlined_format_args -Wclippy::equatable_if_let -Wclippy::enum_glob_use -Fclippy::panic -Fclippy::panic_in_result_fn -Fclippy::undocumented_unsafe_blocks -Fclippy::multiple_unsafe_ops_per_block -Fclippy::missing_safety_doc -Aclippy::tabs_in_doc_comments -Aclippy::unnecessary_semicolon -Aclippy::default_trait_access -Aclippy::upper_case_acronyms -Aclippy::borrowed_box"
+RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3 -C link-arg=-g"
+RUSTFLAGS+=" --edition=2024 --crate-type=cdylib -C relocation-model=pic -C link-arg=-fpic -C relro-level=partial --emit=obj --out-dir=target/release/artefacts"
+RUSTFLAGS+=" -Funsafe_op_in_unsafe_fn -Wclippy::pedantic -Wclippy::nursery -Wclippy::suspicious -Wclippy::as_conversions -Wclippy::min_ident_chars -Wclippy::pattern_type_mismatch -Wclippy::use_self -Wclippy::unused_trait_names -Wclippy::create_dir -Fclippy::exit -Wclippy::float_cmp -Wclippy::float_cmp_const -Wclippy::while_float -Wclippy::integer_divison -Wclippy::integer_division_remainder_used -Wclippy::unreadable_literal -Wclippy::unnecessary_literal_bound -Wclippy::missing_const_for_fn -Wclippy::needless_collect -Wclippy::needless_for_each -Wclippy::as_underscore -Wclippy::branches_sharing_code -Wclippy::infinite_loop -Wclippy::linkedlist -Wclippy::pub_use -Wclippy::wildcard_imports -Wclippy::uninlined_format_args -Wclippy::equatable_if_let -Wclippy::enum_glob_use -Fclippy::panic -Fclippy::panic_in_result_fn -Fclippy::undocumented_unsafe_blocks -Fclippy::multiple_unsafe_ops_per_block -Fclippy::missing_safety_doc -Aclippy::tabs_in_doc_comments -Aclippy::unnecessary_semicolon -Aclippy::default_trait_access -Aclippy::upper_case_acronyms -Aclippy::borrowed_box"
 
 rustc $RUSTFLAGS src/stdlib.rs
 rustc $RUSTFLAGS src/sys/utsname.rs
+
+OBJECT_FILES="
+	target/release/artefacts/stddef.o
+	target/release/artefacts/libc-version.o
+	target/release/artefacts/stdlib.o
+	target/release/artefacts/utsname.o
+"
+
+case "$CC_TYPE" in
+	"clang")
+		if command -v llvm-config >/dev/null 2>&1 && LLVM_GOLD="$(llvm-config --libdir)/LLVMgold.so" && test -f "$LLVM_GOLD"; then
+			LDFLAGS+=" -plugin $LLVM_GOLD -plugin-opt=O3"
+			ARFLAGS+=" --plugin $LLVM_GOLD"
+			RANLIBFLAGS+=" --plugin $LLVM_GOLD"
+		fi
+		unset LLVM_GOLD
+		;;
+	"gcc")
+		LIBLTO_PLUGIN="$($CC -print-prog-name=liblto_plugin.so)"
+		LTO_WRAPPER="$($CC -print-prog-name=lto-wrapper)"
+		if test -f "$LIBLTO_PLUGIN" && test -f "$LTO_WRAPPER"; then
+			if [ -z "$COLLECT_GCC" ]; then export COLLECT_GCC="$CC"; fi
+			if [ -z "$COLLECT_GCC_OPTIONS" ]; then export COLLECT_GCC_OPTIONS="$CFLAGS"; fi
+			LDFLAGS+=" -plugin $LIBLTO_PLUGIN -plugin-opt=$LTO_WRAPPER -plugin-opt=-fresolution=target/release/tmp/gcc.res"
+			ARFLAGS+=" --plugin $LIBLTO_PLUGIN"
+			RANLIBFLAGS+=" --plugin $LIBLTO_PLUGIN"
+		fi
+		unset LIBLTO_PLUGIN
+		;;
+	*)
+		;;
+esac
+
+LDFLAGS+=" -O3 --relax -nostdlib -z relro -z initfirst -z memory-seal -z global -z text"
+if [ "$architecture" = "x86-64" ]; then
+	LDFLAGS+=" -z isa-level-report=all"
+fi
+
+#set -x
+
+$LD $LDFLAGS \
+	-shared -soname libc.so.6 \
+	$OBJECT_FILES \
+	-o target/release/libc.so.6
+
+$AR $ARFLAGS rcs target/release/libc.a $OBJECT_FILES
+
+# It's unclear whether this is stricly needed.
+#$RANLIB $RANLIBFLAGS target/release/libc.a
+
+set +x

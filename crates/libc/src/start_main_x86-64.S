@@ -3,7 +3,9 @@
 .section .text
 	.global _start
 	.extern main
+	.type main,@function
 	.extern _Exit
+	.type _Exit,@function
 
 	_start:
 		endbr64

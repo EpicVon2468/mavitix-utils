@@ -1,6 +1,10 @@
 #pragma once
 #include <internal/__defs.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SYS_NMLN 65
 
 struct utsname {
@@ -12,4 +16,8 @@ struct utsname {
 	char domainname[65];
 };
 
-__THROW__ extern int uname(struct utsname *name);
+__NOTHROW__ extern int uname(struct utsname *name);
+
+#ifdef __cplusplus
+}
+#endif

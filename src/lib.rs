@@ -1,6 +1,6 @@
-#![feature(const_default, const_trait_impl, ffi_const)]
+#![feature(const_default, const_trait_impl, ffi_const, extern_types)]
 
-use std::ffi::{CStr, CString, c_int, c_void};
+use std::ffi::{c_char, c_int, c_void, CStr, CString};
 
 pub mod login;
 pub mod passwd;
@@ -87,7 +87,11 @@ pub fn cstr_clone(value: &CStr) -> CString {
 pub unsafe fn malloc<T>(size: usize) -> Option<*mut T> {
 	// SAFETY: Callers manage returned memory.
 	let mem: *mut T = unsafe { raw_malloc(size * size_of::<T>()) } as *mut T;
-	if mem.is_null() { None } else { Some(mem) }
+	if mem.is_null() {
+		None
+	} else {
+		Some(mem)
+	}
 }
 
 pub unsafe fn realloc<T>(buf: *mut T, size: usize) -> bool {
@@ -98,6 +102,13 @@ pub unsafe fn realloc<T>(buf: *mut T, size: usize) -> bool {
 pub fn errno() -> c_int {
 	// SAFETY: `__errno_location()` is always set.
 	unsafe { *__errno_location() }
+}
+
+#[macro_export]
+macro_rules! unbuffer {
+	($(,)?) => {
+		unsafe { mavitix_utils::setbuf(mavitix_utils::stdout, std::ptr::null_mut()) }
+	};
 }
 
 // SAFETY: The function declarations given below are in line with the header files of `libc`.
@@ -116,4 +127,12 @@ unsafe extern "C" {
 
 	#[unsafe(ffi_const)]
 	pub safe fn __errno_location() -> *mut c_int;
+
+	pub fn puts(s: *const c_char) -> c_int;
+
+	pub type FILE;
+
+	pub static stdout: *mut FILE;
+
+	pub fn setbuf(stream: *mut FILE, buf: *mut c_char);
 }

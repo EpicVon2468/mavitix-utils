@@ -13,3 +13,21 @@ auto-format = true
 [language-server.clangd]
 command = "clangd"
 args = [ "--malloc-trim" ]
+
+[[language]]
+name = "gas"
+scope = "source.gas"
+file-types = ["s", "S", "asm"]
+injection-regex = "gas"
+comment-token = "#"
+indent = { tab-width = 4, unit = "\t" }
+language-servers = ["asm-lsp"]
+
+[[language]]
+name = "nasm"
+scope = "source.nasm"
+file-types = []
+injection-regex = "n?asm"
+comment-token = ";"
+indent = { tab-width = 4, unit = "\t" }
+language-servers = ["asm-lsp"]

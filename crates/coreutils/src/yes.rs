@@ -2,15 +2,18 @@ use std::{
 	env::args_os,
 	ffi::c_void,
 	hint::cold_path,
-	io::{BufWriter, Error, StdoutLock, Write as _, stdout},
+	io::{stdout, BufWriter, Error, StdoutLock, Write as _},
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 	slice,
 };
 
-use mavitix_utils::{bold, const_println, italic, malloc, memcpy};
+use mavitix_utils::{bold, const_println, italic, malloc, memcpy, unbuffer};
 
 pub fn main() {
+	// Avoid quadruple-buffering.
+	#[cfg(any(target_env = "gnu", feature = "libc-is-buffered"))]
+	unbuffer!();
 	let mut named_operands: Vec<&'static [u8]> = Vec::with_capacity(8);
 	let mut seen_double_dash: bool = false;
 	for os_arg in args_os().skip(1) {
@@ -35,7 +38,7 @@ pub fn main() {
 						// SANITY(unusual):
 						// If `malloc` isn't working, you have bigger problems.
 						cold_path();
-						unreachable!("yes: `malloc` failed to allocate memory!");
+						unreachable!("yes: `malloc` failed to allocate memory");
 					},
 				};
 				// SAFETY: `malloc` returns well-formed pointers.
@@ -88,8 +91,7 @@ pub fn main() {
 			},
 			b"--" => seen_double_dash = true,
 			unexpected => {
-				cold_path();
-				eprintln!("yes: unexpected or invalid option {unexpected:?}!");
+				eprintln!("yes: unexpected option {unexpected:?}");
 				exit(1);
 			},
 		};

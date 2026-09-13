@@ -1,28 +1,29 @@
 use std::{
 	env::args_os,
-	ffi::{c_char, c_int, CStr},
+	ffi::{c_char, c_int},
 	hint::{cold_path, unreachable_unchecked},
-	io::{stdout, BufWriter, Error, StdoutLock, Write as _},
+	io::Error,
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 };
 
-use mavitix_utils::{bold, const_println, errno};
+use mavitix_utils::{bold, const_println, errno, puts, unbuffer};
 
 // 1 if standard input is a non-terminal file (i.e. `tty < /dev/full`)
-// 2 if given incorrect arguments (i.e. `tty foo`)
+// 2 if given incorrect operands (i.e. `tty foo`)
 // 3 if a write error occurs (i.e. `tty > /dev/full`)
 // 4 if the terminal’s name cannot be determined
 pub fn main() {
+	#[cfg(any(target_env = "gnu", feature = "libc-is-buffered"))]
+	unbuffer!();
 	let mut silent: bool = false;
 	let mut seen_double_dash: bool = false;
 	for os_arg in args_os().skip(1) {
-		if seen_double_dash {
-			cold_path();
-			eprintln!("tty: unexpected argument {os_arg:?}!");
+		let arg: &[u8] = os_arg.as_bytes();
+		if seen_double_dash || arg[0] != b'-' {
+			eprintln!("tty: unexpected operand {os_arg:?}");
 			exit(2);
 		};
-		let arg: &[u8] = os_arg.as_bytes();
 		match arg {
 			b"-s" | b"--silent" | b"--quiet" => silent = true,
 			b"-h" | b"--help" => {
@@ -54,17 +55,13 @@ pub fn main() {
 			},
 			b"--" => seen_double_dash = true,
 			_ => {
-				cold_path();
-				eprintln!(
-					"tty: unexpected {} {os_arg:?}!",
-					if arg[0] == b'-' { "option" } else { "argument" },
-				);
+				eprintln!("tty: unexpected option {os_arg:?}");
 				exit(2);
 			},
 		}
 	}
 	// SAFETY: Trusted compile-time fileno.
-	let name: *mut c_char = unsafe { ttyname(0) };
+	let name: *const c_char = unsafe { ttyname(0) }.cast_const();
 	if name.is_null() {
 		match errno() {
 			// SAFETY: From `ttyname(3)`: "The function `ttyname()` returns a pointer to a pathname on success.  On error, NULL is returned, and errno is set to indicate the error."
@@ -96,20 +93,10 @@ pub fn main() {
 	if silent {
 		return;
 	};
-	// TODO: Use `puts(3)` instead?
 	// SAFETY: From `ttyname(3)`: "... ttyname() returns a pointer to the null-terminated pathname ..."
-	let cstr: &CStr = unsafe { CStr::from_ptr(name) };
-	let mut stdout: BufWriter<StdoutLock> = BufWriter::new(stdout().lock());
-	let Ok(_): Result<_, Error> = stdout.write(cstr.to_bytes()) else {
+	if unsafe { puts(name) } == -1 {
 		cold_path();
-		exit(3);
-	};
-	let Ok(_): Result<_, Error> = stdout.write(const { &[b'\n'] }) else {
-		cold_path();
-		exit(3);
-	};
-	let Ok(_): Result<_, Error> = stdout.flush() else {
-		cold_path();
+		// SANITY(unusual): Can't print an error message here, because if `eprintln!()` fails, the program won't exit with status '3'.
 		exit(3);
 	};
 }
