@@ -23,9 +23,11 @@ macro_rules! bool_program {
 						bold!("-h"),
 						'|',
 						bold!("--help"),
+						"] [",
+						bold!("-V"),
 						'|',
 						bold!("--version"),
-						'|',
+						"] [",
 						italic!("IGNORED"),
 						"...]\n\nWritten by Mavity The Madity.",
 					)),
@@ -34,6 +36,7 @@ macro_rules! bool_program {
 						" (Mavitix coreutils) ",
 						env!("CARGO_PKG_VERSION"),
 					)),
+					b"-V" => const_println!(env!("CARGO_PKG_VERSION")),
 					_ => (),
 				};
 			};

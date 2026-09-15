@@ -1,8 +1,7 @@
 use std::{
 	env::args_os,
-	ffi::{c_char, c_int, OsStr},
+	ffi::{c_char, OsStr},
 	io::Error,
-	mem::transmute,
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 };
@@ -29,6 +28,8 @@ pub fn main() {
 					'|',
 					bold!("--help"),
 					"] [",
+					bold!("-V"),
+					'|',
 					bold!("--version"),
 					"] ",
 					italic!("FILE"),
@@ -41,6 +42,10 @@ pub fn main() {
 					"unlink (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
+				return;
+			},
+			b"-V" => {
+				const_println!(env!("CARGO_PKG_VERSION"));
 				return;
 			},
 			b"--" => seen_double_dash = true,
@@ -56,8 +61,7 @@ pub fn main() {
 	} else {
 		let mut exit_err: bool = false;
 		for file in files {
-			// SAFETY: This is "intentional" for some reason...
-			let ptr: *const c_char = unsafe { transmute(file.as_bytes().as_ptr()) };
+			let ptr: *const c_char = file.as_bytes().as_ptr().cast();
 			// SAFETY: Soundness is guaranteed, errors are handled below.
 			if unsafe { unlink(ptr) } == -1 {
 				let err: Error = Error::last_os_error();
@@ -73,5 +77,5 @@ pub fn main() {
 #[link(name = "c")]
 unsafe extern "C" {
 
-	pub fn unlink(path: *const c_char) -> c_int;
+	pub fn unlink(path: *const c_char) -> i32;
 }

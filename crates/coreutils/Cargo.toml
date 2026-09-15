@@ -137,6 +137,26 @@ doc = true
 proc-macro = false
 harness = true
 
+[[bin]]
+name = "mavitix-hostid"
+path = "src/hostid.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[[bin]]
+name = "mavitix-nproc"
+path = "src/nproc.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
 [dependencies.mavitix-utils]
 version = "0.0.0-git"
 path = "../.."

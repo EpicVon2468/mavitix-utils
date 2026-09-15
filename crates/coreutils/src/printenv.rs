@@ -43,6 +43,8 @@ pub fn main() {
 					'|',
 					bold!("--help"),
 					"] [",
+					bold!("-V"),
+					'|',
 					bold!("--version"),
 					"] [",
 					italic!("VARIABLE"),
@@ -55,6 +57,10 @@ pub fn main() {
 					"printenv (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
+				return;
+			},
+			"-V" => {
+				const_println!(env!("CARGO_PKG_VERSION"));
 				return;
 			},
 			"-0" | "--null" => use_null = true,

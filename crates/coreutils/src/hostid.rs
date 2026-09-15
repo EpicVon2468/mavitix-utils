@@ -1,8 +1,4 @@
-use std::{
-	env::{args_os, consts::ARCH},
-	os::unix::ffi::OsStrExt as _,
-	process::exit,
-};
+use std::{env::args_os, os::unix::ffi::OsStrExt as _, process::exit};
 
 use mavitix_utils::{bold, const_println};
 
@@ -11,14 +7,14 @@ pub fn main() {
 	for os_arg in args_os().skip(1) {
 		let arg: &[u8] = os_arg.as_bytes();
 		if seen_double_dash || arg[0] != b'-' {
-			eprintln!("arch: unexpected operand {os_arg:?}");
+			eprintln!("hostid: unexpected operand {os_arg:?}");
 			exit(1);
 		};
 		match arg {
 			b"-h" | b"--help" => {
 				const_println!(concat!(
 					"Usage:\n\t",
-					bold!("arch"),
+					bold!("hostid"),
 					" [",
 					bold!("-h"),
 					'|',
@@ -27,13 +23,13 @@ pub fn main() {
 					bold!("-V"),
 					'|',
 					bold!("--version"),
-					"]\n\nWritten by Mavity The Madity.",
+					"]\n\nWritten by Mavity The Madity",
 				));
 				return;
 			},
 			b"--version" => {
 				const_println!(concat!(
-					"arch (Mavitix coreutils) ",
+					"hostid (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
 				return;
@@ -44,10 +40,14 @@ pub fn main() {
 			},
 			b"--" => seen_double_dash = true,
 			_ => {
-				eprintln!("arch: unexpected option {os_arg:?}");
+				eprintln!("hostid: unexpected option {os_arg:?}");
 				exit(1);
 			},
 		};
 	}
-	const_println!(ARCH);
+	println!("{:0>8x}", gethostid());
+}
+
+unsafe extern "C" {
+	pub safe fn gethostid() -> i64;
 }

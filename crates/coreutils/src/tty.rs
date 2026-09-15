@@ -1,6 +1,6 @@
 use std::{
 	env::args_os,
-	ffi::{c_char, c_int},
+	ffi::c_char,
 	hint::{cold_path, unreachable_unchecked},
 	io::Error,
 	os::unix::ffi::OsStrExt as _,
@@ -35,6 +35,8 @@ pub fn main() {
 					'|',
 					bold!("--help"),
 					"] [",
+					bold!("-V"),
+					'|',
 					bold!("--version"),
 					"] [",
 					bold!("-s"),
@@ -51,6 +53,10 @@ pub fn main() {
 					"tty (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
+				return;
+			},
+			b"-V" => {
+				const_println!(env!("CARGO_PKG_VERSION"));
 				return;
 			},
 			b"--" => seen_double_dash = true,
@@ -105,5 +111,5 @@ pub fn main() {
 #[link(name = "c")]
 unsafe extern "C" {
 
-	pub fn ttyname(fd: c_int) -> *mut c_char;
+	pub fn ttyname(fd: i32) -> *mut c_char;
 }

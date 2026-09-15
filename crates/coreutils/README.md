@@ -9,6 +9,7 @@ The following extensions have been added:
 
 - Support for multiple files per invocation in `mavitix-unlink`.
 - Support for `-h` as an alias for `--help` in all programs.
+- Support for `-V` to report only the numerical version in all programs.
 
 Many utilities from the coreutils may not be featured in this package for complexity reasons.<br>
 The currently implemented utilities are as follows:
@@ -24,5 +25,12 @@ The currently implemented utilities are as follows:
 - `tty(1)`
 - `yes(1)`
 - `pwd(1)`
+- `hostid(1)`
+- `nproc(1)`
 
 FIXME: Use `args[0]` or use `CARGO_BIN_NAME` for error name prefixing.  Decide which is best, potentially make a macro.
+
+FFI note:
+
+The type aliases `c_{,u}long` & `c_{,u}int` are not used, and instead evaluated to `{i,u}64` & `{i,u}32` respectively.<br>
+This project assumes you are on a 64-bit Linux system.  Systems not matching this prerequisite are subject to potential undefined behaviour.

@@ -29,6 +29,8 @@ pub fn main() {
 					'|',
 					bold!("--help"),
 					"] [",
+					bold!("-V"),
+					'|',
 					bold!("--version"),
 					"]\n\nWritten by Mavity The Madity.",
 				));
@@ -39,6 +41,10 @@ pub fn main() {
 					"whoami (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
+				return;
+			},
+			b"-V" => {
+				const_println!(env!("CARGO_PKG_VERSION"));
 				return;
 			},
 			b"--" => seen_double_dash = true,

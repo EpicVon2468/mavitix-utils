@@ -75,6 +75,8 @@ pub fn main() {
 					'|',
 					bold!("--help"),
 					"] [",
+					bold!("-V"),
+					'|',
 					bold!("--version"),
 					"] [",
 					italic!("STRING"),
@@ -87,6 +89,10 @@ pub fn main() {
 					"yes (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
+				return;
+			},
+			b"-V" => {
+				const_println!(env!("CARGO_PKG_VERSION"));
 				return;
 			},
 			b"--" => seen_double_dash = true,

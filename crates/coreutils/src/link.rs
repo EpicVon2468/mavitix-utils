@@ -1,8 +1,7 @@
 use std::{
 	env::args_os,
-	ffi::{c_char, c_int, OsStr},
+	ffi::{c_char, OsStr},
 	io::Error,
-	mem::transmute,
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 };
@@ -37,6 +36,8 @@ pub fn main() {
 					'|',
 					bold!("--help"),
 					"] [",
+					bold!("-V"),
+					'|',
 					bold!("--version"),
 					"] ",
 					italic!("SOURCE"),
@@ -51,6 +52,10 @@ pub fn main() {
 					"link (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
+				return;
+			},
+			b"-V" => {
+				const_println!(env!("CARGO_PKG_VERSION"));
 				return;
 			},
 			b"--" => seen_double_dash = true,
@@ -68,12 +73,10 @@ pub fn main() {
 		eprintln!("link: missing operand(s)");
 		exit(1);
 	};
-	// SAFETY: This is "intentional" for some reason...
-	let source_ptr: *const c_char = unsafe { transmute(source.as_bytes().as_ptr()) };
-	// SAFETY: This is "intentional" for some reason...
-	let dest_ptr: *const c_char = unsafe { transmute(dest.as_bytes().as_ptr()) };
+	let sptr: *const c_char = source.as_bytes().as_ptr().cast();
+	let dptr: *const c_char = dest.as_bytes().as_ptr().cast();
 	// SAFETY:
-	if unsafe { link(source_ptr, dest_ptr) } == -1 {
+	if unsafe { link(sptr, dptr) } == -1 {
 		let err: Error = Error::last_os_error();
 		eprintln!("link: couldn't link {source:?} and {dest:?}; {err}");
 		exit(1);
@@ -84,5 +87,5 @@ pub fn main() {
 #[link(name = "c")]
 unsafe extern "C" {
 
-	pub fn link(oldpath: *const c_char, newpath: *const c_char) -> c_int;
+	pub fn link(oldpath: *const c_char, newpath: *const c_char) -> i32;
 }

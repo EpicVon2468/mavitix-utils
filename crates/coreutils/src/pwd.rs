@@ -54,6 +54,10 @@ pub fn main() {
 					'|',
 					bold!("--help"),
 					"] [",
+					bold!("-V"),
+					'|',
+					bold!("--version"),
+					"] [",
 					bold!("-L"),
 					'|',
 					bold!("--logical"),
@@ -61,8 +65,6 @@ pub fn main() {
 					bold!("-P"),
 					'|',
 					bold!("--physical"),
-					"] [",
-					bold!("--version"),
 					"]\n\nWritten by Mavity The Madity.",
 				));
 				return;
@@ -72,6 +74,10 @@ pub fn main() {
 					"pwd (Mavitix coreutils) ",
 					env!("CARGO_PKG_VERSION"),
 				));
+				return;
+			},
+			b"-V" => {
+				const_println!(env!("CARGO_PKG_VERSION"));
 				return;
 			},
 			b"-L" | b"--logical" => use_physical = false,
