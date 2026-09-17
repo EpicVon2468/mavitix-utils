@@ -5,7 +5,7 @@
 	const_default
 )]
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 use mavitix_utils::{const_println, main};
 

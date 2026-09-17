@@ -17,6 +17,16 @@ license.workspace = true
 # This is assumed on glibc, but other libcs with buffered stdout may exist.
 libc-is-buffered = []
 
+[dependencies.const-str]
+workspace = true
+
+[dependencies.mavitix-utils]
+version = "0.0.0-git"
+path = "../.."
+
+[lints]
+workspace = true
+
 [[bin]]
 name = "mavitix-whoami"
 path = "src/whoami.rs"
@@ -156,10 +166,3 @@ bench = true
 doc = true
 proc-macro = false
 harness = true
-
-[dependencies.mavitix-utils]
-version = "0.0.0-git"
-path = "../.."
-
-[lints]
-workspace = true

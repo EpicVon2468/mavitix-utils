@@ -1,6 +1,6 @@
 #![feature(const_default, const_trait_impl, ffi_const, extern_types)]
 
-use std::ffi::{c_char, c_int, c_void, CStr, CString};
+use std::ffi::{CStr, CString, c_char, c_void};
 
 pub mod login;
 pub mod passwd;
@@ -48,28 +48,25 @@ macro_rules! italic {
 	};
 }
 
-// SANITY(const-hack + unusual): Me?  Abuse potentially triple-buffered I/O streams?  Noooo...
 #[macro_export]
 macro_rules! const_println {
-	($($value:expr),* $(,)?) => {{
-		use std::io::Write as _;
-
-		let mut stdout: std::io::BufWriter<_> = std::io::BufWriter::new(std::io::stdout().lock());
-		$({
-			let Ok(_) = stdout.write(const { $value.as_bytes() }) else {
-				std::hint::cold_path();
-				std::process::exit(1);
-			};
-		})*;
-		let Ok(_) = stdout.write(const { &[b'\n'] }) else {
-			std::hint::cold_path();
-			std::process::exit(1);
+	($value:expr $(,)?) => {
+		mavitix_utils::const_println!(1; $value)
+	};
+	($code:expr; $value:expr $(,)?) => {{
+		let ptr: *const std::ffi::c_char = const {
+			const_str::concat_bytes!($value.as_bytes(), b'\0')
+				.as_ptr()
+				.cast()
 		};
-		let Ok(_) = stdout.flush() else {
+		if unsafe { mavitix_utils::puts(ptr) } == -1 {
 			std::hint::cold_path();
-			std::process::exit(1);
+			std::process::exit($code);
 		};
-		drop(stdout);
+		if unsafe { mavitix_utils::fflush(mavitix_utils::stdout) } == -1 {
+			std::hint::cold_path();
+			std::process::exit($code);
+		};
 	}};
 }
 
@@ -87,11 +84,7 @@ pub fn cstr_clone(value: &CStr) -> CString {
 pub unsafe fn malloc<T>(size: usize) -> Option<*mut T> {
 	// SAFETY: Callers manage returned memory.
 	let mem: *mut T = unsafe { raw_malloc(size * size_of::<T>()) } as *mut T;
-	if mem.is_null() {
-		None
-	} else {
-		Some(mem)
-	}
+	if mem.is_null() { None } else { Some(mem) }
 }
 
 pub unsafe fn realloc<T>(buf: *mut T, size: usize) -> bool {
@@ -99,7 +92,7 @@ pub unsafe fn realloc<T>(buf: *mut T, size: usize) -> bool {
 	unsafe { raw_realloc(buf as *mut c_void, size * size_of::<T>()) }.is_null()
 }
 
-pub fn errno() -> c_int {
+pub fn errno() -> i32 {
 	// SAFETY: `__errno_location()` is always set.
 	unsafe { *__errno_location() }
 }
@@ -126,13 +119,14 @@ unsafe extern "C" {
 	pub fn free(ptr: *mut c_void);
 
 	#[unsafe(ffi_const)]
-	pub safe fn __errno_location() -> *mut c_int;
+	pub safe fn __errno_location() -> *mut i32;
 
-	pub fn puts(s: *const c_char) -> c_int;
+	pub fn puts(s: *const c_char) -> i32;
 
 	pub type FILE;
 
 	pub static stdout: *mut FILE;
 
 	pub fn setbuf(stream: *mut FILE, buf: *mut c_char);
+	pub fn fflush(stream: *mut FILE) -> i32;
 }

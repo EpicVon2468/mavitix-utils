@@ -1,4 +1,4 @@
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 
 // This seems to be accurate for all my targets.
 // It's more favourable than taking a dependency on the `libc` crate.
@@ -114,11 +114,7 @@ pub fn get_passwd() -> Option<*mut passwd> {
 	let uid: uid_t = geteuid();
 	// SAFETY:
 	let passwd: *mut passwd = unsafe { getpwuid(uid) };
-	if passwd.is_null() {
-		None
-	} else {
-		Some(passwd)
-	}
+	if passwd.is_null() { None } else { Some(passwd) }
 }
 
 pub fn get_raw_username() -> Option<*mut c_char> {

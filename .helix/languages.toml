@@ -31,3 +31,24 @@ injection-regex = "n?asm"
 comment-token = ";"
 indent = { tab-width = 4, unit = "\t" }
 language-servers = ["asm-lsp"]
+
+[[language]]
+name = "rust"
+scope = "source.rust"
+injection-regex = "rs|rust"
+file-types = ["rs"]
+roots = ["Cargo.toml", "Cargo.lock"]
+shebangs = ["rust-script", "cargo", "rustc"]
+formatter = {
+	command = "rustfmt",
+}
+auto-format = true
+comment-tokens = ["//", "///", "//!"]
+block-comment-tokens = [
+  { start = "/*", end = "*/" },
+  { start = "/**", end = "*/" },
+  { start = "/*!", end = "*/" },
+]
+language-servers = [ "rust-analyzer" ]
+indent = { tab-width = 4, unit = "\t" }
+persistent-diagnostic-sources = ["rustc", "clippy"]

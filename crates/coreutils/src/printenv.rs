@@ -2,11 +2,11 @@ use std::{
 	env::{args, var_os as get_var, vars_os},
 	ffi::OsString,
 	hint::cold_path,
-	io::{stdout, BufWriter, StdoutLock, Write as _},
+	io::{BufWriter, StdoutLock, Write as _, stdout},
 	process::exit,
 };
 
-use mavitix_utils::{bold, const_println, italic};
+use mavitix_utils::{bold, const_println, italic, unbuffer};
 
 macro_rules! try_io {
 	($action:expr $(,)?) => {{
@@ -18,8 +18,9 @@ macro_rules! try_io {
 }
 
 // See: https://www.gnu.org/software/coreutils/printenv
-// GNU printenv interprets 'printenv --' as just 'printenv'.
 pub fn main() {
+	#[cfg(any(target_env = "gnu", feature = "libc-is-buffered"))]
+	unbuffer!();
 	let mut named_env_vars: Vec<String> = Vec::with_capacity(8);
 	let mut use_null: bool = false;
 	let mut seen_double_dash: bool = false;

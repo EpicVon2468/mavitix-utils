@@ -48,6 +48,8 @@ pub fn main() {
 	println!("{:0>8x}", gethostid());
 }
 
+// SAFETY: The function declarations given below are in line with the header files of `libc`.
+#[link(name = "c")]
 unsafe extern "C" {
 	pub safe fn gethostid() -> i64;
 }

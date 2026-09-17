@@ -2,7 +2,7 @@ use std::{
 	env::args_os,
 	ffi::c_void,
 	hint::cold_path,
-	io::{stdout, BufWriter, Error, StdoutLock, Write as _},
+	io::{BufWriter, Error, StdoutLock, Write as _, stdout},
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 	slice,

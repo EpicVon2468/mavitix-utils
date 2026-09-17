@@ -7,9 +7,15 @@ pub fn main() {
 	{
 		cold_path();
 		eprintln!("users: a fhs-noncompliant systemd setup has been detected; cannot list users");
-		eprintln!("users: the maintainers of several distributions have configured systemd to no longer provide `/var/run/utmp{{,x}}`");
-		eprintln!("users: this is a violation of chapter 5 section 13 subsection 2 of the file hierarchy standard");
-		eprintln!("users: `utmp(5)` from the man-pages project also notes that \"Unlike various other systems, where utmp logging can be disabled by removing the file, utmp must always exist on Linux.\"");
+		eprintln!(
+			"users: the maintainers of several distributions have configured systemd to no longer provide `/var/run/utmp{{,x}}`"
+		);
+		eprintln!(
+			"users: this is a violation of chapter 5 section 13 subsection 2 of the file hierarchy standard"
+		);
+		eprintln!(
+			"users: `utmp(5)` from the man-pages project also notes that \"Unlike various other systems, where utmp logging can be disabled by removing the file, utmp must always exist on Linux.\""
+		);
 		eprintln!("users: see also:");
 		eprintln!("users: - https://lists.debian.org/debian-devel/2025/04/msg00032.html");
 		eprintln!("users: - https://bugs.launchpad.net/ubuntu/+source/systemd/+bug/2103489");

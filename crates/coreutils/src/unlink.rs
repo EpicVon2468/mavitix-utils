@@ -1,6 +1,6 @@
 use std::{
 	env::args_os,
-	ffi::{c_char, OsStr},
+	ffi::{OsStr, c_char},
 	io::Error,
 	os::unix::ffi::OsStrExt as _,
 	process::exit,

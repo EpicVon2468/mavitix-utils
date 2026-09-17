@@ -1,7 +1,7 @@
 #![feature(slice_split_once)]
 
 use std::{
-	env::{args_os, ArgsOs},
+	env::{ArgsOs, args_os},
 	ffi::OsString,
 	io::Error,
 	os::unix::ffi::OsStrExt as _,
@@ -135,11 +135,7 @@ pub fn main() {
 		for bit in &mask.bits[..(cpu_set_t::SIZE / size_of_val(&mask.bits[0]))] {
 			count += bit.count_ones() as usize;
 		}
-		if count < 1 {
-			1
-		} else {
-			count
-		}
+		if count < 1 { 1 } else { count }
 	};
 	if ignore != 0 {
 		count = if ignore >= count { 1 } else { count - ignore };
@@ -158,6 +154,8 @@ impl cpu_set_t {
 
 pub const _SC_NPROCESSORS_ONLN: i32 = 84;
 
+// SAFETY: The function declarations given below are in line with the header files of `libc`.
+#[link(name = "c")]
 unsafe extern "C" {
 
 	pub fn sysconf(name: i32) -> i64;

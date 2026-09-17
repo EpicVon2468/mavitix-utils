@@ -29,6 +29,12 @@ description = "Foo bar baz"
 repository = "https://github.com/EpicVon2468/mavitix-utils/"
 license = "MIT OR Apache-2.0"
 
+[workspace.dependencies]
+const-str = "1.1.0"
+
+[dependencies.const-str]
+workspace = true
+
 [workspace]
 members = [
 	"crates/colonthree",
