@@ -42,20 +42,47 @@ extern "C" {
 
 #include <internal/__size_t.h> /* size_t */
 
-__NORETURN__ extern void _exit(int status);
-extern long fpathconf(int desc, int name);
-extern char *getcwd(char *buf, size_t size);
-extern int isatty(int fd);
-extern int link(const char *oldpath, const char *newpath);
-extern int linkat(
-	int oldfd, const char *oldpath, int newfd, const char *newpath, int flags
+__NORETURN__ extern
+void _exit(int status);
+
+__NOTHROW__ extern
+long fpathconf(int desc, int name);
+
+__NOTHROW__ extern
+char *getcwd(char *buf, size_t size);
+
+__NOTHROW__ extern
+int isatty(int fd);
+
+__NOTHROW__ extern
+int link(const char *oldpath, const char *newpath);
+
+__NOTHROW__ extern
+int linkat(
+	int oldfd,
+	const char *oldpath,
+	int newfd,
+	const char *newpath,
+	int flags
 );
-extern long pathconf(const char *path, int name);
-extern int symlink(const char *target, const char *linkpath);
-extern int symlinkat(const char *target, int newdirfd, const char *linkpath);
-extern char *ttyname(int fd);
-extern int unlink(const char *path);
-extern int unlinkat(int fd, const char *path, int flags);
+
+__NOTHROW__ extern
+long pathconf(const char *path, int name);
+
+__NOTHROW__ extern
+int symlink(const char *target, const char *linkpath);
+
+__NOTHROW__ extern
+int symlinkat(const char *target, int newdirfd, const char *linkpath);
+
+__NOTHROW__ extern
+char *ttyname(int fd);
+
+__NOTHROW__ extern
+int unlink(const char *path);
+
+__NOTHROW__ extern
+int unlinkat(int fd, const char *path, int flags);
 
 extern char *optarg;
 extern int opterr, optind, optopt;

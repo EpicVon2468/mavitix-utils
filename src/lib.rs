@@ -6,9 +6,22 @@ pub mod login;
 pub mod passwd;
 pub mod uname;
 
+pub extern crate const_str;
+
 const _: () = cfg_select! {
 	target_os = "linux" => (),
-	_ => compile_error!("Unsupported OS!"),
+	_ => compile_error!("Unsupported operating system!"),
+};
+
+const _: () = cfg_select! {
+	target_pointer_width = "64" => (),
+	_ => compile_error!("Unsupported target pointer width!"),
+};
+
+const _: () = cfg_select! {
+	target_arch = "x86_64" => (),
+	target_arch = "aarch64" => (),
+	_ => compile_error!("Unsupported target architecture!"),
 };
 
 #[macro_export]
@@ -50,12 +63,12 @@ macro_rules! italic {
 
 #[macro_export]
 macro_rules! const_println {
-	($value:expr $(,)?) => {
-		mavitix_utils::const_println!(1; $value)
+	($($value:expr),* $(,)?) => {
+		mavitix_utils::const_println!(1; $($value,)*)
 	};
-	($code:expr; $value:expr $(,)?) => {{
+	($code:expr; $($value:expr),* $(,)?) => {{
 		let ptr: *const std::ffi::c_char = const {
-			const_str::concat_bytes!($value.as_bytes(), b'\0')
+			mavitix_utils::const_str::concat_bytes!($($value,)* b'\0')
 				.as_ptr()
 				.cast()
 		};

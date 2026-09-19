@@ -1,7 +1,7 @@
 #![no_std]
 #![crate_name = "utsname"]
 #![crate_type = "cdylib"]
-#![feature(extern_types)]
+#![feature(extern_types, ffi_const)]
 
 use core::arch::asm;
 

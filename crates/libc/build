@@ -26,12 +26,13 @@ case "$($CC --version)" in
 		;;
 esac
 
-ASFLAGS+=" -mnaked-reg -O2 -g"
+ASFLAGS+=" -mnaked-reg --warn"
+ASFLAGS+=" -gdwarf-5 -g --gstabs --gsframe-3"
 
 architecture="$(uname -m | sed -e 's/x86_64/x86-64/g')"
 
 if [ "$architecture" = "x86-64" ]; then
-	ASFLAGS+=" --64 -mintel64 -msyntax=intel -mmnemonic=intel"
+	ASFLAGS+=" --64 -O2 -mintel64 -msyntax=intel -mmnemonic=intel"
 fi
 
 CPPFLAGS+=" -fdirectives-only -E -nostdlib -nostdinc -std=c23"
@@ -43,14 +44,23 @@ $AS $ASFLAGS target/release/tmp/start_main.s -o target/release/artefacts/start_m
 $CPP $CPPFLAGS src/stddef.S -o target/release/tmp/stddef.s
 $AS $ASFLAGS target/release/tmp/stddef.s -o target/release/artefacts/stddef.o
 
-CFLAGS+=" -isysteminclude -nostdlib -nostdinc -std=c23 -O3 -m64 -march=native -mtune=native -fpic -g"
+# https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-fcf-protection
+# https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#index-fcf-protection
+# https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/cf-protection.html
+CFLAGS+=" -fcf-protection -fno-fast-math"
+CFLAGS+=" -isysteminclude -nostdlib -nostdinc -std=c23 -O3 -m64 -march=native -mtune=native -fpic"
+CFLAGS+=" -g -g3 -gdwarf-5 -gdwarf64"
 CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs -Wunknown-pragmas"
 case "$CC_TYPE" in
 	"clang")
 		CFLAGS+=" -Wno-error=#warnings -Wno-error=unused-command-line-argument"
-		CFLAGS+=" -fno-knr-functions -fno-digraphs -fno-trigraphs"
+		CFLAGS+=" -fno-knr-functions -fno-digraphs -fno-trigraphs -femit-all-decls"
+		CFLAGS+=" -gembed-source"
 		;;
 	"gcc")
+		# https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html#index-gas-loc-support
+		# Surprisingly, even source-built clang 23 doesn't support this.
+		CFLAGS+=" -gas-loc-support"
 		;;
 	*)
 		;;
@@ -58,10 +68,26 @@ esac
 
 $CC $CFLAGS src/gnu/libc-version.c -c -o target/release/artefacts/libc-version.o
 
-RUSTFLAGS+=" -C debug-assertions=no -C panic=immediate-abort -C link-arg=-nostdlib"
-RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3 -C link-arg=-g"
-RUSTFLAGS+=" --edition=2024 --crate-type=cdylib -C relocation-model=pic -C link-arg=-fpic -C relro-level=partial --emit=obj --out-dir=target/release/artefacts"
+# TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
+RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -C link-arg=-nostdlib"
+RUSTFLAGS+=" -C link-arg=-fcf-protection -C link-arg=-fno-fast-math -Z cf-protection=full"
+RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3 -Z dylib-lto -Z mir-opt-level=4"
+RUSTFLAGS+=" -Z llvm-writable=on -Z inline-llvm=on -Z inline-mir=on -Z verify-llvm-ir=on -Z validate-mir=on -C link-self-contained=off -Z checksum-hash-algorithm=sha256"
+RUSTFLAGS+=" -C link-arg=-g -C link-arg=-g3 -C link-arg=-gdwarf-5 -C link-arg=-gdwarf64 -g -Z dwarf-version=5 -Z embed-source=on -Z src-hash-algorithm=sha256 -Z debug-info-type-line-numbers=on -Z debuginfo-for-profiling=on -Z annotate-moves=on"
+RUSTFLAGS+=" --edition=2024 -C relocation-model=pic -C link-arg=-fpic -C relro-level=partial --emit=obj --out-dir=target/release/artefacts"
 RUSTFLAGS+=" -Funsafe_op_in_unsafe_fn -Wclippy::pedantic -Wclippy::nursery -Wclippy::suspicious -Wclippy::as_conversions -Wclippy::min_ident_chars -Wclippy::pattern_type_mismatch -Wclippy::use_self -Wclippy::unused_trait_names -Wclippy::create_dir -Fclippy::exit -Wclippy::float_cmp -Wclippy::float_cmp_const -Wclippy::while_float -Wclippy::integer_divison -Wclippy::integer_division_remainder_used -Wclippy::unreadable_literal -Wclippy::unnecessary_literal_bound -Wclippy::missing_const_for_fn -Wclippy::needless_collect -Wclippy::needless_for_each -Wclippy::as_underscore -Wclippy::branches_sharing_code -Wclippy::infinite_loop -Wclippy::linkedlist -Wclippy::pub_use -Wclippy::wildcard_imports -Wclippy::uninlined_format_args -Wclippy::equatable_if_let -Wclippy::enum_glob_use -Fclippy::panic -Fclippy::panic_in_result_fn -Fclippy::undocumented_unsafe_blocks -Fclippy::multiple_unsafe_ops_per_block -Fclippy::missing_safety_doc -Aclippy::tabs_in_doc_comments -Aclippy::unnecessary_semicolon -Aclippy::default_trait_access -Aclippy::upper_case_acronyms -Aclippy::borrowed_box"
+case "$CC_TYPE" in
+	"clang")
+		RUSTFLAGS+=" -C link-arg=-femit-all-decls"
+		;;
+	"gcc")
+		;;
+	*)
+		;;
+esac
+
+rustc $RUSTFLAGS src/internal/__checks.rs
+rm target/release/artefacts/__checks.o
 
 rustc $RUSTFLAGS src/stdlib.rs
 rustc $RUSTFLAGS src/sys/utsname.rs
@@ -98,7 +124,10 @@ case "$CC_TYPE" in
 		;;
 esac
 
-LDFLAGS+=" -O3 --relax -nostdlib -z relro -z initfirst -z memory-seal -z global -z text"
+# https://sourceware.org/binutils/docs/ld.html
+# TODO: `--no-undefined-version`, `--default-symver`
+# Would enable `-z initfirst`, but that also says "Similarly, the runtime finalisation of the object will occur after the runtime finalisation of any other objects."
+LDFLAGS+=" -O3 --relax -nostdlib -z relro -z memory-seal -z global -z text -z combreloc --warn-execstack --build-id"
 if [ "$architecture" = "x86-64" ]; then
 	LDFLAGS+=" -z isa-level-report=all"
 fi

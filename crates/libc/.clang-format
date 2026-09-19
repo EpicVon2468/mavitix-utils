@@ -23,7 +23,7 @@ BreakBeforeCloseBracketFunction: true
 BreakBeforeCloseBracketIf: true
 BreakBeforeCloseBracketLoop: true
 BreakBeforeCloseBracketSwitch: true
-BreakBeforeReturnType: None
+BreakBeforeReturnType: All
 BreakBeforeTemplateCloser: true
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: AfterColon
@@ -75,3 +75,5 @@ SortUsingDeclarations: LexicographicNumeric
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
 SpaceInEmptyBraces: Never
+AttributeMacros: [__NOTHROW__, __USED__, __CONST__, __NOINLINE__, __PURE__, __NORETURN__]
+AllowAllParametersOfDeclarationOnNextLine: false

@@ -212,5 +212,6 @@ pub fn main() {
 unsafe extern "C" {
 
 	pub fn getcwd(buf: *mut c_char, size: usize) -> *mut c_char;
+
 	pub fn realpath(path: *const c_char, resolved_path: *mut c_char) -> *mut c_char;
 }

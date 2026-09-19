@@ -39,7 +39,7 @@ typedef typeof_unqual(nullptr) nullptr_t;
  * Mavitix libc extension: `unreachable()` (or at least a stub) is provided for
  * versions as far back as C11.
  */
-#if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
+#if __CLANG_LIKE__
 /*
  * Clang & GCC both provide `__builtin_unreachable()`, no matter what C
  * Standard is specified.
@@ -51,12 +51,13 @@ typedef typeof_unqual(nullptr) nullptr_t;
 #warning This build may be non-portable against other libc implementations!
 
 /* We're >= C11 here, so `inline` is a valid keyword (available since C99). */
-__NORETURN__ extern inline void __mavitix_unreachable_impl(void);
+__NORETURN__ extern inline
+void __mavitix_unreachable_impl(void);
 #define unreachable() __mavitix_unreachable_impl()
 
 #endif /* unreachable(void) */
 
-#if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
+#if __CLANG_LIKE__
 #define offsetof(type, member_designator) __builtin_offsetof(type, member_designator)
 #else
 /*

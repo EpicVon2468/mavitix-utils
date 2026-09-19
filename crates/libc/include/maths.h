@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
+#if __CLANG_LIKE__
 #define INFINITY __builtin_inff()
 #define NAN __builtin_nanf("")
 #define HUGE_VAL __builtin_huge_val()
@@ -19,38 +19,59 @@ extern "C" {
 #define HUGE_VAL ((double) INFINITY)
 #define HUGE_VALF INFINITY
 #define HUGE_VALL ((long double) INFINITY)
-#endif
+#endif /* CLANG_LIKE */
 
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
 
-extern double acos(double value);
-extern float acosf(float value);
-extern long double acosl(long double value);
+__NOTHROW__ extern
+double acos(double value);
+__NOTHROW__ extern
+float acosf(float value);
+__NOTHROW__ extern
+long double acosl(long double value);
 
-extern double asin(double value);
-extern float asinf(float value);
-extern long double asinl(long double value);
+__NOTHROW__ extern
+double asin(double value);
+__NOTHROW__ extern
+float asinf(float value);
+__NOTHROW__ extern
+long double asinl(long double value);
 
-extern double atan(double value);
-extern float atanf(float value);
-extern long double atanl(long double value);
+__NOTHROW__ extern
+double atan(double value);
+__NOTHROW__ extern
+float atanf(float value);
+__NOTHROW__ extern
+long double atanl(long double value);
 
-extern double atan2(double y, double x);
-extern float atan2f(float y, float x);
-extern long double atan2l(long double y, long double x);
+__NOTHROW__ extern
+double atan2(double y, double x);
+__NOTHROW__ extern
+float atan2f(float y, float x);
+__NOTHROW__ extern
+long double atan2l(long double y, long double x);
 
-extern double cos(double value);
-extern float cosf(float value);
-extern long double cosl(long double value);
+__NOTHROW__ extern
+double cos(double value);
+__NOTHROW__ extern
+float cosf(float value);
+__NOTHROW__ extern
+long double cosl(long double value);
 
-extern double sin(double value);
-extern float sinf(float value);
-extern long double sinl(long double value);
+__NOTHROW__ extern
+double sin(double value);
+__NOTHROW__ extern
+float sinf(float value);
+__NOTHROW__ extern
+long double sinl(long double value);
 
-extern double tan(double value);
-extern float tanf(float value);
-extern long double tanl(long double value);
+__NOTHROW__ extern
+double tan(double value);
+__NOTHROW__ extern
+float tanf(float value);
+__NOTHROW__ extern
+long double tanl(long double value);
 
 #ifdef __cplusplus
 }

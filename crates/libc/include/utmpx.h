@@ -9,8 +9,11 @@
 extern "C" {
 #endif
 
-extern void endutxent(void);
-extern void setutxent(void);
+__NOTHROW__ extern
+void endutxent(void);
+
+__NOTHROW__ extern
+void setutxent(void);
 
 #ifdef __cplusplus
 }

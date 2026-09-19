@@ -29,8 +29,10 @@ extern "C" {
  * """
  */
 
-__NOTHROW__ extern const char *gnu_get_libc_release(void);
-__NOTHROW__ extern const char *gnu_get_libc_version(void);
+__NOINLINE__ __NOTHROW__ extern
+const char *gnu_get_libc_release(void);
+__NOINLINE__ __NOTHROW__ extern
+const char *gnu_get_libc_version(void);
 
 #ifdef __cplusplus
 }

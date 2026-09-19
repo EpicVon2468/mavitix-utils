@@ -3,9 +3,9 @@
 .section .text
 	.global _start
 	.extern main
-	.type main,@function
+	.type main, @function
 	.extern _Exit
-	.type _Exit,@function
+	.type _Exit, @function
 
 	_start:
 		endbr64
@@ -14,3 +14,6 @@
 		mov rdi, rax
 		# TODO: Use actual `exit()` which cleans up libc & calls exit hooks.
 		call _Exit
+
+# https://wiki.gentoo.org/wiki/Hardened/GNU_stack_quickstart
+.section .note.GNU-stack, "", %progbits

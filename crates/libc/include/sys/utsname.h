@@ -16,7 +16,8 @@ struct utsname {
 	char domainname[65];
 };
 
-__NOTHROW__ extern int uname(struct utsname *name);
+__NOTHROW__ extern
+int uname(struct utsname *name);
 
 #ifdef __cplusplus
 }

@@ -17,9 +17,6 @@ license.workspace = true
 # This is assumed on glibc, but other libcs with buffered stdout may exist.
 libc-is-buffered = []
 
-[dependencies.const-str]
-workspace = true
-
 [dependencies.mavitix-utils]
 version = "0.0.0-git"
 path = "../.."
