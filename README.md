@@ -6,7 +6,9 @@
 [![Licence]][Licence-1]
 [![Dependencies]][Dependencies-1]
 
-Description goes here :)
+A madman's set of utilities and libraries.
+
+May contain trace amounts of bad opinions, poor life choices, and an unhealthy amount of optimisation flags.
 
 MSRV: N/A (nightly, see: [`rust-toolchain.toml`](https://github.com/EpicVon2468/mavitix-utils/blob/master/rust-toolchain.toml)).
 

@@ -41,8 +41,8 @@ CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs"
 $CPP $CPPFLAGS "src/start_main_$architecture.S" -o target/release/tmp/start_main.s
 $AS $ASFLAGS target/release/tmp/start_main.s -o target/release/artefacts/start_main.o
 
-$CPP $CPPFLAGS src/stddef.S -o target/release/tmp/stddef.s
-$AS $ASFLAGS target/release/tmp/stddef.s -o target/release/artefacts/stddef.o
+$CPP $CPPFLAGS src/stddef/__mavitix_unreachable_impl.S -o target/release/tmp/__mavitix_unreachable_impl.s
+$AS $ASFLAGS target/release/tmp/__mavitix_unreachable_impl.s -o target/release/artefacts/__mavitix_unreachable_impl.o
 
 # https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-fcf-protection
 # https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#index-fcf-protection
@@ -89,14 +89,18 @@ esac
 rustc $RUSTFLAGS src/internal/__checks.rs
 rm target/release/artefacts/__checks.o
 
-rustc $RUSTFLAGS src/stdlib.rs
+rustc $RUSTFLAGS src/stdlib/_Exit.rs
 rustc $RUSTFLAGS src/sys/utsname.rs
+rustc $RUSTFLAGS src/unistd/symlink.rs
+rustc $RUSTFLAGS src/ctype/classification.rs
 
 OBJECT_FILES="
-	target/release/artefacts/stddef.o
+	target/release/artefacts/__mavitix_unreachable_impl.o
 	target/release/artefacts/libc-version.o
-	target/release/artefacts/stdlib.o
+	target/release/artefacts/_Exit.o
 	target/release/artefacts/utsname.o
+	target/release/artefacts/symlink.o
+	target/release/artefacts/classification.o
 "
 
 case "$CC_TYPE" in

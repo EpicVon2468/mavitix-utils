@@ -25,7 +25,7 @@ authors = [
 ]
 edition = "2024"
 rust-version = "1.100.0"
-description = "Foo bar baz"
+description = "A madman's set of utilities and libraries."
 repository = "https://github.com/EpicVon2468/mavitix-utils/"
 license = "MIT OR Apache-2.0"
 
