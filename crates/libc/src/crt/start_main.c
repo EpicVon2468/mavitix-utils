@@ -113,13 +113,13 @@ bool __mavitix_libc_init(
 				auxv.secure = entry.a_un.a_val;
 				break;
 			case AT_NULL:
-				goto outer;
+				goto escape;
 			default:
 				break;
 		};
 		size += 1;
 	};
-outer:
+escape:
 	rpmalloc_config_t config = {
 		.page_size = auxv.page_size,
 		.page_name = "mavitix-libc-rpmalloc-page",
@@ -158,6 +158,7 @@ outer:
 	};
 
 	if __likely (rtld_fini != NULL) {
+		// "a function pointer that the application should register with atexit"
 		atexit(rtld_fini);
 	};
 	if __likely (_fini != NULL) {
