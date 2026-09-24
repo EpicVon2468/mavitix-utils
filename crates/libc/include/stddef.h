@@ -25,11 +25,11 @@ typedef signed long int ptrdiff_t;
 
 #include <internal/__size_t.h> /* size_t */
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#if __C11__
 typedef long double max_align_t;
 #endif /* max_align_t */
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+#if __C23__
 typedef typeof_unqual(nullptr) nullptr_t;
 #endif /* nullptr_t */
 
@@ -45,7 +45,7 @@ typedef typeof_unqual(nullptr) nullptr_t;
  * Standard is specified.
  */
 #define unreachable() __builtin_unreachable()
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#elif __C11__
 
 #warning Using mavitix-libc function as a fallback for `unreachable()`!
 #warning This build may be non-portable against other libc implementations!

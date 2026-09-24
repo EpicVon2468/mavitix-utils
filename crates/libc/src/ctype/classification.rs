@@ -6,7 +6,7 @@
 /// A more efficient range check (I think?).
 ///
 /// This macro (ab)uses `i32 -> u32` overflow & `u32` subtraction underflow
-/// to one subtraction & one comparison instead of two comparisions.
+/// to emit one subtraction & one comparison instead of two comparisions.
 ///
 /// Values less than 0x0 (0) ('\0') will underflow once cast to `u32`, meaning the `<` check will not return true for them.
 ///
@@ -31,7 +31,7 @@ pub extern "C" fn isalpha(ch: i32) -> i32 {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn isblank(ch: i32) -> i32 {
-	(ch == ' ' as u32 as i32 || ch == '\t' as u32 as i32) as i32
+	(ch == (' ' as u32 as i32) || ch == ('\t' as u32 as i32)) as i32
 }
 
 /* iscntrl */

@@ -14,4 +14,4 @@
 		#endif
 
 # https://wiki.gentoo.org/wiki/Hardened/GNU_stack_quickstart
-.section .note.GNU-stack, "", %progbits
+.section .note.GNU-stack, "", @progbits

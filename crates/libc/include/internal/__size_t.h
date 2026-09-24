@@ -1,6 +1,7 @@
 #pragma once
+#include <internal/__defs.h>
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+#if __C23__
 typedef typeof_unqual(sizeof(int)) size_t;
 #elif defined(__SIZE_TYPE__)
 typedef __SIZE_TYPE__ size_t;

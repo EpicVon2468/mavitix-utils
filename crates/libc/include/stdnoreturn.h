@@ -1,7 +1,7 @@
 #pragma once
 #include <internal/__defs.h>
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+#if __C23__
 #warning Use of <stdnoreturn.h> is deprecated in C23.
 #endif
 

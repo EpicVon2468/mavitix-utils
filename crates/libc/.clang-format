@@ -3,12 +3,12 @@ UseTab: Always
 IndentWidth: 4
 TabWidth: 4
 PointerAlignment: Right
-AllowShortBlocksOnASingleLine: Always
+AllowShortBlocksOnASingleLine: Never
 AllowShortCaseExpressionOnASingleLine: true
-AllowShortCaseLabelsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: Empty
 AllowShortNamespacesOnASingleLine: false
 BreakBeforeBraces: Attach
@@ -34,9 +34,6 @@ IncludeBlocks: Preserve
 IndentAccessModifiers: false
 IndentCaseLabels: true
 IndentExportBlock: true
-# Normally I'd want this as 'Indent', but since we're exposing headers which
-# may be called from C++, we have to conditionally wrap everything in extern "C",
-# and that would mean indenting all code inside that, which just looks bad.
 IndentExternBlock: NoIndent
 InsertNewlineAtEOF: true
 KeepEmptyLines:
@@ -50,6 +47,8 @@ NumericLiteralCase:
     Prefix: Lower
 PackConstructorInitializers: CurrentLine
 PackParameters:
+    BinPack: OnePerLine
+PackArguments:
     BinPack: OnePerLine
 ReferenceAlignment: Right
 RemoveEmptyLinesInUnwrappedLines: true
@@ -75,5 +74,9 @@ SortUsingDeclarations: LexicographicNumeric
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
 SpaceInEmptyBraces: Never
-AttributeMacros: [__NOTHROW__, __USED__, __CONST__, __NOINLINE__, __PURE__, __NORETURN__]
+AttributeMacros: [__NOTHROW__, __USED__, __CONST__, __NOINLINE__, __PURE__, __PROTECTED__, __HIDDEN__, __WEAK__, __NORETURN__]
 AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+BreakFunctionDeclarationParameters: false
+BreakFunctionDefinitionParameters: false
+AlignAfterOpenBracket: false

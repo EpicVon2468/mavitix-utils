@@ -17,6 +17,13 @@ typedef signed short int int16_t;
 #endif /* int16_t */
 #define INT16_WIDTH 16
 
+#ifdef __UINT16_TYPE__
+typedef __UINT16_TYPE__ uint16_t;
+#else
+typedef unsigned short int uint16_t;
+#endif /* uint16_t */
+#define UINT16_WIDTH 16
+
 #ifdef __INT32_TYPE__
 typedef __INT32_TYPE__ int32_t;
 #else
@@ -24,12 +31,26 @@ typedef signed int int32_t;
 #endif /* int32_t */
 #define INT32_WIDTH 32
 
+#ifdef __UINT32_TYPE__
+typedef __UINT32_TYPE__ uint32_t;
+#else
+typedef unsigned int uint32_t;
+#endif /* uint32_t */
+#define UINT32_WIDTH 32
+
 #ifdef __INT64_TYPE__
 typedef __INT64_TYPE__ int64_t;
 #else
 typedef signed long int int64_t;
 #endif /* int64_t */
 #define INT64_WIDTH 64
+
+#ifdef __UINT64_TYPE__
+typedef __UINT64_TYPE__ uint64_t;
+#else
+typedef unsigned long int int64_t;
+#endif /* uint64_t */
+#define UINT64_WIDTH 64
 
 #define INTPTR_WIDTH UINTPTR_WIDTH
 #define UINTPTR_WIDTH 16

@@ -1,3 +1,6 @@
+#define __MAVITIX_INTERNAL__
+#include <internal/__defs.h>
+
 #include <gnu/libc-version.h>
 
 __NOINLINE__ __PURE__ __NOTHROW__ __USED__

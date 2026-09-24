@@ -30,7 +30,18 @@ __NOTHROW__ extern
 void *realloc(void *ptr, size_t size);
 
 __NORETURN__ extern
+void abort(void);
+__NORETURN__ extern
+void exit(int status);
+__NORETURN__ extern
+void _exit(int status);
+__NORETURN__ extern
 void _Exit(int status);
+
+__NOTHROW__ extern
+int on_exit(void (*fn)(int status, void *usr_ptr), void *usr_ptr);
+__NOTHROW__ extern
+int atexit(void (*fn)(void));
 
 #ifdef __cplusplus
 }

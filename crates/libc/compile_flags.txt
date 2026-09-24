@@ -8,3 +8,5 @@
 -Werror
 -Wundef
 -Wno-error=cpp
+-Wno-error=unused-parameter
+-Wno-error=unused-variable

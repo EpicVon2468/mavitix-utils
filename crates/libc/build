@@ -13,6 +13,7 @@ if [ -z "$CC" ]; then CC="cc"; fi
 if [ -z "$LD" ]; then LD="ld"; fi
 if [ -z "$AR" ]; then AR="ar"; fi
 if [ -z "$RANLIB" ]; then RANLIB="ranlib"; fi
+if [ -z "$RUSTC" ]; then RUSTC="rustc"; fi
 
 case "$($CC --version)" in
 	*"clang"*)
@@ -38,8 +39,8 @@ fi
 CPPFLAGS+=" -fdirectives-only -E -nostdlib -nostdinc -std=c23"
 CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs"
 
-$CPP $CPPFLAGS "src/start_main_$architecture.S" -o target/release/tmp/start_main.s
-$AS $ASFLAGS target/release/tmp/start_main.s -o target/release/artefacts/start_main.o
+$CPP $CPPFLAGS "src/crt/crt1_$architecture.S" -o target/release/tmp/crt1.s
+$AS $ASFLAGS target/release/tmp/crt1.s -o target/release/artefacts/crt1.o
 
 $CPP $CPPFLAGS src/stddef/__mavitix_unreachable_impl.S -o target/release/tmp/__mavitix_unreachable_impl.s
 $AS $ASFLAGS target/release/tmp/__mavitix_unreachable_impl.s -o target/release/artefacts/__mavitix_unreachable_impl.o
@@ -48,9 +49,10 @@ $AS $ASFLAGS target/release/tmp/__mavitix_unreachable_impl.s -o target/release/a
 # https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#index-fcf-protection
 # https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/cf-protection.html
 CFLAGS+=" -fcf-protection -fno-fast-math"
-CFLAGS+=" -isysteminclude -nostdlib -nostdinc -std=c23 -O3 -m64 -march=native -mtune=native -fpic"
+CFLAGS+=" -nostdlib -nostdinc -nostartfiles -nodefaultlibs -nolibc -ffreestanding"
+CFLAGS+=" -isysteminclude -std=c23 -O3 -m64 -march=native -mtune=native -fpic"
 CFLAGS+=" -g -g3 -gdwarf-5 -gdwarf64"
-CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs -Wunknown-pragmas"
+CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs -Wunknown-pragmas -Wno-error=unused-parameter -Wno-error=unused-variable"
 case "$CC_TYPE" in
 	"clang")
 		CFLAGS+=" -Wno-error=#warnings -Wno-error=unused-command-line-argument"
@@ -58,6 +60,7 @@ case "$CC_TYPE" in
 		CFLAGS+=" -gembed-source"
 		;;
 	"gcc")
+		CFLAGS+=" -Wno-error=attributes"
 		# https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html#index-gas-loc-support
 		# Surprisingly, even source-built clang 23 doesn't support this.
 		CFLAGS+=" -gas-loc-support"
@@ -67,10 +70,14 @@ case "$CC_TYPE" in
 esac
 
 $CC $CFLAGS src/gnu/libc-version.c -c -o target/release/artefacts/libc-version.o
+$CC $CFLAGS src/stdio/__init.c -c -o target/release/artefacts/stdio__init.o
+$CC $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
+$CC $CFLAGS src/env/environ.c -c -o target/release/artefacts/environ.o
 
 # TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
-RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -C link-arg=-nostdlib"
-RUSTFLAGS+=" -C link-arg=-fcf-protection -C link-arg=-fno-fast-math -Z cf-protection=full"
+RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -C strip=none -C link-dead-code=on"
+RUSTFLAGS+=" -C link-arg=-nostdlib -C link-arg=-nostdinc -C link-arg=-nostartfiles -C link-arg=-nodefaultlibs -C link-arg=-nolibc -C link-arg=-ffreestanding"
+RUSTFLAGS+=" -C link-arg=-fcf-protection -C link-arg=-fno-fast-math -Z cf-protection=full -C overflow-checks=off"
 RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3 -Z dylib-lto -Z mir-opt-level=4"
 RUSTFLAGS+=" -Z llvm-writable=on -Z inline-llvm=on -Z inline-mir=on -Z verify-llvm-ir=on -Z validate-mir=on -C link-self-contained=off -Z checksum-hash-algorithm=sha256"
 RUSTFLAGS+=" -C link-arg=-g -C link-arg=-g3 -C link-arg=-gdwarf-5 -C link-arg=-gdwarf64 -g -Z dwarf-version=5 -Z embed-source=on -Z src-hash-algorithm=sha256 -Z debug-info-type-line-numbers=on -Z debuginfo-for-profiling=on -Z annotate-moves=on"
@@ -86,18 +93,21 @@ case "$CC_TYPE" in
 		;;
 esac
 
-rustc $RUSTFLAGS src/internal/__checks.rs
+$RUSTC $RUSTFLAGS src/internal/__checks.rs
 rm target/release/artefacts/__checks.o
 
-rustc $RUSTFLAGS src/stdlib/_Exit.rs
-rustc $RUSTFLAGS src/sys/utsname.rs
-rustc $RUSTFLAGS src/unistd/symlink.rs
-rustc $RUSTFLAGS src/ctype/classification.rs
+$RUSTC $RUSTFLAGS src/stdlib/_exit.rs
+$RUSTC $RUSTFLAGS src/sys/utsname.rs
+$RUSTC $RUSTFLAGS src/unistd/symlink.rs
+$RUSTC $RUSTFLAGS src/ctype/classification.rs
 
 OBJECT_FILES="
 	target/release/artefacts/__mavitix_unreachable_impl.o
 	target/release/artefacts/libc-version.o
-	target/release/artefacts/_Exit.o
+	target/release/artefacts/stdio__init.o
+	target/release/artefacts/start_main.o
+	target/release/artefacts/environ.o
+	target/release/artefacts/_exit.o
 	target/release/artefacts/utsname.o
 	target/release/artefacts/symlink.o
 	target/release/artefacts/classification.o
@@ -144,6 +154,8 @@ $LD $LDFLAGS \
 	-o target/release/libc.so.6
 
 $AR $ARFLAGS rcs target/release/libc.a $OBJECT_FILES
+
+cp target/release/artefacts/crt1.o target/release/crt1.o
 
 # It's unclear whether this is stricly needed.
 #$RANLIB $RANLIBFLAGS target/release/libc.a

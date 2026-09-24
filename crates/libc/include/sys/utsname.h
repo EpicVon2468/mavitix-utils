@@ -1,6 +1,10 @@
 #pragma once
 #include <internal/__defs.h>
 
+/*
+ * https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/sys_utsname.h.html
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
