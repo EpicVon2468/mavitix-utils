@@ -75,7 +75,7 @@ $CC $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
 $CC $CFLAGS src/env/environ.c -c -o target/release/artefacts/environ.o
 
 # TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
-RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -C strip=none -C link-dead-code=on"
+RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -C link-dead-code=on"
 RUSTFLAGS+=" -C link-arg=-nostdlib -C link-arg=-nostdinc -C link-arg=-nostartfiles -C link-arg=-nodefaultlibs -C link-arg=-nolibc -C link-arg=-ffreestanding"
 RUSTFLAGS+=" -C link-arg=-fcf-protection -C link-arg=-fno-fast-math -Z cf-protection=full -C overflow-checks=off"
 RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3 -Z dylib-lto -Z mir-opt-level=4"
@@ -100,6 +100,7 @@ $RUSTC $RUSTFLAGS src/stdlib/_exit.rs
 $RUSTC $RUSTFLAGS src/sys/utsname.rs
 $RUSTC $RUSTFLAGS src/unistd/symlink.rs
 $RUSTC $RUSTFLAGS src/ctype/classification.rs
+$RUSTC $RUSTFLAGS src/crt/libc_init.rs
 
 OBJECT_FILES="
 	target/release/artefacts/__mavitix_unreachable_impl.o
@@ -111,6 +112,7 @@ OBJECT_FILES="
 	target/release/artefacts/utsname.o
 	target/release/artefacts/symlink.o
 	target/release/artefacts/classification.o
+	target/release/artefacts/libc_init.o
 "
 
 case "$CC_TYPE" in

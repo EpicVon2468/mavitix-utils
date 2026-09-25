@@ -1,7 +1,6 @@
 #define __MAVITIX_INTERNAL__
 #include <internal/__defs.h>
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -9,7 +8,7 @@ FILE *stdin = NULL;
 FILE *stdout = NULL;
 FILE *stderr = NULL;
 
-bool __mavitix_libc__stdio_init(void) {
+int __mavitix_libc__stdio_init(void) {
 	// FIXME:
 	// This isn't needed or normal, it's a temporary solution because I haven't
 	// implemented the `FILE` type yet.
@@ -27,7 +26,7 @@ bool __mavitix_libc__stdio_init(void) {
 	return true;
 }
 
-bool __mavitix_libc__stdio_fini(void) {
+int __mavitix_libc__stdio_fini(void) {
 	// SANITY(unusual):
 	// `fclose` automagically flushes the stream(s).
 	if (fclose(stdin) == EOF) {
