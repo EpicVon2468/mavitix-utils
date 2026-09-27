@@ -37,14 +37,16 @@ typedef typeof_unqual(nullptr) nullptr_t;
 
 /*
  * Mavitix libc extension: `unreachable()` (or at least a stub) is provided for
- * versions as far back as C11.
+ * versions as far back as possible.
  */
-#if __CLANG_LIKE__
-/*
- * Clang & GCC both provide `__builtin_unreachable()`, no matter what C
- * Standard is specified.
- */
+#if __has_builtin(__builtin_unreachable)
 #define unreachable() __builtin_unreachable()
+#elif __has_builtin(__builtin_trap)
+#define unreachable() __builtin_trap()
+#elif __CLANG_LIKE__ && (defined(__x86_64__) || defined(__amd64__))
+#define unreachable() __asm__ __volatile__("ud2")
+#elif __CLANG_LIKE__ && defined(__aarch64__)
+#define unreachable() __asm__ __volatile__("udf #0")
 #elif __C11__
 
 #warning Using mavitix-libc function as a fallback for `unreachable()`!
@@ -55,9 +57,9 @@ __NORETURN__ extern inline
 void __mavitix_unreachable_impl(void);
 #define unreachable() __mavitix_unreachable_impl()
 
-#endif /* unreachable(void) */
+#endif /* unreachable */
 
-#if __CLANG_LIKE__
+#if __has_builtin(__builtin_offsetof)
 #define offsetof(type, member_designator) __builtin_offsetof(type, member_designator)
 #else
 /*
@@ -69,7 +71,7 @@ void __mavitix_unreachable_impl(void);
  * https://stackoverflow.com/questions/713963/why-does-this-implementation-of-offsetof-work
  */
 #define offsetof(type, member_designator) ((size_t) ( (char *)&((type *)(0))->member_designator - (char *)0 ))
-#endif /* offsetof(type, member_designator) */
+#endif /* offsetof */
 
 #ifdef __cplusplus
 }

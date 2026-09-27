@@ -1,6 +1,50 @@
 #! /usr/bin/env bash
 
-set -ex
+set -e
+
+# https://stackoverflow.com/a/52674277
+
+options=$(getopt -s "bash" -l "help,verbose-ub-checks,use-ranlib" -o "hv" -- "$@")
+
+eval set -- "$options"
+
+__help() {
+cat << EOF
+Usage:
+	./build
+		[-h|--help]
+		[-v]
+		[--verbose-ub-checks]
+		[--use-ranlib]
+EOF
+}
+
+opt__use_ranlib="false"
+
+while true; do
+	case "$1" in
+		"-h"|"--help")
+			__help
+			exit 0
+			;;
+		"--verbose-ub-checks")
+			CPPFLAGS+=" -D__MAVITIX_VERBOSE_UB_CHECKS"
+			CFLAGS+=" -D__MAVITIX_VERBOSE_UB_CHECKS"
+			RUSTFLAGS+=" --cfg=feature=\"verbose-ub-checks\""
+			;;
+		"--use-ranlib")
+			opt__use_ranlib="true"
+			;;
+		"-v")
+			set -x
+			;;
+		"--")
+			shift
+			break
+			;;
+	esac
+	shift
+done
 
 rm -rf target
 mkdir -p target/release
@@ -36,7 +80,7 @@ if [ "$architecture" = "x86-64" ]; then
 	ASFLAGS+=" --64 -O2 -mintel64 -msyntax=intel -mmnemonic=intel"
 fi
 
-CPPFLAGS+=" -fdirectives-only -E -nostdlib -nostdinc -std=c23"
+CPPFLAGS+=" -fdirectives-only -nostdlib -nostdinc -std=c23"
 CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs"
 
 $CPP $CPPFLAGS "src/crt/crt1_$architecture.S" -o target/release/tmp/crt1.s
@@ -72,9 +116,9 @@ esac
 $CC $CFLAGS src/gnu/libc-version.c -c -o target/release/artefacts/libc-version.o
 $CC $CFLAGS src/stdio/__init.c -c -o target/release/artefacts/stdio__init.o
 $CC $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
-$CC $CFLAGS src/env/environ.c -c -o target/release/artefacts/environ.o
 
 # TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
+RUSTFLAGS+=" --check-cfg=cfg(feature,values(\"verbose-ub-checks\"))"
 RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -C link-dead-code=on"
 RUSTFLAGS+=" -C link-arg=-nostdlib -C link-arg=-nostdinc -C link-arg=-nostartfiles -C link-arg=-nodefaultlibs -C link-arg=-nolibc -C link-arg=-ffreestanding"
 RUSTFLAGS+=" -C link-arg=-fcf-protection -C link-arg=-fno-fast-math -Z cf-protection=full -C overflow-checks=off"
@@ -101,18 +145,19 @@ $RUSTC $RUSTFLAGS src/sys/utsname.rs
 $RUSTC $RUSTFLAGS src/unistd/symlink.rs
 $RUSTC $RUSTFLAGS src/ctype/classification.rs
 $RUSTC $RUSTFLAGS src/crt/libc_init.rs
+$RUSTC $RUSTFLAGS src/env/environ.rs
 
 OBJECT_FILES="
 	target/release/artefacts/__mavitix_unreachable_impl.o
 	target/release/artefacts/libc-version.o
 	target/release/artefacts/stdio__init.o
 	target/release/artefacts/start_main.o
-	target/release/artefacts/environ.o
 	target/release/artefacts/_exit.o
 	target/release/artefacts/utsname.o
 	target/release/artefacts/symlink.o
 	target/release/artefacts/classification.o
 	target/release/artefacts/libc_init.o
+	target/release/artefacts/environ.o
 "
 
 case "$CC_TYPE" in
@@ -141,25 +186,27 @@ case "$CC_TYPE" in
 esac
 
 # https://sourceware.org/binutils/docs/ld.html
-# TODO: `--no-undefined-version`, `--default-symver`
 # Would enable `-z initfirst`, but that also says "Similarly, the runtime finalisation of the object will occur after the runtime finalisation of any other objects."
 LDFLAGS+=" -O3 --relax -nostdlib -z relro -z memory-seal -z global -z text -z combreloc --warn-execstack --build-id"
 if [ "$architecture" = "x86-64" ]; then
 	LDFLAGS+=" -z isa-level-report=all"
 fi
 
-#set -x
-
 $LD $LDFLAGS \
 	-shared -soname libc.so.6 \
 	$OBJECT_FILES \
 	-o target/release/libc.so.6
 
-$AR $ARFLAGS rcs target/release/libc.a $OBJECT_FILES
+if [ "$opt__use_ranlib" = "true" ]; then
+	ARFLAGS+=" rc"
+else
+	ARFLAGS+=" rcs"
+fi
+
+$AR $ARFLAGS target/release/libc.a $OBJECT_FILES
+
+if [ "$opt__use_ranlib" = "true" ]; then
+	$RANLIB $RANLIBFLAGS target/release/libc.a
+fi
 
 cp target/release/artefacts/crt1.o target/release/crt1.o
-
-# It's unclear whether this is stricly needed.
-#$RANLIB $RANLIBFLAGS target/release/libc.a
-
-set +x

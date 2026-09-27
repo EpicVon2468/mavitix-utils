@@ -23,6 +23,7 @@
 		ret
 
 	_start:
+		.cfi_startproc
 		endbr64
 		# "The content of this register is unspecified at process initialisation time, but the user code should mark the deepest stack frame by setting the frame pointer to zero"
 		xor rbp, rbp
@@ -46,6 +47,7 @@
 		# end
 		call __libc_start_main
 		ud2
+		.cfi_endproc
 
 # https://wiki.gentoo.org/wiki/Hardened/GNU_stack_quickstart
 .section .note.GNU-stack, "", @progbits

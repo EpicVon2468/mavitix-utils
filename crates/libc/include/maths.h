@@ -2,24 +2,41 @@
 #include <internal/__defs.h>
 
 #define __STDC_VERSION_MATH_H__ 202311L
+#define __STDC_VERSION_MATHS_H__ 202311L
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if __CLANG_LIKE__
+#if __has_builtin(__builtin_inff)
 #define INFINITY __builtin_inff()
+#else
+#define INFINITY (1.0f / 0.0f)
+#endif /* INFINITY */
+
+#if __has_builtin(__builtin_nanf)
 #define NAN __builtin_nanf("")
-#define HUGE_VAL __builtin_huge_val()
-#define HUGE_VALF __builtin_huge_valf()
-#define HUGE_VALL __builtin_huge_vall()
 #else
 #define NAN (0.0f / 0.0f)
-#define INFINITY (1.0f / 0.0f)
-#define HUGE_VAL ((double) INFINITY)
+#endif /* NAN */
+
+#if __has_builtin(__builtin_huge_val)
+#define HUGE_VAL __builtin_huge_val()
+#else
+#define HUGE_VAL (1.0 / 0.0)
+#endif /* HUGE_VAL */
+
+#if __has_builtin(__builtin_huge_valf)
+#define HUGE_VALF __builtin_huge_valf()
+#else
 #define HUGE_VALF INFINITY
-#define HUGE_VALL ((long double) INFINITY)
-#endif /* CLANG_LIKE */
+#endif /* HUGE_VALF */
+
+#if __has_builtin(__builtin_huge_vall)
+#define HUGE_VALL __builtin_huge_vall()
+#else
+#define HUGE_VALL (1.0L / 0.0L)
+#endif /* HUGE_VALL */
 
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2

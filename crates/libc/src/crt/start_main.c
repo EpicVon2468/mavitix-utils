@@ -71,11 +71,6 @@ int __libc_start_main(
 	};
 }
 
-__NOTHROW__ extern
-int __mavitix_libc__stdio_init(void);
-__NOTHROW__ extern
-int __mavitix_libc__stdio_fini(void);
-
 __PROTECTED__ static
 void __libc_init(const __init_t _init) {
 	size_t index;

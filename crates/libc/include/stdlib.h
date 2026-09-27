@@ -39,6 +39,13 @@ __NORETURN__ extern
 void _Exit(int status);
 
 __NOTHROW__ extern
+char *getenv(const char *name);
+__NOTHROW__ extern
+int setenv(const char *name, const char *value, int overwrite);
+__NOTHROW__ extern
+int unsetenv(const char *name);
+
+__NOTHROW__ extern
 int on_exit(void (*fn)(int status, void *usr_ptr), void *usr_ptr);
 __NOTHROW__ extern
 int atexit(void (*fn)(void));

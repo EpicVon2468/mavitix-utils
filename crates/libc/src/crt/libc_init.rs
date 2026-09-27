@@ -1,11 +1,11 @@
 #![no_std]
 #![crate_name = "libc_init"]
 #![crate_type = "cdylib"]
-#![feature(likely_unlikely, linkage)]
+#![feature(likely_unlikely)]
 
 use core::{
 	ffi::{c_char, c_void},
-	hint::likely as __likely,
+	hint::{cold_path, likely as __likely},
 };
 
 include!("../rsinclude/elf.rs");
@@ -27,6 +27,11 @@ unsafe extern "C" {
 	) -> i32;
 	pub safe fn atexit(r#fn: *mut unsafe extern "C" fn()) -> i32;
 }
+
+// FIXME:
+// The use of literally anything from `core` (even just pointer stuff) is adding huge amounts of `core`'s source code into the output library.
+// Entire files worth of redundant code, despite only using one or two functions.
+// Found a related issue at https://github.com/rust-lang/rust/issues/56068.
 
 static mut MAVITIX_EXECFN: *const c_char = core::ptr::null_mut();
 
@@ -78,22 +83,32 @@ pub unsafe extern "C" fn __mavitix_libc_init(
 		unmap_on_finalise: 0,
 		disable_thp: 0,
 	};
-	rpmalloc::rpmalloc_initialise_config(core::ptr::null_mut(), &raw mut config);
+	if rpmalloc::rpmalloc_initialise_config(core::ptr::null_mut(), &raw mut config) == 0 {
+		return false as i32;
+	};
 	if __mavitix_libc__stdio_init() == 0 {
 		return false as i32;
 	};
 
 	if __likely(!rtld_fini.is_null()) {
 		// "a function pointer that the application should register with atexit"
-		atexit(rtld_fini);
+		if atexit(rtld_fini) == 0 {
+			cold_path();
+			return false as i32;
+		};
 	};
 	if __likely(!fini.is_null()) {
-		on_exit(__libc_fini as _, fini as *mut c_void);
+		if on_exit(__libc_fini as _, fini as *mut c_void) == 0 {
+			cold_path();
+			return false as i32;
+		};
 	};
 
 	return true as i32;
 }
 
+// #[unsafe(no_mangle)]
+// #[allow(nonstandard_style)]
 // pub unsafe extern "C" fn __libc_init(init: *const ld_syms::init) {
 // 	let mut index: usize;
 

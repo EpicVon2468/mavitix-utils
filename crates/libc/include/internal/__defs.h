@@ -8,7 +8,11 @@
 #define _XOPEN_SOURCE 800
 
 #if !defined(__has_c_attribute)
-#define __has__has_c_attribute(x) 0
+#define __has_c_attribute(x) 0
+#endif
+
+#if !defined(__has_attribute)
+#define __has_attribute(x) 0
 #endif
 
 #if !defined(__has_builtin)
@@ -70,29 +74,53 @@
 
 #endif /* __STDC_VERSION__ */
 
-#if __CLANG_LIKE__
+#if __has_attribute(nothrow)
 #define __NOTHROW__ __attribute__((nothrow))
-#define __USED__ __attribute__((used))
-#define __CONST__ __attribute__((const))
-#define __NOINLINE__ __attribute__((noinline))
-#define __PURE__ __attribute__((pure))
-#define __PROTECTED__ __attribute__((visibility("protected")))
-#define __HIDDEN__ __attribute__((visibility("hidden")))
-#define __WEAK__ __attribute__((weak))
 #else
 #define __NOTHROW__
+#endif /* __NOTHROW__ */
+
+#if __has_attribute(used)
+#define __USED__ __attribute__((used))
+#else
 #define __USED__
+#endif /* __USED__ */
+
+#if __has_attribute(const)
+#define __CONST__ __attribute__((const))
+#else
 #define __CONST__
+#endif /* __CONST__ */
+
+#if __has_attribute(noinline)
+#define __NOINLINE__ __attribute__((noinline))
+#else
 #define __NOINLINE__
+#endif /* __NOINLINE__ */
+
+#if __has_attribute(pure)
+#define __PURE__ __attribute__((pure))
+#else
 #define __PURE__
+#endif /* __PURE__ */
+
+#if __has_attribute(visibility)
+#define __PROTECTED__ __attribute__((visibility("protected")))
+#define __HIDDEN__ __attribute__((visibility("hidden")))
+#else
 #define __PROTECTED__
 #define __HIDDEN__
+#endif /* __PROTECTED__ & __HIDDEN__ */
+
+#if __has_attribute(weak)
+#define __WEAK__ __attribute__((weak))
+#else
 #define __WEAK__
-#endif
+#endif /* __WEAK__ */
 
 #if __C23__ && __has_c_attribute(noreturn)
 
-#if __CLANG_LIKE__
+#if __has_attribute(noreturn)
 #define __NORETURN__ [[noreturn]] __attribute__((noreturn))
 #else
 #define __NORETURN__ [[noreturn]]
@@ -100,13 +128,13 @@
 
 #elif __C11__
 
-#if __CLANG_LIKE__
+#if __has_attribute(noreturn)
 #define __NORETURN__ _Noreturn __attribute__((noreturn))
 #else
 #define __NORETURN__ _Noreturn
 #endif
 
-#elif __CLANG_LIKE__
+#elif __has_attribute(noreturn)
 
 #define __NORETURN__ __attribute__((noreturn))
 
@@ -141,8 +169,10 @@ typedef int (*__main_t)(int argc, char **argv, char **envp);
 #endif
 
 #else
+
 #define _ClangLikely(x) (x)
 #define _ClangUnlikely(x) (x)
+
 #endif /* _ClangLikely & _ClangUnlikely */
 
 #if __has_builtin(__builtin_expect)
