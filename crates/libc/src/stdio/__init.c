@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 FILE *stdin = NULL;
 FILE *stdout = NULL;
@@ -14,13 +15,13 @@ int __mavitix_libc__stdio_init(void) {
 	// implemented the `FILE` type yet.
 	// In reality, the three streams can just be initialised to the FILE type
 	// without any opening whatsoever.
-	if ((stdin = fdopen(0, "r")) == NULL) {
+	if ((stdin = fdopen(STDIN_FILENO, "r")) == NULL) {
 		return false;
 	};
-	if ((stdout = fdopen(1, "a")) == NULL) {
+	if ((stdout = fdopen(STDOUT_FILENO, "a")) == NULL) {
 		return false;
 	};
-	if ((stderr = fdopen(2, "a")) == NULL) {
+	if ((stderr = fdopen(STDERR_FILENO, "a")) == NULL) {
 		return false;
 	};
 	return true;

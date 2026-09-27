@@ -113,7 +113,6 @@ case "$CC_TYPE" in
 		;;
 esac
 
-$CC $CFLAGS src/gnu/libc-version.c -c -o target/release/artefacts/libc-version.o
 $CC $CFLAGS src/stdio/__init.c -c -o target/release/artefacts/stdio__init.o
 $CC $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
 
@@ -146,10 +145,10 @@ $RUSTC $RUSTFLAGS src/unistd/symlink.rs
 $RUSTC $RUSTFLAGS src/ctype/classification.rs
 $RUSTC $RUSTFLAGS src/crt/libc_init.rs
 $RUSTC $RUSTFLAGS src/env/environ.rs
+$RUSTC $RUSTFLAGS src/gnu/libc_version.rs
 
 OBJECT_FILES="
 	target/release/artefacts/__mavitix_unreachable_impl.o
-	target/release/artefacts/libc-version.o
 	target/release/artefacts/stdio__init.o
 	target/release/artefacts/start_main.o
 	target/release/artefacts/_exit.o
@@ -158,6 +157,7 @@ OBJECT_FILES="
 	target/release/artefacts/classification.o
 	target/release/artefacts/libc_init.o
 	target/release/artefacts/environ.o
+	target/release/artefacts/libc_version.o
 "
 
 case "$CC_TYPE" in

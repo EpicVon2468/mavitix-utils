@@ -84,6 +84,9 @@ int unlink(const char *path);
 __NOTHROW__ extern
 int unlinkat(int fd, const char *path, int flags);
 
+__NOTHROW__ extern
+int getopt(int argc, char *const argv[], const char *optstr);
+
 extern char *optarg;
 extern int opterr, optind, optopt;
 
