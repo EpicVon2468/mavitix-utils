@@ -123,7 +123,7 @@ $CC $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
 
 # TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
 RUSTFLAGS+=" --check-cfg=cfg(feature,values(\"verbose-ub-checks\"))"
-RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -C link-dead-code=on"
+RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -Z panic-in-drop=immediate-abort -C link-dead-code=on"
 RUSTFLAGS+=" -C link-arg=-nostdlib -C link-arg=-nostdinc -C link-arg=-nostartfiles -C link-arg=-nodefaultlibs -C link-arg=-nolibc -C link-arg=-ffreestanding"
 RUSTFLAGS+=" -C link-arg=-fcf-protection -C link-arg=-fno-fast-math -Z cf-protection=full -C overflow-checks=off"
 RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3 -Z dylib-lto -Z mir-opt-level=4"
@@ -194,13 +194,27 @@ esac
 
 # https://sourceware.org/binutils/docs/ld.html
 # Would enable `-z initfirst`, but that also says "Similarly, the runtime finalisation of the object will occur after the runtime finalisation of any other objects."
-LDFLAGS+=" -O3 --relax -nostdlib -z relro -z memory-seal -z global -z text -z combreloc -z unique -z nodelete --ctf-variables --warn-execstack --enable-linker-version --build-id"
+LDFLAGS+=" -O3 --relax -nostdlib -z relro -z memory-seal -z global -z text -z combreloc -z unique -z nodelete -z sectionheader --warn-execstack --eh-frame-hdr --enable-new-dtags --build-id"
 if [ "$architecture" = "x86-64" ]; then
-	LDFLAGS+=" -z isa-level-report=all"
+	LDFLAGS+=" -z isa-level-report=all -z pack-relative-relocs"
 	if [ "$opt__ibt_plt" = "true" ]; then
 		LDFLAGS+=" -z ibt -z ibtplt"
 	fi
 fi
+case "$($LD --version | tr '[:upper:]' '[:lower:]')" in
+	*"wild"*)
+		;;
+	*"lld"*)
+		;;
+	*"mold"*)
+		;;
+	*"gnu ld"*)
+		# A lot of "compatible with GNU linkers" programs do not actually support all ld.bfd options.
+		LDFLAGS+=" --ctf-variables --enable-linker-version --no-gnu2-tls-tag"
+		;;
+	*)
+		;;
+esac
 
 $LD $LDFLAGS \
 	-shared -soname libc.so.6 \
