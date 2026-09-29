@@ -58,4 +58,49 @@ pub mod rpmalloc {
 		#[link_name = "rpmalloc_is_thread_initialized"]
 		pub safe fn rpmalloc_is_thread_initialised() -> i32;
 	}
+
+	unsafe extern "C" {
+
+		#[link_name = "rpmalloc"]
+		pub fn malloc(size: usize) -> *mut c_void;
+
+		#[link_name = "rpzalloc"]
+		pub fn zalloc(size: usize) -> *mut c_void;
+
+		#[link_name = "rpcalloc"]
+		pub fn calloc(num: usize, size: usize) -> *mut c_void;
+
+		#[link_name = "rprealloc"]
+		pub fn realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
+
+		#[link_name = "rpaligned_alloc"]
+		pub fn aligned_alloc(align: usize, size: usize) -> *mut c_void;
+
+		#[link_name = "rpaligned_zalloc"]
+		pub fn aligned_zalloc(align: usize, size: usize) -> *mut c_void;
+
+		#[link_name = "rpaligned_calloc"]
+		pub fn aligned_calloc(align: usize, num: usize, size: usize) -> *mut c_void;
+
+		#[link_name = "rpaligned_realloc"]
+		pub fn aligned_realloc(
+			ptr: *mut c_void,
+			align: usize,
+			size: usize,
+			oldsize: usize,
+			flags: u32,
+		) -> *mut c_void;
+
+		#[link_name = "rpmemalign"]
+		pub fn memalign(align: usize, size: usize) -> *mut c_void;
+
+		#[link_name = "rpposix_memalign"]
+		pub fn posix_memalign(memptr: *mut *mut c_void, align: usize, size: usize) -> i32;
+
+		#[link_name = "rpfree"]
+		pub fn free(ptr: *mut c_void);
+
+		#[link_name = "rpmalloc_usable_size"]
+		pub fn malloc_usable_size(ptr: *mut c_void) -> usize;
+	}
 }

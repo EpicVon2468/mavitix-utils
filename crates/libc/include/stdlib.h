@@ -15,19 +15,24 @@ extern "C" {
 #include <internal/__size_t.h> /* size_t */
 
 __NOTHROW__ extern
-void *aligned_alloc(size_t align, size_t size);
+void *malloc(size_t size);
 __NOTHROW__ extern
 void *calloc(size_t num, size_t size);
+__NOTHROW__ extern
+void *realloc(void *ptr, size_t size);
+
+__NOTHROW__ extern
+void *aligned_alloc(size_t align, size_t size);
+
+__NOTHROW__ extern
+int posix_memalign(void **memptr, size_t align, size_t size);
+
 __NOTHROW__ extern
 void free(void *ptr);
 __NOTHROW__ extern
 void free_sized(void *ptr, size_t size);
 __NOTHROW__ extern
 void free_aligned_sized(void *ptr, size_t align, size_t size);
-__NOTHROW__ extern
-void *malloc(size_t size);
-__NOTHROW__ extern
-void *realloc(void *ptr, size_t size);
 
 __NORETURN__ extern
 void abort(void);

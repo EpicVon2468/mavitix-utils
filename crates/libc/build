@@ -4,7 +4,7 @@ set -e
 
 # https://stackoverflow.com/a/52674277
 
-options=$(getopt -s "bash" -l "help,verbose-ub-checks,use-ranlib" -o "hv" -- "$@")
+options=$(getopt -s "bash" -l "help,verbose-ub-checks,use-ranlib,no-ibt-plt" -o "hv" -- "$@")
 
 eval set -- "$options"
 
@@ -16,10 +16,12 @@ Usage:
 		[-v]
 		[--verbose-ub-checks]
 		[--use-ranlib]
+		[--no-ibt-plt]
 EOF
 }
 
 opt__use_ranlib="false"
+opt__ibt_plt="true"
 
 while true; do
 	case "$1" in
@@ -34,6 +36,9 @@ while true; do
 			;;
 		"--use-ranlib")
 			opt__use_ranlib="true"
+			;;
+		"--no-ibt-plt")
+			opt__ibt_plt="false"
 			;;
 		"-v")
 			set -x
@@ -146,6 +151,7 @@ $RUSTC $RUSTFLAGS src/ctype/classification.rs
 $RUSTC $RUSTFLAGS src/crt/libc_init.rs
 $RUSTC $RUSTFLAGS src/env/environ.rs
 $RUSTC $RUSTFLAGS src/gnu/libc_version.rs
+$RUSTC $RUSTFLAGS src/mem/mem.rs
 
 OBJECT_FILES="
 	target/release/artefacts/__mavitix_unreachable_impl.o
@@ -158,6 +164,7 @@ OBJECT_FILES="
 	target/release/artefacts/libc_init.o
 	target/release/artefacts/environ.o
 	target/release/artefacts/libc_version.o
+	target/release/artefacts/mem.o
 "
 
 case "$CC_TYPE" in
@@ -187,9 +194,12 @@ esac
 
 # https://sourceware.org/binutils/docs/ld.html
 # Would enable `-z initfirst`, but that also says "Similarly, the runtime finalisation of the object will occur after the runtime finalisation of any other objects."
-LDFLAGS+=" -O3 --relax -nostdlib -z relro -z memory-seal -z global -z text -z combreloc --warn-execstack --build-id"
+LDFLAGS+=" -O3 --relax -nostdlib -z relro -z memory-seal -z global -z text -z combreloc -z unique -z nodelete --ctf-variables --warn-execstack --enable-linker-version --build-id"
 if [ "$architecture" = "x86-64" ]; then
 	LDFLAGS+=" -z isa-level-report=all"
+	if [ "$opt__ibt_plt" = "true" ]; then
+		LDFLAGS+=" -z ibt -z ibtplt"
+	fi
 fi
 
 $LD $LDFLAGS \
