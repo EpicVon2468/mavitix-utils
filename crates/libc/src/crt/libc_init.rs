@@ -36,11 +36,13 @@ unsafe extern "C" {
 static mut MAVITIX_EXECFN: *const c_char = core::ptr::null_mut();
 
 #[unsafe(no_mangle)]
+#[allow(nonstandard_style)]
 pub unsafe extern "C" fn __mavitix_getexecfn() -> *const c_char {
 	return unsafe { MAVITIX_EXECFN };
 }
 
 #[unsafe(no_mangle)]
+#[allow(nonstandard_style)]
 pub unsafe extern "C" fn __mavitix_libc_init(
 	_argc: i32,
 	_argv: *mut *mut c_char,
@@ -83,7 +85,7 @@ pub unsafe extern "C" fn __mavitix_libc_init(
 		unmap_on_finalise: 0,
 		disable_thp: 0,
 	};
-	if rpmalloc::rpmalloc_initialise_config(core::ptr::null_mut(), &raw mut config) == 0 {
+	if rpmalloc::initialise_config(core::ptr::null_mut(), &raw mut config) == 0 {
 		return false as i32;
 	};
 	if __mavitix_libc__stdio_init() == 0 {

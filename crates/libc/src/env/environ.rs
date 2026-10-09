@@ -4,8 +4,9 @@
 
 use core::ffi::c_char;
 
+#[used]
 #[unsafe(no_mangle)]
-pub static mut enivron: *mut *mut c_char = core::ptr::null_mut();
+pub static mut environ: *mut *mut c_char = core::ptr::null_mut();
 
 // #[unsafe(no_mangle)]
 // pub unsafe extern "C" fn getenv(name: *const c_char) -> *mut c_char {}

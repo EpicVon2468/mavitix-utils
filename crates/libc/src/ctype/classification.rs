@@ -19,6 +19,8 @@ macro_rules! char_range_check {
 	};
 }
 
+pub const ASCII_CAPITAL_OFFSET: u32 = 32;
+
 #[unsafe(no_mangle)]
 pub extern "C" fn isalnum(ch: i32) -> i32 {
 	(isalpha(ch) != 0 || isdigit(ch) != 0) as i32
@@ -26,6 +28,7 @@ pub extern "C" fn isalnum(ch: i32) -> i32 {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn isalpha(ch: i32) -> i32 {
+	// TODO: Can this be similarly optimised to `isxdigit` ?
 	(islower(ch) != 0 || isupper(ch) != 0) as i32
 }
 
@@ -61,8 +64,9 @@ pub extern "C" fn isupper(ch: i32) -> i32 {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn isxdigit(ch: i32) -> i32 {
-	// TODO:
-	// I vaguely remember some stuff about lowercase & uppercase characters being a fixed
-	// offset apart from each other in ASCII; Can that be used to optimise this further?
-	(isdigit(ch) != 0 || char_range_check!(ch; 'a', 'f') || char_range_check!(ch; 'A', 'F')) as i32
+	// SANITY(unusual):
+	// Manually cast first so that the overflow is still enforced even with the bitor.
+	// Use a bitor of `32` as that is the offset between uppercase and lowercase ASCII characters.
+	// I'm not entirely sure how the maths & binary stuff works out, but I did some testing in Rust playground and this seems to work.
+	(isdigit(ch) != 0 || char_range_check!((ch as u32) | ASCII_CAPITAL_OFFSET; 'a', 'f')) as i32
 }

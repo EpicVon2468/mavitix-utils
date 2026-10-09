@@ -10,6 +10,13 @@ typedef signed char int8_t;
 #endif /* int8_t */
 #define INT8_WIDTH 8
 
+#ifdef __UINT8_TYPE__
+typedef __UINT8_TYPE__ uint8_t;
+#else
+typedef unsigned char uint8_t;
+#endif /* uint8_t */
+#define UINT8_WIDTH 8
+
 #ifdef __INT16_TYPE__
 typedef __INT16_TYPE__ int16_t;
 #else
@@ -48,17 +55,49 @@ typedef signed long int int64_t;
 #ifdef __UINT64_TYPE__
 typedef __UINT64_TYPE__ uint64_t;
 #else
-typedef unsigned long int int64_t;
+typedef unsigned long int uint64_t;
 #endif /* uint64_t */
 #define UINT64_WIDTH 64
 
-#define INTPTR_WIDTH UINTPTR_WIDTH
-#define UINTPTR_WIDTH 16
+typedef int8_t int_least8_t;
+typedef uint8_t uint_least8_t;
+
+typedef int16_t int_least16_t;
+typedef uint16_t uint_least16_t;
+
+typedef int32_t int_least32_t;
+typedef uint32_t uint_least32_t;
+
+typedef int64_t int_least64_t;
+typedef uint64_t uint_least64_t;
+
+#ifdef __INTPTR_TYPE__
+typedef __INTPTR_TYPE__ intptr_t;
+#else
+typedef signed long int intptr_t;
+#endif
+#ifdef __INTPTR_WIDTH__
+#define INTPTR_WIDTH __INTPTR_WIDTH__
+#else
+#define INTPTR_WIDTH 64
+#endif /* intptr_t */
+
+#ifdef __UINTPTR_TYPE__
+typedef __UINTPTR_TYPE__ uintptr_t;
+#else
+typedef unsigned long int uintptr_t;
+#endif
+#ifdef __UINTPTR_WIDTH__
+#define UINTPTR_WIDTH __UINTPTR_WIDTH__
+#else
+#define UINTPTR_WIDTH 64
+#endif /* uintptr_t */
 
 #define INTMAX_WIDTH UINTMAX_WIDTH
 #define UINTMAX_WIDTH 64
 
 #define PTRDIFF_WIDTH 16
+#define SIG_ATOMIC_WIDTH 8
 #define SIZE_WIDTH 16
 #define WCHAR_WIDTH 8
 #define WINT_WIDTH 16

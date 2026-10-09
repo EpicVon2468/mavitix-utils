@@ -34,29 +34,28 @@ pub mod rpmalloc {
 	unsafe extern "C" {
 
 		#[link_name = "rpmalloc_initialize"]
-		pub safe fn rpmalloc_initialise(memory_interface: *mut Interface) -> i32;
+		pub safe fn initialise(interface: *mut Interface) -> i32;
 
 		#[link_name = "rpmalloc_initialize_config"]
-		pub safe fn rpmalloc_initialise_config(
-			memory_interface: *mut Interface,
-			config: *mut Config,
-		) -> i32;
+		pub safe fn initialise_config(interface: *mut Interface, config: *mut Config) -> i32;
 
-		pub safe fn rpmalloc_config() -> *const Config;
+		#[link_name = "rpmalloc_config"]
+		pub safe fn config() -> *const Config;
 
 		#[link_name = "rpmalloc_finalize"]
-		pub safe fn rpmalloc_finalise();
+		pub safe fn finalise();
 
 		#[link_name = "rpmalloc_thread_initialize"]
-		pub safe fn rpmalloc_thread_initialise();
+		pub safe fn thread_initialise();
 
 		#[link_name = "rpmalloc_thread_finalize"]
-		pub safe fn rpmalloc_thread_finalise();
+		pub safe fn thread_finalise();
 
-		pub safe fn rpmalloc_thread_collect() -> i32;
+		#[link_name = "rpmalloc_thread_collect"]
+		pub safe fn thread_collect() -> i32;
 
 		#[link_name = "rpmalloc_is_thread_initialized"]
-		pub safe fn rpmalloc_is_thread_initialised() -> i32;
+		pub safe fn is_thread_initialised() -> i32;
 	}
 
 	unsafe extern "C" {

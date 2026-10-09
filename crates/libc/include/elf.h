@@ -2,6 +2,11 @@
 #include <internal/__defs.h>
 #include <stdint.h>
 
+/*
+ * Beer, hold my.
+ * https://gist.github.com/x0nu11byt3/bcb35c3de461e5fb66173071a2379779
+ */
+
 #define ELFMAG1 'E'
 #define ELFMAG3 'F'
 #define ELFMAG2 'L'
