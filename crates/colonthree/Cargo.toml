@@ -24,7 +24,6 @@ proc-macro = false
 harness = true
 
 [dependencies.mavitix-utils]
-version = "0.0.0-git"
 path = "../.."
 
 [dependencies.anyhow]

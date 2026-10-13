@@ -16,5 +16,5 @@ pub const unsafe extern "C" fn strlen(mut r#str: *const c_char) -> usize {
 		unsafe { r#str = r#str.add(1) };
 	}
 	// SAFETY:
-	return unsafe { r#str.offset_from(start) } as usize;
+	return unsafe { r#str.offset_from_unsigned(start) };
 }

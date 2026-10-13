@@ -37,6 +37,7 @@ workspace = true
 
 [workspace]
 members = [
+	"crates/elf-inspector",
 	"crates/colonthree",
 	"crates/coreutils",
 	"crates/fetch",

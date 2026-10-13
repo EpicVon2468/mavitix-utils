@@ -31,7 +31,7 @@ macro_rules! main {
 			match $main_impl {
 				Ok(()) => std::process::ExitCode::SUCCESS,
 				Err(error) => {
-					eprintln!("{error}");
+					eprintln!(concat!(env!("CARGO_BIN_NAME"), ": {}"), error);
 					let chain: Vec<&(dyn std::error::Error + 'static)> =
 						error.chain().skip(1).collect();
 					if !chain.is_empty() {
