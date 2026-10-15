@@ -102,138 +102,161 @@ pub fn print_information(
 	let machine: Machine = header.machine;
 	println!("==== ELF File Information ====");
 	println!("Endian: {}", if header.is_le { "Little" } else { "Big" });
-	{
-		let abi: &str = match header.abi {
-			Some(value) => match value {
-				ABI::SysV => "System V",
-				ABI::HPUX => "HP-UX",
-				ABI::NetBSD => "NetBSD",
-				ABI::Linux => "Linux",
-				ABI::Solaris => "Solaris",
-				ABI::AIX => "AIX",
-				ABI::IRIX => "IRIS",
-				ABI::FreeBSD => "FreeBSD",
-				ABI::TRU64 => "TRU64",
-				ABI::Modesto => "Modesto",
-				ABI::OpenBSD => "OpenBSD",
-				ABI::ARMEABI => "ARM EABI",
-				ABI::ARM => "ARM",
-				ABI::Standalone => "Standalone [Embedded]",
-			},
-			None => "Unknown",
-		};
-		println!("ABI: {abi}");
-	};
+	println!(
+		"ABI: {}",
+		header.abi.map_or_default(ABI::name).unwrap_or("Unknown"),
+	);
 	println!("ABI Version: {:#b}", header.abi_version);
-	println!("Type: {:?}", header.r#type);
-	println!("Machine: {:?}", machine);
+	println!(
+		"Type: {}",
+		match header.r#type {
+			ELFType::OSSpecific(value) => format!("Unspecified OS-Specific Value; Raw: {value:#X}"),
+			ELFType::ProcessorSpecific(value) =>
+				format!("Unspecified Processor-Specific Value; Raw: {value:#X}"),
+			other => other.name().unwrap().to_owned(),
+		},
+	);
+	println!(
+		"Machine: {}",
+		match machine {
+			Machine::Unofficial(value) => format!("Unspecified Unofficial Value; Raw: {value:#X}"),
+			_ => machine.name().unwrap().to_owned(),
+		},
+	);
 	println!("Entry Address: {:#X}", header.entry_addr);
 	println!("Flags: {:#b}", header.flags);
 	for program_header in program_headers {
 		println!("=== Program Header ===");
-		let type_description: &str = match program_header.r#type {
-			ProgramType::Null => "Unused Entry",
-			ProgramType::Load => "Loadable",
-			ProgramType::Dynamic => "Dynamic Linking Information",
-			ProgramType::Interpreter => "Interpreter",
-			ProgramType::Note => "Note[s]",
-			ProgramType::_Reserved => "Reserved",
-			ProgramType::ProgramHeaderTable => "Header Table Entry",
-			ProgramType::ThreadLocalStorage => "Thread Local Storage",
-			ProgramType::GNUEhFrame => "GNU `.eh_frame_hdr`",
-			ProgramType::GNUStack => "GNU Stack Note",
-			ProgramType::GNUReadOnlyAfterRelocation => "Read-Only After Relocation",
-			ProgramType::GNUProperty => "GNU Property",
-			ProgramType::GNUSFrame => "GNU SFrame",
-			ProgramType::SUNBss => "SUN `.bss`",
-			ProgramType::SUNStack => "SUN Stack",
-			ProgramType::SUNSpecific(value) =>
-				&format!("Unspecified SUN-Specific Value; Raw: {value:#X}"),
-			ProgramType::OSSpecific(value) =>
-				&format!("Unspecified OS-Specific Value; Raw: {value:#X}"),
-			ProgramType::ProcessorSpecific(value) => {
-				macro_rules! unspecified {
-					($(,)?) => {
-						&format!("Unspecified Processor-Specific Value; Raw: {value:#X}")
-					};
-				}
-				match machine {
-					Machine::MIPS | Machine::MIPSX | Machine::MIPSR3000LittleEndian =>
-						match value {
-							0x70000000 => "MIPS Register Information",
-							0x70000001 => "MIPS Runtime Procedure Table",
-							0x70000002 => "MIPS Options",
-							0x70000003 => "MIPS ABI Flags",
+		let type_description: &str = {
+			let r#type: ProgramType = program_header.r#type;
+			if let Some(value) = r#type.name() {
+				value
+			} else {
+				match r#type {
+					ProgramType::SUNSpecific(value) =>
+						&format!("Unspecified SUN-Specific Value; Raw: {value:#X}"),
+					ProgramType::OSSpecific(value) =>
+						&format!("Unspecified OS-Specific Value; Raw: {value:#X}"),
+					ProgramType::ProcessorSpecific(value) => {
+						macro_rules! unspecified {
+							($(,)?) => {
+								&format!("Unspecified Processor-Specific Value; Raw: {value:#X}")
+							};
+						}
+						match machine {
+							Machine::MIPSBE | Machine::MIPSLE | Machine::MIPSX => match value {
+								0x70000000 => "MIPS Register Information",
+								0x70000001 => "MIPS Runtime Procedure Table",
+								0x70000002 => "MIPS Options",
+								0x70000003 => "MIPS ABI Flags",
+								_ => unspecified!(),
+							},
 							_ => unspecified!(),
-						},
-					_ => unspecified!(),
+						}
+					},
+					unexpected => unreachable!("{unexpected:?}"),
 				}
-			},
+			}
 		};
 		println!("Type: {type_description}");
 	}
 	for section_header in section_headers {
 		println!("=== Section Header ===");
-		let type_description: &str = match section_header.r#type {
-			SectionType::Null => "Unused Entry",
-			SectionType::Progbits => "Program Data (`@progbits`)",
-			SectionType::SymbolTable => "Symbol Table",
-			SectionType::StringTable => "String Table",
-			SectionType::RelocationAddends => "Relocation Entries With Addends",
-			SectionType::SymbolHashTable => "Symbol Hash Table",
-			SectionType::Dynamic => "Dynamic Linking Information",
-			SectionType::Note => "Note[s] (`@note`)",
-			SectionType::Bss => "Null Program Data",
-			SectionType::RelocationNoAddends => "Relocation Entries Without Addends",
-			SectionType::_Reserved => "Reserved",
-			SectionType::DynamicSymbolTable => "Dynamic Symbol Table",
-			SectionType::InitArray => "Initialisation Array (`@init_array`)",
-			SectionType::FiniArray => "Finalisation Array (`@fini_array`)",
-			SectionType::PreinitArray => "Pre-Initialisation Array (`@preinit_array`)",
-			SectionType::SectionGroup => "Section Group",
-			SectionType::SymbolTableIndices => "Extended Symbol Table Indices",
-			SectionType::RelativeRelocations => "Relative Relocation[s]",
-			SectionType::GNUObjectAttributes => "GNU Object Attributes",
-			SectionType::GNUHashTable => "GNU Hash Table",
-			SectionType::GNULibraryList => "GNU [Pre-Link] Library List",
-			SectionType::Checksum => "Checksum",
-			SectionType::SUNMove => "SUN Move",
-			SectionType::SUNCOMDAT => "SUN COMDAT",
-			SectionType::SUNSyminfo => "SUN Syminfo",
-			SectionType::GNUVersionDefinition => "GNU Version Definition",
-			SectionType::GNUVersionNeeds => "GNU Version Needs",
-			SectionType::GNUVersionSymbolTable => "GNU Version Symbol Table",
-			SectionType::OSSpecific(value) =>
-				&format!("Unspecified OS-Specific Value; Raw: {value:#X}"),
-			SectionType::ProcessorSpecific(value) => {
-				macro_rules! unspecified {
-					($(,)?) => {
-						&format!("Unspecified Processor-Specific Value; Raw: {value:#X}")
-					};
-				}
-				match machine {
-					Machine::MIPS | Machine::MIPSX | Machine::MIPSR3000LittleEndian =>
-						match value {
-							0x70000000 => "MIPS Shared Library List",
-							0x70000002 => "MIPS Conflicting Symbols List",
-							0x70000003 => "MIPS Global Pointer Table",
-							0x70000004 => "MIPS Reserved",
-							0x70000005 => "MIPS Debug Information",
-							0x70000006 => "MIPS Register Information",
+		let type_description: &str = {
+			let r#type: SectionType = section_header.r#type;
+			if let Some(value) = r#type.name() {
+				value
+			} else {
+				match r#type {
+					SectionType::OSSpecific(value) =>
+						&format!("Unspecified OS-Specific Value; Raw: {value:#X}"),
+					SectionType::ProcessorSpecific(value) => {
+						macro_rules! unspecified {
+							($(,)?) => {
+								&format!("Unspecified Processor-Specific Value; Raw: {value:#X}")
+							};
+						}
+						match machine {
+							Machine::MIPSBE | Machine::MIPSLE | Machine::MIPSX => match value {
+								0x70000000 => "MIPS Shared Library List",
+								0x70000001 => "MIPS M Symbol",
+								0x70000002 => "MIPS Conflicting Symbols List",
+								0x70000003 => "MIPS Global Pointer Table",
+								0x70000004 => "MIPS Reserved",
+								0x70000005 => "MIPS Debug Information",
+								0x70000006 => "MIPS Register Information",
+								0x70000007 => "MIPS Package",
+								0x70000008 => "MIPS Pack Symbol",
+								0x70000009 => "MIPS RELD",
+								0x7000000B => "MIPS IFACE",
+								0x7000000C => "MIPS Content",
+								0x7000000D => "MIPS Options",
+								0x70000010 => "MIPS SHDR",
+								0x70000011 => "MIPS FDESC",
+								0x70000012 => "MIPS Ext Symbol",
+								0x70000013 => "MIPS Dense",
+								0x70000014 => "MIPS PDESC",
+								0x70000015 => "MIPS Loc Symbol",
+								0x70000016 => "MIPS Auxillary Symbol",
+								0x70000017 => "MIPS Opt Symbol",
+								0x70000018 => "MIPS Loc String",
+								0x70000019 => "MIPS Line",
+								0x7000001A => "MIPS RFDESC",
+								0x7000001B => "MIPS Delta Symbol",
+								0x7000001C => "MIPS Delta Inst",
+								0x7000001D => "MIPS Delta Class",
+								0x7000001E => "MIPS DWARF Debug Information",
+								0x7000001F => "MIPS Delta Declaration",
+								0x70000020 => "MIPS Symbol Library",
+								0x70000021 => "MIPS Events",
+								0x70000022 => "MIPS Translate",
+								0x70000023 => "MIPS Pixie",
+								0x70000024 => "MIPS XLate",
+								0x70000025 => "MIPS XLate Debug",
+								0x70000026 => "MIPS Whirl",
+								0x70000027 => "MIPS EH Region",
+								0x70000028 => "MIPS XLate [Old]",
+								0x70000029 => "MIPS PDR Exception",
+								0x7000002A => "MIPS ABI Flags",
+								0x7000002B => "MIPS XHash",
+								_ => unspecified!(),
+							},
+							Machine::PrecisionArchitectureRISC => match value {
+								0x70000000 => "PA-RISC Extension Bits",
+								0x70000001 => "PA-RISC Unwind Table",
+								0x70000002 => "PA-RISC Debug Information For Optimised Code",
+								0x70000003 => "PA-RISC Code Annotations",
+								_ => unspecified!(),
+							},
+							Machine::Alpha => match value {
+								0x70000001 => "Alpha Debug Information",
+								0x70000002 => "Alpha Register Information",
+								_ => unspecified!(),
+							},
+							Machine::ARM => match value {
+								0x70000001 => "ARM [32-bit] Unwind Section",
+								0x70000002 => "ARM [32-bit] Pre-Emption Details",
+								0x70000003 => "ARM [32-bit] Attributes",
+								_ => unspecified!(),
+							},
+							Machine::CSKY if let 0x70000001 = value => "C-SKY Attributes",
+							Machine::IntelItanium64 => match value {
+								0x70000000 => "IA-64 Extension Bits",
+								0x70000001 => "IA-64 Unwind Bits",
+								_ => unspecified!(),
+							},
+							Machine::X86_64 if let 0x70000001 = value =>
+								"x86-64 Unwind Information",
+							Machine::RISCV if let 0x70000003 = value => "RISC-V Attributes",
+							Machine::ARC if let 0x70000001 = value => "ARC Attributes",
 							_ => unspecified!(),
-						},
-					Machine::PrecisionArchitectureRISC => match value {
-						0x70000000 => "PA-RISC Extension Bits",
-						0x70000001 => "PA-RISC Unwind Table",
-						0x70000002 => "PA-RISC Debug Information For Optimised Code",
-						0x70000003 => "PA-RISC Code Annotations",
-						_ => unspecified!(),
+						}
 					},
-					_ => unspecified!(),
+					SectionType::ApplicationSpecific(value) =>
+						&format!("Unspecified Application-Specific Value; Raw: {value:#X}"),
+					unexpected => unreachable!("{unexpected:?}"),
 				}
-			},
-			SectionType::ApplicationSpecific(value) =>
-				&format!("Unspecified Application-Specific Value; Raw: {value:#X}"),
+			}
 		};
 		println!("Type: {type_description}");
 	}
