@@ -1,7 +1,10 @@
 .intel_syntax noprefix
 
+.file "crt1.s"
+
 .section .text
 	.global _start
+	.type _start, @function
 
 	.global __stack_end__stub
 	.type __stack_end__stub, @function

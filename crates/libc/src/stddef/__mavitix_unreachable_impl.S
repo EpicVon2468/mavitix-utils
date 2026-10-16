@@ -1,5 +1,7 @@
 .intel_syntax noprefix
 
+.file "__mavitix_unreachable_impl.s"
+
 .section .text
 	.global __mavitix_unreachable_impl
 	.type __mavitix_unreachable_impl, @function

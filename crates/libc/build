@@ -103,6 +103,12 @@ $AS $ASFLAGS target/release/tmp/info.s -o target/release/artefacts/info.o
 $CPP $CPPFLAGS src/stddef/__mavitix_unreachable_impl.S -o target/release/tmp/__mavitix_unreachable_impl.s
 $AS $ASFLAGS target/release/tmp/__mavitix_unreachable_impl.s -o target/release/artefacts/__mavitix_unreachable_impl.o
 
+$CPP $CPPFLAGS src/unistd/getuid_x86-64.S -o target/release/tmp/getuid.s
+$AS $ASFLAGS target/release/tmp/getuid.s -o target/release/artefacts/getuid.o
+
+$CPP $CPPFLAGS src/unistd/getgid_x86-64.S -o target/release/tmp/getgid.s
+$AS $ASFLAGS target/release/tmp/getgid.s -o target/release/artefacts/getgid.o
+
 # https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-fcf-protection
 # https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#index-fcf-protection
 # https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/cf-protection.html
@@ -167,6 +173,8 @@ $RUSTC $RUSTFLAGS src/str/strlen.rs
 OBJECT_FILES="
 	target/release/artefacts/info.o
 	target/release/artefacts/__mavitix_unreachable_impl.o
+	target/release/artefacts/getuid.o
+	target/release/artefacts/getgid.o
 	target/release/artefacts/stdio__init.o
 	target/release/artefacts/start_main.o
 	target/release/artefacts/_exit.o
