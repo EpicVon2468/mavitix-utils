@@ -4,7 +4,7 @@ set -e
 
 # https://stackoverflow.com/a/52674277
 
-options=$(getopt -s "bash" -l "help,verbose-ub-checks,use-ranlib,no-ibt-plt,strip" -o "hv" -- "$@")
+options=$(getopt -s "bash" -l "help,verbose-ub-checks,use-ranlib,no-ibt-plt,no-shadowstack,strip" -o "hv" -- "$@")
 
 eval set -- "$options"
 
@@ -17,12 +17,14 @@ Usage:
 		[--verbose-ub-checks]
 		[--use-ranlib]
 		[--no-ibt-plt]
+		[--no-shadowstack]
 		[--strip]
 EOF
 }
 
 opt__use_ranlib="false"
 opt__ibt_plt="true"
+opt__shadowstack="true"
 opt__strip="false"
 
 while true; do
@@ -41,6 +43,9 @@ while true; do
 			;;
 		"--no-ibt-plt")
 			opt__ibt_plt="false"
+			;;
+		"--no-shadowstack")
+			opt__shadowstack="false"
 			;;
 		"--strip")
 			opt__strip="true"
@@ -82,13 +87,13 @@ case "$($CC --version)" in
 		;;
 esac
 
-ASFLAGS+=" -mnaked-reg --warn"
+ASFLAGS+=" -mnaked-reg --warn -mrelax-relocations=yes --divide"
 ASFLAGS+=" -gdwarf-5 -g --gsframe --gsframe-3 --gdwarf-cie-version=4"
 
 architecture="$(uname -m | sed -e 's/x86_64/x86-64/g')"
 
 if [ "$architecture" = "x86-64" ]; then
-	ASFLAGS+=" --64 -O2 -mintel64 -msyntax=intel -mmnemonic=intel"
+	ASFLAGS+=" --64 -O2 -mintel64 -msyntax=intel -mmnemonic=intel -mx86-used-note=yes"
 fi
 
 CPPFLAGS+=" -fdirectives-only -nostdlib -nostdinc -std=c23"
@@ -213,40 +218,49 @@ case "$CC_TYPE" in
 		;;
 esac
 
+# https://research.google/pubs/safe-icf-pointer-safe-and-unwinding-aware-identical-code-folding-in-gold/
 # https://sourceware.org/binutils/docs/ld.html
-LDFLAGS+=" -O3 --relax -nostdlib -z lazy -z relro -z memory-seal -z global -z text -z combreloc -z unique -z nodelete -z sectionheader -z initfirst --error-execstack --eh-frame-hdr --enable-new-dtags --build-id"
+LDFLAGS+=" -O3 --relax -nostdlib -z lazy -z relro -z memory-seal -z global -z text -z combreloc -z unique -z nodelete -z sectionheader -z initfirst --error-execstack --eh-frame-hdr --enable-new-dtags --build-id --demangle --gc-sections --enable-linker-version"
 if [ "$architecture" = "x86-64" ]; then
-	LDFLAGS+=" -z isa-level-report=all -z pack-relative-relocs"
+	LDFLAGS+=" -z isa-level-report=all -z pack-relative-relocs -z mark-plt"
 	if [ "$opt__ibt_plt" = "true" ]; then
 		LDFLAGS+=" -z ibt -z ibtplt"
+	fi
+	if [ "$opt__shadowstack" = "true" ]; then
+		LDFLAGS+=" -z shstk"
 	fi
 fi
 case "$($LD --version | tr '[:upper:]' '[:lower:]')" in
 	*"wild"*)
-		LDFLAGS+=" --enable-linker-version"
 		# https://github.com/wild-linker/wild/issues/1576 [SFrame 3]
 		# https://github.com/wild-linker/wild/issues/1156 [Weak Symbols]
 		# https://github.com/wild-linker/wild/issues/1088 [Garbage Collect Debug Information]
+		# https://github.com/wild-linker/wild/issues/2650 [-z {ibt,}plt]
 		;;
-	*"lld"*)
+	*"gold"*)
+		export LDFLAGS="$(echo $LDFLAGS | sed -e 's/ \{0,\}--error-execstack//g' -e 's/ \{0,\}-z \{0,\}memory-seal//g' -e 's/ \{0,\}-z \{0,\}sectionheader//g' -e 's/ \{0,\}-z \{0,\}isa-level-report=all//g' -e 's/ \{0,\}-z \{0,\}pack-relative-relocs//g' -e 's/ \{0,\}-z \{0,\}ibt\(plt\)\{0,1\}//g')"
+		LDFLAGS+=" --icf=safe"
+		;;
+	*"lld"*|*"mold 2"*)
 		# ld.lld: error: target/release/artefacts/stdio__init.o:(.debug_names): found DWARF64, which is currently unsupported
 		# ld.lld: error: target/release/artefacts/start_main.o:(.debug_names): found DWARF64, which is currently unsupported
 		# LDFLAGS+=" --debug-names"
-		# https://github.com/llvm/llvm-project/pull/229129 [`LDEMULATION`]
+		# `ld.lld` is not actually "compatible with GNU linkers"; see: https://github.com/llvm/llvm-project/issues/233006
+		export LDFLAGS="$(echo $LDFLAGS | sed -e 's/ \{0,\}--error-execstack//g' -e 's/ \{0,\}--enable-linker-version//g')"
+		LDFLAGS+=" --icf=safe"
 		;;
-	*"mold 2"*)
-		;;
-	*"mold 3"*)
+	*"mold"*)
+		# mold 0.x, 1.x, 3.x, and any future versions
+		# Welcome to `User-Agent` hell
 		echo "Slopware detected; terminating..."
 		exit 1
 		;;
-	*"mold"*)
-		# mold 0.x, 1.x, and any future versions
-		# Welcome to `User-Agent` hell
-		;;
 	*"gnu ld"*)
 		# A lot of "compatible with GNU linkers" programs do not actually support all ld.bfd options.
-		LDFLAGS+=" --enable-linker-version --no-gnu2-tls-tag"
+		LDFLAGS+=" --enable-linker-version --error-rwx-segments"
+		if [ "$architecture" = "x86-64" ]; then
+			LDFLAGS+=" --no-gnu2-tls-tag"
+		fi
 		;;
 	*)
 		echo "Unknown linker '$LD'; some options or flags may not be applied"

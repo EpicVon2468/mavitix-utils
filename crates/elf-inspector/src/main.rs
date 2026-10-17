@@ -1,13 +1,13 @@
 #![feature(const_trait_impl, const_convert, derive_const, const_cmp)]
 
 use std::{
-	env::{args, Args},
+	env::{Args, args},
 	fs::File,
 	hint::cold_path,
 	io::Read as _,
 };
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 use mavitix_utils::main;
 
@@ -16,6 +16,7 @@ pub mod errors;
 
 use crate::{
 	elf::{
+		ABI,
 		ELFType,
 		ExecutableHeader,
 		Machine,
@@ -23,7 +24,6 @@ use crate::{
 		ProgramType,
 		SectionHeader,
 		SectionType,
-		ABI,
 	},
 	errors::ELFError,
 };

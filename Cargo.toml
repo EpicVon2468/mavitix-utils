@@ -41,6 +41,7 @@ members = [
 	"crates/colonthree",
 	"crates/coreutils",
 	"crates/fetch",
+	"crates/as",
 	".",
 ]
 default-members = ["."]
