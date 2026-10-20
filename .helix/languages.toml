@@ -41,6 +41,7 @@ roots = ["Cargo.toml", "Cargo.lock"]
 shebangs = ["rust-script", "cargo", "rustc"]
 formatter = {
 	command = "rustfmt",
+	args = [ "--edition=2024" ],
 }
 auto-format = true
 comment-tokens = ["//", "///", "//!"]

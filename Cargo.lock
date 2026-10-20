@@ -46,6 +46,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mavitix-as"
+version = "0.0.0-git"
+dependencies = [
+ "anyhow",
+ "mavitix-utils",
+]
+
+[[package]]
 name = "mavitix-utils"
 version = "0.0.0-git"
 dependencies = [

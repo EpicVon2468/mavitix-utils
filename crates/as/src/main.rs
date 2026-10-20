@@ -1,14 +1,27 @@
+#![feature(
+	const_trait_impl,
+	derive_const,
+	const_convert,
+	const_option_ops,
+	const_cmp,
+	const_default
+)]
+
 use std::{
-	hint::{assert_unchecked, cold_path},
-	str::Chars,
+	ffi::OsStr,
+	hint::cold_path,
+	os::unix::ffi::OsStrExt as _,
+	path::Path,
+	str::{Chars, FromStr as _},
 };
 
 use anyhow::Result;
 
 use mavitix_utils::{const_println, main};
 
-use crate::cli::{ArgIter, CLI};
+use crate::cli::{ArgIter, CLI, OptLevel, Target};
 
+pub mod backend;
 pub mod cli;
 
 main!(main_impl());
@@ -18,26 +31,55 @@ pub fn main_impl() -> Result<()> {
 	let mut args: ArgIter = ArgIter::new();
 	while let Some(arg) = args.next() {
 		if args.seen_double_dash || arg.as_bytes()[0] != b'-' {
-			cli.files.push(arg);
+			cli.files.push({
+				// SANITY(unusual):
+				// Bypass indirection in conversion.
+				// Less work for the optimiser, and less potential overhead.
+				Path::new(OsStr::from_bytes(arg.into_bytes().leak()))
+			});
 			continue;
 		};
-		let (first, second, rest): (char, char, &str) = {
-			let mut chars: Chars = arg.chars();
-			(chars.next().unwrap(), chars.next().unwrap(), chars.as_str())
+		if arg.len() == 1 {
+			cold_path();
+			cli.read_from_stdin = true;
+			continue;
 		};
-		cfg_select! {
-			debug_assertions => {
-				assert!(first == '-');
-			},
-			not(debug_assertions) => {
-				// SAFETY:
-				// The operand catch at the start of the loop handles args which
-				// do not start with '-', so `first` is always '-' here.
-				unsafe {
-					assert_unchecked(first == '-');
-				};
-			},
+		let (second, rest): (char, &str) = {
+			// SAFETY:
+			// The first check of the loop will catch any case where the first byte is not '-'.
+			// Thus, the length of the first character is known to be one byte at this point, and we can slice past.
+			let mut chars: Chars = unsafe { arg.get_unchecked(1..) }.chars();
+			(
+				// SAFETY: The above checks make it impossible for this to fail.
+				unsafe { chars.next().unwrap_unchecked() },
+				chars.as_str(),
+			)
 		};
+		macro_rules! try_next_as_operand {
+			($(,)?) => {
+				match args.peek() {
+					// SANITY(unusual): Have to use a borrow instead of the `to_str()` method due to `Drop` issues.
+					// SAFETY: If `peek()` was `Some(_)`, then there will be a value when `next()` is called.
+					Some(next) if next.as_bytes()[0] != b'-' => &unsafe { args.next().unwrap_unchecked() },
+					_ => panic!(/* missing operand for option */),
+				}
+			};
+		}
+		macro_rules! short_arg_required_val {
+			($(,)?) => {
+				if rest.is_empty() {
+					try_next_as_operand!()
+				} else if let b'=' = rest.as_bytes()[0] {
+					let value: &str = unsafe { rest.get_unchecked(1..) };
+					if value.is_empty() {
+						panic!(/* missing operand for option */);
+					};
+					value
+				} else {
+					rest
+				}
+			};
+		}
 		match second {
 			'V' => {
 				const_println!(env!("CARGO_PKG_VERSION"));
@@ -45,6 +87,13 @@ pub fn main_impl() -> Result<()> {
 			},
 			'g' => cli.debug_info = true,
 			'v' => cli.verbose = true,
+			'O' => {
+				let input: &str = short_arg_required_val!();
+				let Ok(value): Result<OptLevel, _> = OptLevel::from_str(input) else {
+					panic!(/* invalid operand */);
+				};
+				cli.opt_level = value;
+			},
 			'-' => {
 				if rest.is_empty() {
 					// SANITY(unusual): This is true at most once.
@@ -67,10 +116,7 @@ pub fn main_impl() -> Result<()> {
 					($(,)?) => {
 						match value {
 							Some(inner) => inner,
-							None => match args.peek() {
-								Some(next) if next.as_bytes()[0] != b'-' => unsafe { args.next().unwrap_unchecked() }.as_str(),
-								_ => panic!(/* missing operand for option */),
-							},
+							None => try_next_as_operand!(),
 						}
 					};
 				}
@@ -100,6 +146,13 @@ pub fn main_impl() -> Result<()> {
 						cli.warn = false;
 					},
 					"divide" | "64" => (),
+					"target" => {
+						let input: &str = get_raw_value!();
+						let Ok(value): Result<Target, _> = Target::from_str(input) else {
+							panic!(/* unknown or invalid target */);
+						};
+						cli.target = value;
+					},
 					_ => panic!(/* unknown arg */),
 				};
 			},
@@ -134,5 +187,6 @@ pub fn main_impl() -> Result<()> {
 		// 	_ => panic!(),
 		// };
 	}
+	dbg!(&cli);
 	Ok(())
 }

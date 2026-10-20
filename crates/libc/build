@@ -234,8 +234,10 @@ case "$($LD --version | tr '[:upper:]' '[:lower:]')" in
 	*"wild"*)
 		# https://github.com/wild-linker/wild/issues/1576 [SFrame 3]
 		# https://github.com/wild-linker/wild/issues/1156 [Weak Symbols]
+		# https://github.com/wild-linker/wild/issues/600 [Weak Symbol [Implementation] Selection]
 		# https://github.com/wild-linker/wild/issues/1088 [Garbage Collect Debug Information]
 		# https://github.com/wild-linker/wild/issues/2650 [-z {ibt,}plt]
+		# https://github.com/wild-linker/wild/issues/1595 [Identical Code Folding]
 		;;
 	*"gold"*)
 		export LDFLAGS="$(echo $LDFLAGS | sed -e 's/ \{0,\}--error-execstack//g' -e 's/ \{0,\}-z \{0,\}memory-seal//g' -e 's/ \{0,\}-z \{0,\}sectionheader//g' -e 's/ \{0,\}-z \{0,\}isa-level-report=all//g' -e 's/ \{0,\}-z \{0,\}pack-relative-relocs//g' -e 's/ \{0,\}-z \{0,\}ibt\(plt\)\{0,1\}//g')"
@@ -245,6 +247,7 @@ case "$($LD --version | tr '[:upper:]' '[:lower:]')" in
 		# ld.lld: error: target/release/artefacts/stdio__init.o:(.debug_names): found DWARF64, which is currently unsupported
 		# ld.lld: error: target/release/artefacts/start_main.o:(.debug_names): found DWARF64, which is currently unsupported
 		# LDFLAGS+=" --debug-names"
+		# https://github.com/llvm/llvm-project/issues/165097 [CIEs Not GC'd]
 		# `ld.lld` is not actually "compatible with GNU linkers"; see: https://github.com/llvm/llvm-project/issues/233006
 		export LDFLAGS="$(echo $LDFLAGS | sed -e 's/ \{0,\}--error-execstack//g' -e 's/ \{0,\}--enable-linker-version//g')"
 		LDFLAGS+=" --icf=safe"
