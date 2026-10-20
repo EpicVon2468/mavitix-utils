@@ -1,4 +1,6 @@
-use std::ffi::{CStr, CString, c_char};
+use std::{ffi::c_char, slice};
+
+use crate::strlen;
 
 // This seems to be accurate for all my targets.
 // It's more favourable than taking a dependency on the `libc` crate.
@@ -130,11 +132,10 @@ pub fn get_raw_username() -> Option<*mut c_char> {
 }
 
 pub fn get_username() -> Option<String> {
-	let pw_name: *mut c_char = get_raw_username()?;
+	let pw_name: *const c_char = get_raw_username()?;
 	// SAFETY: `passwd->pw_name` is generally well-formed.
-	let user: CString = crate::cstr_clone(unsafe { CStr::from_ptr(pw_name) });
-	match user.into_string() {
-		Ok(value) => Some(value),
-		Err(_) => None,
-	}
+	let len: usize = unsafe { strlen(pw_name) };
+	// SAFETY: The length is directly calculated from relevant variables.
+	let dest: &[u8] = unsafe { slice::from_raw_parts(pw_name as *const u8, len) };
+	String::from_utf8(dest.to_vec()).ok()
 }

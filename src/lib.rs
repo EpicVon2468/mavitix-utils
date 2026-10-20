@@ -1,6 +1,6 @@
 #![feature(const_default, const_trait_impl, ffi_const, extern_types)]
 
-use std::ffi::{CStr, CString, c_char, c_void};
+use std::ffi::{c_char, c_void};
 
 pub mod login;
 pub mod passwd;
@@ -83,17 +83,6 @@ macro_rules! const_println {
 	}};
 }
 
-#[inline(always)]
-pub fn cstr_clone(value: &CStr) -> CString {
-	let mut dest: CString = {
-		let tmp: Vec<u8> = Vec::with_capacity(value.count_bytes() + 1);
-		// SAFETY:
-		unsafe { CString::from_vec_unchecked(tmp) }
-	};
-	value.clone_into(&mut dest);
-	dest
-}
-
 pub unsafe fn malloc<T>(size: usize) -> Option<*mut T> {
 	// SAFETY: Callers manage returned memory.
 	let mem: *mut T = unsafe { raw_malloc(size * size_of::<T>()) } as *mut T;
@@ -130,6 +119,8 @@ unsafe extern "C" {
 	pub fn memcpy(dest: *mut c_void, src: *const c_void, n: usize) -> *mut c_void;
 
 	pub fn free(ptr: *mut c_void);
+
+	pub fn strlen(r#str: *const c_char) -> usize;
 
 	#[unsafe(ffi_const)]
 	pub safe fn __errno_location() -> *mut i32;

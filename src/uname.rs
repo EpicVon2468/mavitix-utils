@@ -1,4 +1,6 @@
-use std::ffi::{CStr, c_char, c_int};
+use std::{ffi::c_char, slice};
+
+use crate::strlen;
 
 pub const UTSNAME_LENGTH: usize = 65;
 
@@ -25,14 +27,10 @@ macro_rules! utsname_conv {
 				),
 			);
 			// SAFETY: uname(2) returns well-formed C strings.
-			let cstr: &CStr = unsafe { CStr::from_ptr(ptr) };
-			match $crate::cstr_clone(cstr).into_string() {
-				Ok(value) => value,
-				Err(_) => {
-					std::hint::cold_path();
-					unreachable!("uname(2) returns well-formed C strings.");
-				},
-			}
+			let len: usize = unsafe { strlen(ptr) };
+			// SAFETY: The length is directly calculated from relevant variables.
+			let dest: &[u8] = unsafe { slice::from_raw_parts(ptr as *const u8, len) };
+			String::from_utf8(dest.to_vec()).unwrap()
 		}
 	};
 }
@@ -63,7 +61,7 @@ const impl Default for utsname {
 #[link(name = "c")]
 unsafe extern "C" {
 
-	pub fn uname(buf: *mut utsname) -> c_int;
+	pub fn uname(buf: *mut utsname) -> i32;
 }
 
 pub fn get_uname() -> utsname {
