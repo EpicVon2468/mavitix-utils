@@ -11,8 +11,5 @@ license.workspace = true
 [dependencies.mavitix-utils]
 path = "../.."
 
-[dependencies.anyhow]
-version = ">=1.0.104, <2"
-
 [lints]
 workspace = true

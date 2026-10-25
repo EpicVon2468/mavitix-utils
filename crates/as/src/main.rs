@@ -12,21 +12,53 @@ use std::{
 	hint::cold_path,
 	os::unix::ffi::OsStrExt as _,
 	path::Path,
-	str::{Chars, FromStr as _},
+	process::ExitCode,
+	str::Chars,
 };
 
-use anyhow::Result;
+use mavitix_utils::const_println;
 
-use mavitix_utils::{const_println, main};
-
-use crate::cli::{ArgIter, CLI, OptLevel, Target};
+use crate::{
+	cli::{ArgIter, CLI, OptLevel, Target, arg::Arg as _},
+	errors::{CLIError, MainError},
+};
 
 pub mod backend;
 pub mod cli;
+pub mod errors;
+pub mod frontend;
 
-main!(main_impl());
+pub fn main() -> ExitCode {
+	match main_impl() {
+		Ok(()) => ExitCode::SUCCESS,
+		Err(error) => {
+			match error {
+				MainError::CLI(error) => {
+					let display: String = format!("\u{001B}[1;91merror\u{001B}[22;39m: {error}")
+						.replace(
+							"\n",
+							"\n  \u{001B}[96m|\u{001B}[39m \u{001B}[1;35mhelp\u{001B}[22;39m: ",
+						);
+					eprintln!("{display}");
+				},
+			};
+			eprintln!(concat!(
+				'\n',
+				env!("CARGO_BIN_NAME"),
+				": a fatal error occurred, aborting",
+			));
+			ExitCode::FAILURE
+		},
+	}
+}
 
-pub fn main_impl() -> Result<()> {
+macro_rules! err {
+	($error:expr $(,)?) => {
+		return Err($error)?
+	};
+}
+
+pub fn main_impl() -> Result<(), MainError> {
 	let mut cli: CLI = CLI::default();
 	let mut args: ArgIter = ArgIter::new();
 	while let Some(arg) = args.next() {
@@ -56,23 +88,30 @@ pub fn main_impl() -> Result<()> {
 			)
 		};
 		macro_rules! try_next_as_operand {
-			($(,)?) => {
+			($else_case:expr $(,)?) => {
 				match args.peek() {
-					// SANITY(unusual): Have to use a borrow instead of the `to_str()` method due to `Drop` issues.
 					// SAFETY: If `peek()` was `Some(_)`, then there will be a value when `next()` is called.
-					Some(next) if next.as_bytes()[0] != b'-' => &unsafe { args.next().unwrap_unchecked() },
-					_ => panic!(/* missing operand for option */),
+					Some(next) if next.as_bytes()[0] != b'-' => unsafe { args.next().unwrap_unchecked() },
+					_ => $else_case,
 				}
 			};
 		}
 		macro_rules! short_arg_required_val {
-			($(,)?) => {
+			($arg_ty:ty $(,)?) => {
 				if rest.is_empty() {
-					try_next_as_operand!()
+					&try_next_as_operand!({
+						err!(CLIError::ExpectedOperand {
+							arg_name: const { <$arg_ty>::LONG_NAME.or(<$arg_ty>::SHORT_NAME).unwrap() },
+							possible_values: <$arg_ty>::POSSIBLE_VALUES,
+						});
+					})
 				} else if let b'=' = rest.as_bytes()[0] {
 					let value: &str = unsafe { rest.get_unchecked(1..) };
 					if value.is_empty() {
-						panic!(/* missing operand for option */);
+						err!(CLIError::ExpectedOperand {
+							arg_name: const { <$arg_ty>::LONG_NAME.or(<$arg_ty>::SHORT_NAME).unwrap() },
+							possible_values: <$arg_ty>::POSSIBLE_VALUES,
+						});
 					};
 					value
 				} else {
@@ -88,11 +127,8 @@ pub fn main_impl() -> Result<()> {
 			'g' => cli.debug_info = true,
 			'v' => cli.verbose = true,
 			'O' => {
-				let input: &str = short_arg_required_val!();
-				let Ok(value): Result<OptLevel, _> = OptLevel::from_str(input) else {
-					panic!(/* invalid operand */);
-				};
-				cli.opt_level = value;
+				let input: &str = short_arg_required_val!(OptLevel);
+				cli.opt_level = cli::arg::try_parse(input)?;
 			},
 			'-' => {
 				if rest.is_empty() {
@@ -101,22 +137,32 @@ pub fn main_impl() -> Result<()> {
 					args.seen_double_dash = true;
 					continue;
 				};
-				let (prefix, value): (&str, Option<&str>) = match rest.split_once('=') {
+				let (prefix, operand): (&str, Option<&str>) = match rest.split_once('=') {
 					None => (rest, None),
-					Some((prefix, value)) => (prefix, Some(value)),
+					Some((prefix, operand)) => (prefix, Some(operand)),
 				};
 				macro_rules! no_value_allowed {
-					($(,)?) => {
-						if let Some(_) = value {
-							panic!(/* unexpected operand for flag-type option */);
+					($arg_name:literal $(,)?) => {
+						if let Some(actual) = operand {
+							err!(CLIError::UnexpectedOperand {
+								arg_name: $arg_name,
+								actual: actual.to_owned(),
+							});
 						};
 					};
 				}
 				macro_rules! get_raw_value {
-					($(,)?) => {
-						match value {
+					($arg_ty:ty $(,)?) => {
+						match operand {
 							Some(inner) => inner,
-							None => try_next_as_operand!(),
+							None => &try_next_as_operand!({
+								err!(CLIError::ExpectedOperand {
+									arg_name: const {
+										<$arg_ty>::LONG_NAME.or(<$arg_ty>::SHORT_NAME).unwrap()
+									},
+									possible_values: <$arg_ty>::POSSIBLE_VALUES,
+								});
+							}),
 						}
 					};
 				}
@@ -129,63 +175,41 @@ pub fn main_impl() -> Result<()> {
 						));
 						return Ok(());
 					},
-					"gen-debug" => {
-						no_value_allowed!();
+					"debug" => {
+						no_value_allowed!("--debug");
 						cli.debug_info = true;
 					},
+					"debug-embed-source" => {
+						no_value_allowed!("--debug-embed-source");
+						cli.debug_embed_source = true;
+					},
 					"verbose" => {
-						no_value_allowed!();
+						no_value_allowed!("--verbose");
 						cli.verbose = true;
 					},
-					"warn" => {
-						no_value_allowed!();
-						cli.warn = true;
-					},
-					"no-warn" => {
-						no_value_allowed!();
-						cli.warn = false;
-					},
-					"divide" | "64" => (),
+					// TODO: --warnings={all,none,etc.}
 					"target" => {
-						let input: &str = get_raw_value!();
-						let Ok(value): Result<Target, _> = Target::from_str(input) else {
-							panic!(/* unknown or invalid target */);
-						};
-						cli.target = value;
+						let input: &str = get_raw_value!(Target);
+						cli.target = cli::arg::try_parse(input)?;
 					},
-					_ => panic!(/* unknown arg */),
+					_ => err!(CLIError::UnrecognisedOption {
+						arg: {
+							let mut dest: String = String::with_capacity(prefix.len() + 2);
+							dest.push_str("--");
+							dest.push_str(prefix);
+							dest
+						},
+						value: match operand {
+							Some(operand) => Some(operand.to_owned()),
+							None => 'try_next: {
+								Some(try_next_as_operand!(break 'try_next None))
+							},
+						},
+					}),
 				};
 			},
-			'm' if !rest.is_empty() => {
-				match rest {
-					"naked-reg" | "syntax=intel" | "mnemonic=intel" | "intel64" | "abi=lp64" => (),
-					_ => panic!(/* unknown arg */),
-				};
-			},
-			_ => panic!(/* unknown arg */),
+			_ => err!(CLIError::UnrecognisedOption { arg, value: None }),
 		};
-		// match arg {
-		// 	"--version" => {
-		// 		const_println!(concat!(
-		// 			env!("CARGO_BIN_NAME"),
-		// 			' ',
-		// 			env!("CARGO_PKG_VERSION"),
-		// 		));
-		// 		return Ok(());
-		// 	},
-		// 	"-V" => {
-		// 		const_println!(env!("CARGO_PKG_VERSION"));
-		// 		return Ok(());
-		// 	},
-		// 	"-g" | "--gen-debug" => cli.debug_info = true,
-		// 	"-v" | "--verbose" => cli.verbose = true,
-		// 	"--warn" => cli.warn = true,
-		// 	"--no-warn" => cli.warn = false,
-		// 	"--" => args.seen_double_dash = true,
-		// 	"-mnaked-reg" | "-msyntax=intel" | "-mmnemonic=intel" | "-mintel64" | "--divide"
-		// 	| "--64" | "-mabi=lp64" => (),
-		// 	_ => panic!(),
-		// };
 	}
 	dbg!(&cli);
 	Ok(())
