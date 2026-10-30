@@ -4,7 +4,10 @@ use std::{
 	hint::cold_path,
 };
 
-use crate::cli::arg::Arg;
+use crate::{
+	cli::{ALL_OPTIONS, arg::Arg},
+	fuzzy,
+};
 
 #[must_use]
 #[derive(Debug)]
@@ -38,7 +41,7 @@ impl Display for MainError {
 pub enum CLIError {
 	ExpectedOperand {
 		arg_name: &'static str,
-		possible_values: &'static [&'static str],
+		possible_operands: &'static [&'static str],
 	},
 	UnexpectedOperand {
 		arg_name: &'static str,
@@ -46,7 +49,7 @@ pub enum CLIError {
 	},
 	InvalidOperand {
 		arg_name: &'static str,
-		possible_values: &'static [&'static str],
+		possible_operands: &'static [&'static str],
 		suggestion: Option<&'static str>,
 		actual: String,
 	},
@@ -58,10 +61,13 @@ pub enum CLIError {
 
 impl CLIError {
 	#[inline]
-	pub fn invalid_operand<T: const Arg>(actual: String) -> Self {
+	pub fn invalid_operand<T: const Arg>(actual: String, is_long: bool) -> Self {
 		Self::InvalidOperand {
-			arg_name: const { T::LONG_NAME.or(T::SHORT_NAME).unwrap() },
-			possible_values: T::POSSIBLE_VALUES,
+			arg_name: match if is_long { T::LONG_NAME } else { T::SHORT_NAME } {
+				Some(arg_name) => arg_name,
+				None => unreachable!(),
+			},
+			possible_operands: T::POSSIBLE_OPERANDS,
 			suggestion: T::suggest_from(&actual),
 			actual,
 		}
@@ -71,13 +77,13 @@ impl CLIError {
 impl Error for CLIError {}
 
 #[inline]
-fn format_possible(fmt: &mut Formatter<'_>, possible_values: &'static [&'static str]) -> FmtResult {
-	write!(fmt, "expected one of: ")?;
-	for index in 0..possible_values.len() {
-		let value: &'static str = possible_values[index];
-		if index + 1 == possible_values.len() {
+fn format_possible(fmt: &mut Formatter<'_>, possible_values: &[&str], join: &str) -> FmtResult {
+	let len: usize = possible_values.len();
+	for index in 0..len {
+		let value: &str = possible_values[index];
+		if index + 1 == len {
 			cold_path();
-			write!(fmt, "or '{value}'")?;
+			write!(fmt, "{join} '{value}'")?;
 		} else {
 			write!(fmt, "'{value}', ")?;
 		};
@@ -90,10 +96,11 @@ impl Display for CLIError {
 		match *self {
 			Self::ExpectedOperand {
 				arg_name,
-				possible_values,
+				possible_operands,
 			} => {
 				writeln!(fmt, "expected operand for option '{arg_name}'")?;
-				format_possible(fmt, possible_values)?;
+				write!(fmt, "\u{0002}help\u{0003} expected one of: ")?;
+				format_possible(fmt, possible_operands, "or")?;
 				Ok(())
 			},
 			Self::UnexpectedOperand {
@@ -106,28 +113,55 @@ impl Display for CLIError {
 			),
 			Self::InvalidOperand {
 				arg_name,
-				possible_values,
+				possible_operands,
 				suggestion,
 				ref actual,
 			} => {
 				writeln!(fmt, "invalid operand for option '{arg_name}'")?;
-				writeln!(fmt, "invalid operand was '{}'", actual.escape_debug())?;
-				format_possible(fmt, possible_values)?;
+				writeln!(
+					fmt,
+					"\u{0002}help\u{0003} invalid operand was '{}'",
+					actual.escape_debug(),
+				)?;
+				write!(fmt, "\u{0002}help\u{0003} expected one of: ")?;
+				format_possible(fmt, possible_operands, "or")?;
+				writeln!(fmt)?;
 				if let Some(suggestion) = suggestion {
-					write!(fmt, "\ntry '{suggestion}' instead")?;
+					write!(fmt, "\u{0002}help\u{0003} try '{suggestion}' instead")?;
 				};
 				Ok(())
 			},
 			Self::UnrecognisedOption { ref arg, ref value } => {
+				let closest: &'static [&'static str] = fuzzy::filter_cli_range(arg, ALL_OPTIONS, 1);
 				writeln!(fmt, "unrecognised option '{}'", arg.escape_debug())?;
 				if let Some(ref value) = *value {
 					writeln!(
 						fmt,
-						"the following operand was also found: '{}'",
+						"\u{0002}help\u{0003} the following operand was also found: '{}'",
 						value.escape_debug(),
 					)?;
 				};
-				write!(fmt, "use '--help' to view recognised options")?;
+				match closest {
+					&[] => (),
+					&[singular] => {
+						writeln!(
+							fmt,
+							"\u{0002}help\u{0003} the closest recognised option is: '{singular}'",
+						)?;
+					},
+					_ => {
+						write!(
+							fmt,
+							"\u{0002}help\u{0003} the closest recognised options are: ",
+						)?;
+						format_possible(fmt, closest, "and")?;
+						writeln!(fmt)?;
+					},
+				};
+				write!(
+					fmt,
+					"\u{0002}help\u{0003} use '--help' to view all recognised options",
+				)?;
 				Ok(())
 			},
 		}

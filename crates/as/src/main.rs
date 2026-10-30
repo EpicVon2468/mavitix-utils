@@ -4,7 +4,8 @@
 	const_convert,
 	const_option_ops,
 	const_cmp,
-	const_default
+	const_default,
+	const_clone
 )]
 
 use std::{
@@ -19,7 +20,7 @@ use std::{
 use mavitix_utils::const_println;
 
 use crate::{
-	cli::{ArgIter, CLI, OptLevel, Target, arg::Arg as _},
+	cli::{Arch, ArgIter, CLI, Endian, OptLevel, arg::Arg as _},
 	errors::{CLIError, MainError},
 };
 
@@ -27,6 +28,7 @@ pub mod backend;
 pub mod cli;
 pub mod errors;
 pub mod frontend;
+pub mod fuzzy;
 
 pub fn main() -> ExitCode {
 	match main_impl() {
@@ -36,8 +38,8 @@ pub fn main() -> ExitCode {
 				MainError::CLI(error) => {
 					let display: String = format!("\u{001B}[1;91merror\u{001B}[22;39m: {error}")
 						.replace(
-							"\n",
-							"\n  \u{001B}[96m|\u{001B}[39m \u{001B}[1;35mhelp\u{001B}[22;39m: ",
+							"\u{0002}help\u{0003}",
+							"  \u{001B}[96m|\u{001B}[39m \u{001B}[1;35mhelp\u{001B}[22;39m:",
 						);
 					eprintln!("{display}");
 				},
@@ -82,7 +84,7 @@ pub fn main_impl() -> Result<(), MainError> {
 			// Thus, the length of the first character is known to be one byte at this point, and we can slice past.
 			let mut chars: Chars = unsafe { arg.get_unchecked(1..) }.chars();
 			(
-				// SAFETY: The above checks make it impossible for this to fail.
+				// SAFETY: Always more than a length of 1 here.
 				unsafe { chars.next().unwrap_unchecked() },
 				chars.as_str(),
 			)
@@ -98,24 +100,28 @@ pub fn main_impl() -> Result<(), MainError> {
 		}
 		macro_rules! short_arg_required_val {
 			($arg_ty:ty $(,)?) => {
-				if rest.is_empty() {
-					&try_next_as_operand!({
+				match rest.as_bytes() {
+					&[] => &try_next_as_operand!({
 						err!(CLIError::ExpectedOperand {
-							arg_name: const { <$arg_ty>::LONG_NAME.or(<$arg_ty>::SHORT_NAME).unwrap() },
-							possible_values: <$arg_ty>::POSSIBLE_VALUES,
+							arg_name: const { <$arg_ty>::SHORT_NAME.unwrap() },
+							possible_operands: <$arg_ty>::POSSIBLE_OPERANDS,
 						});
-					})
-				} else if let b'=' = rest.as_bytes()[0] {
-					let value: &str = unsafe { rest.get_unchecked(1..) };
-					if value.is_empty() {
-						err!(CLIError::ExpectedOperand {
-							arg_name: const { <$arg_ty>::LONG_NAME.or(<$arg_ty>::SHORT_NAME).unwrap() },
-							possible_values: <$arg_ty>::POSSIBLE_VALUES,
-						});
-					};
-					value
-				} else {
-					rest
+					}),
+					&[b'=', ..] => {
+						// SANITY(unusual):
+						// Not using the `..` pattern matched above, as that would only yield `&[u8]`, not `&str`.
+						// SAFETY:
+						// The pattern match arm validates this slice.
+						let value: &str = unsafe { rest.get_unchecked(1..) };
+						if value.is_empty() {
+							err!(CLIError::ExpectedOperand {
+								arg_name: const { <$arg_ty>::SHORT_NAME.unwrap() },
+								possible_operands: <$arg_ty>::POSSIBLE_OPERANDS,
+							});
+						};
+						value
+					},
+					_ => rest,
 				}
 			};
 		}
@@ -124,11 +130,11 @@ pub fn main_impl() -> Result<(), MainError> {
 				const_println!(env!("CARGO_PKG_VERSION"));
 				return Ok(());
 			},
-			'g' => cli.debug_info = true,
 			'v' => cli.verbose = true,
+			'g' => cli.debug_info = true,
 			'O' => {
 				let input: &str = short_arg_required_val!(OptLevel);
-				cli.opt_level = cli::arg::try_parse(input)?;
+				cli.opt_level = cli::arg::try_parse_short(input)?;
 			},
 			'-' => {
 				if rest.is_empty() {
@@ -157,10 +163,8 @@ pub fn main_impl() -> Result<(), MainError> {
 							Some(inner) => inner,
 							None => &try_next_as_operand!({
 								err!(CLIError::ExpectedOperand {
-									arg_name: const {
-										<$arg_ty>::LONG_NAME.or(<$arg_ty>::SHORT_NAME).unwrap()
-									},
-									possible_values: <$arg_ty>::POSSIBLE_VALUES,
+									arg_name: const { <$arg_ty>::LONG_NAME.unwrap() },
+									possible_operands: <$arg_ty>::POSSIBLE_OPERANDS,
 								});
 							}),
 						}
@@ -175,6 +179,10 @@ pub fn main_impl() -> Result<(), MainError> {
 						));
 						return Ok(());
 					},
+					"verbose" => {
+						no_value_allowed!("--verbose");
+						cli.verbose = true;
+					},
 					"debug" => {
 						no_value_allowed!("--debug");
 						cli.debug_info = true;
@@ -183,14 +191,18 @@ pub fn main_impl() -> Result<(), MainError> {
 						no_value_allowed!("--debug-embed-source");
 						cli.debug_embed_source = true;
 					},
-					"verbose" => {
-						no_value_allowed!("--verbose");
-						cli.verbose = true;
+					"opt-level" => {
+						let input: &str = get_raw_value!(OptLevel);
+						cli.opt_level = cli::arg::try_parse_long(input)?;
 					},
 					// TODO: --warnings={all,none,etc.}
-					"target" => {
-						let input: &str = get_raw_value!(Target);
-						cli.target = cli::arg::try_parse(input)?;
+					"arch" => {
+						let input: &str = get_raw_value!(Arch);
+						cli.arch = cli::arg::try_parse_long(input)?;
+					},
+					"endian" => {
+						let input: &str = get_raw_value!(Endian);
+						cli.endian = cli::arg::try_parse_long(input)?;
 					},
 					_ => err!(CLIError::UnrecognisedOption {
 						arg: {

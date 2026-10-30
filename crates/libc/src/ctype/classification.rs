@@ -15,7 +15,7 @@
 /// Thus, only elements within the range `$start..=$end` will pass the check (in theory).
 macro_rules! char_range_check {
 	($ch:expr; $start:expr, $end:expr $(,)?) => {
-		(($ch as u32 - $start as u32) < ($end as u32 - $start as u32 + 1))
+		(($ch as u32 - $start as u32) < const { $end as u32 - $start as u32 + 1 })
 	};
 }
 

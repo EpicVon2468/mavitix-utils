@@ -66,16 +66,102 @@ mkdir -p target/release
 mkdir -p target/release/tmp
 mkdir -p target/release/artefacts
 
-if [ -z "$CPP" ]; then CPP="cpp"; fi
-if [ -z "$AS" ]; then AS="as"; fi
-if [ -z "$CC" ]; then CC="cc"; fi
-if [ -z "$LD" ]; then LD="ld"; fi
-if [ -z "$AR" ]; then AR="ar"; fi
-if [ -z "$RANLIB" ]; then RANLIB="ranlib"; fi
-if [ -z "$RUSTC" ]; then RUSTC="rustc"; fi
-if [ -z "$STRIP" ]; then STRIP="strip"; fi
+if [ -z "$CPP" ]; then
+	for __CPP__ in "cpp" "clang-cpp"; do
+		if command -v "$__CPP__" >/dev/null 2>&1; then
+			CPP="$__CPP__"
+			break
+		fi
+	done
+	unset __CPP__
+	if [ -z "$CPP" ]; then
+		echo "Couldn't find C pre-processor; terminating..."
+		exit 1
+	fi
+fi
+if [ -z "$AS" ]; then
+	if command -v as >/dev/null 2>&1; then
+		AS="as"
+	else
+		echo "Couldn't find assembler; terminating..."
+		exit 1
+	fi
+fi
+if [ -z "$CC" ]; then
+	for __CC__ in "cc" "clang" "gcc"; do
+		if command -v "$__CC__" >/dev/null 2>&1; then
+			CC="$__CC__"
+			break
+		fi
+	done
+	unset __CC__
+	if [ -z "$CC" ]; then
+		echo "Couldn't find C compiler; terminating..."
+		exit 1
+	fi
+fi
+if [ -z "$LD" ]; then
+	for __LD__ in "ld" {ld.,}"wild" "ld.lld" {ld.,}"mold" {ld.,}"gold" "ld.bfd" "$(uname -m)-linux-"{gnu,musl}"-ld"{,.bfd}; do
+		if command -v "$__LD__" >/dev/null 2>&1; then
+			LD="$__LD__"
+			break
+		fi
+	done
+	unset __LD__
+	if [ -z "$LD" ]; then
+		echo "Couldn't find linker; terminating..."
+		exit 1
+	fi
+fi
+if [ -z "$AR" ]; then
+	for __AR__ in "ar" "llvm-ar" "eu-ar" "$(uname -m)-linux-"{gnu,musl}"-ar"; do
+		if command -v "$__AR__" >/dev/null 2>&1; then
+			AR="$__AR__"
+			break
+		fi
+	done
+	unset __AR__
+	if [ -z "$AR" ]; then
+		echo "Couldn't find ar[chive tool]; terminating..."
+		exit 1
+	fi
+fi
+if [ -z "$RANLIB" -a "$opt__use_ranlib" = "true" ]; then
+	for __RANLIB__ in "ranlib" "llvm-ranlib" "eu-ranlib" "$(uname -m)-linux-"{gnu,musl}"-ranlib"; do
+		if command -v "$__RANLIB__" >/dev/null 2>&1; then
+			RANLIB="$__RANLIB__"
+			break
+		fi
+	done
+	unset __RANLIB__
+	if [ -z "$RANLIB" ]; then
+		echo "Couldn't find archive indexer; terminating..."
+		exit 1
+	fi
+fi
+if [ -z "$RUSTC" ]; then
+	if command -v rustc >/dev/null 2>&1; then
+		RUSTC="rustc"
+	else
+		echo "Couldn't find Rust compiler; terminating..."
+		exit 1
+	fi
+fi
+if [ -z "$STRIP" ]; then
+	for __STRIP__ in "strip" "llvm-strip" "eu-strip" "$(uname -m)-linux-"{gnu,musl}"-strip"; do
+		if command -v "$__STRIP__" >/dev/null 2>&1; then
+			STRIP="$__STRIP__"
+			break
+		fi
+	done
+	unset __STRIP__
+	if [ -z "$STRIP" ]; then
+		echo "Couldn't find symbol discarder; terminating..."
+		exit 1
+	fi
+fi
 
-case "$($CC --version)" in
+case "$($CC --version | tr '[:upper:]' '[:lower:]')" in
 	*"clang"*)
 		CC_TYPE="clang"
 		;;
@@ -86,6 +172,7 @@ case "$($CC --version)" in
 		CC_TYPE="unknown"
 		;;
 esac
+LD_TYPE="$($LD --version | tr '[:upper:]' '[:lower:]')"
 
 ASFLAGS+=" -mnaked-reg --warn -mrelax-relocations=yes --divide"
 ASFLAGS+=" -gdwarf-5 -g --gsframe --gsframe-3 --gdwarf-cie-version=4"
@@ -99,20 +186,20 @@ fi
 CPPFLAGS+=" -fdirectives-only -nostdlib -nostdinc -std=c23"
 CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs"
 
-$CPP $CPPFLAGS "src/crt/crt1_$architecture.S" -o target/release/tmp/crt1.s
-$AS $ASFLAGS target/release/tmp/crt1.s -o target/release/artefacts/crt1.o
+"$CPP" $CPPFLAGS "src/crt/crt1_$architecture.S" -o target/release/tmp/crt1.s
+"$AS" $ASFLAGS target/release/tmp/crt1.s -o target/release/artefacts/crt1.o
 
-$CPP $CPPFLAGS "src/info.S" -o target/release/tmp/info.s
-$AS $ASFLAGS target/release/tmp/info.s -o target/release/artefacts/info.o
+"$CPP" $CPPFLAGS "src/info.S" -o target/release/tmp/info.s
+"$AS" $ASFLAGS target/release/tmp/info.s -o target/release/artefacts/info.o
 
-$CPP $CPPFLAGS src/stddef/__mavitix_unreachable_impl.S -o target/release/tmp/__mavitix_unreachable_impl.s
-$AS $ASFLAGS target/release/tmp/__mavitix_unreachable_impl.s -o target/release/artefacts/__mavitix_unreachable_impl.o
+"$CPP" $CPPFLAGS src/stddef/__mavitix_unreachable_impl.S -o target/release/tmp/__mavitix_unreachable_impl.s
+"$AS" $ASFLAGS target/release/tmp/__mavitix_unreachable_impl.s -o target/release/artefacts/__mavitix_unreachable_impl.o
 
-$CPP $CPPFLAGS src/unistd/getuid_x86-64.S -o target/release/tmp/getuid.s
-$AS $ASFLAGS target/release/tmp/getuid.s -o target/release/artefacts/getuid.o
+"$CPP" $CPPFLAGS src/unistd/getuid_x86-64.S -o target/release/tmp/getuid.s
+"$AS" $ASFLAGS target/release/tmp/getuid.s -o target/release/artefacts/getuid.o
 
-$CPP $CPPFLAGS src/unistd/getgid_x86-64.S -o target/release/tmp/getgid.s
-$AS $ASFLAGS target/release/tmp/getgid.s -o target/release/artefacts/getgid.o
+"$CPP" $CPPFLAGS src/unistd/getgid_x86-64.S -o target/release/tmp/getgid.s
+"$AS" $ASFLAGS target/release/tmp/getgid.s -o target/release/artefacts/getgid.o
 
 # https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-fcf-protection
 # https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#index-fcf-protection
@@ -138,8 +225,8 @@ case "$CC_TYPE" in
 		;;
 esac
 
-$CC $CFLAGS src/stdio/__init.c -c -o target/release/artefacts/stdio__init.o
-$CC $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
+"$CC" $CFLAGS src/stdio/__init.c -c -o target/release/artefacts/stdio__init.o
+"$CC" $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
 
 # TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
 # FIXME: https://github.com/rust-lang/rust/issues/56068
@@ -162,18 +249,18 @@ case "$CC_TYPE" in
 		;;
 esac
 
-$RUSTC $RUSTFLAGS src/internal/__checks.rs
+"$RUSTC" $RUSTFLAGS src/internal/__checks.rs
 rm target/release/artefacts/__checks.o
 
-$RUSTC $RUSTFLAGS src/stdlib/_exit.rs
-$RUSTC $RUSTFLAGS src/sys/utsname.rs
-$RUSTC $RUSTFLAGS src/unistd/symlink.rs
-$RUSTC $RUSTFLAGS src/ctype/classification.rs
-$RUSTC $RUSTFLAGS src/crt/libc_init.rs
-$RUSTC $RUSTFLAGS src/env/environ.rs
-$RUSTC $RUSTFLAGS src/gnu/libc_version.rs
-$RUSTC $RUSTFLAGS src/mem/mem.rs
-$RUSTC $RUSTFLAGS src/str/strlen.rs
+"$RUSTC" $RUSTFLAGS src/stdlib/_exit.rs
+"$RUSTC" $RUSTFLAGS src/sys/utsname.rs
+"$RUSTC" $RUSTFLAGS src/unistd/symlink.rs
+"$RUSTC" $RUSTFLAGS src/ctype/classification.rs
+"$RUSTC" $RUSTFLAGS src/crt/libc_init.rs
+"$RUSTC" $RUSTFLAGS src/env/environ.rs
+"$RUSTC" $RUSTFLAGS src/gnu/libc_version.rs
+"$RUSTC" $RUSTFLAGS src/mem/mem.rs
+"$RUSTC" $RUSTFLAGS src/str/strlen.rs
 
 OBJECT_FILES="
 	target/release/artefacts/info.o
@@ -220,9 +307,9 @@ esac
 
 # https://research.google/pubs/safe-icf-pointer-safe-and-unwinding-aware-identical-code-folding-in-gold/
 # https://sourceware.org/binutils/docs/ld.html
-LDFLAGS+=" -O3 --relax -nostdlib -z lazy -z relro -z memory-seal -z global -z text -z combreloc -z unique -z nodelete -z sectionheader -z initfirst --error-execstack --eh-frame-hdr --enable-new-dtags --build-id --demangle --gc-sections --enable-linker-version"
+LDFLAGS+=" -O3 --relax -nostdlib -z lazy -z relro -z memory-seal -z global -z text -z combreloc -z unique -z nodelete -z sectionheader -z initfirst --warn-rwx-segments --error-rwx-segments --warn-execstack --warn-execstack-objects --error-execstack --eh-frame-hdr --enable-new-dtags --build-id --demangle --gc-sections --enable-linker-version"
 if [ "$architecture" = "x86-64" ]; then
-	LDFLAGS+=" -z isa-level-report=all -z pack-relative-relocs -z mark-plt"
+	LDFLAGS+=" -z pack-relative-relocs -z mark-plt"
 	if [ "$opt__ibt_plt" = "true" ]; then
 		LDFLAGS+=" -z ibt -z ibtplt"
 	fi
@@ -230,17 +317,21 @@ if [ "$architecture" = "x86-64" ]; then
 		LDFLAGS+=" -z shstk"
 	fi
 fi
-case "$($LD --version | tr '[:upper:]' '[:lower:]')" in
+case "$LD_TYPE" in
 	*"wild"*)
 		# https://github.com/wild-linker/wild/issues/1576 [SFrame 3]
 		# https://github.com/wild-linker/wild/issues/1156 [Weak Symbols]
 		# https://github.com/wild-linker/wild/issues/600 [Weak Symbol [Implementation] Selection]
 		# https://github.com/wild-linker/wild/issues/1088 [Garbage Collect Debug Information]
-		# https://github.com/wild-linker/wild/issues/2650 [-z {ibt,}plt]
+		# https://github.com/wild-linker/wild/issues/2835 [`--warn-textrel` & `-z text`]
+		# https://github.com/wild-linker/wild/issues/2852 [`-z memory-seal`]
+		# https://github.com/wild-linker/wild/issues/2859 [`-z unique`]
+		# https://github.com/wild-linker/wild/issues/2860 [`-z combreloc`]
 		# https://github.com/wild-linker/wild/issues/1595 [Identical Code Folding]
+		LDFLAGS+=" --icf=safe"
 		;;
 	*"gold"*)
-		export LDFLAGS="$(echo $LDFLAGS | sed -e 's/ \{0,\}--error-execstack//g' -e 's/ \{0,\}-z \{0,\}memory-seal//g' -e 's/ \{0,\}-z \{0,\}sectionheader//g' -e 's/ \{0,\}-z \{0,\}isa-level-report=all//g' -e 's/ \{0,\}-z \{0,\}pack-relative-relocs//g' -e 's/ \{0,\}-z \{0,\}ibt\(plt\)\{0,1\}//g')"
+		export LDFLAGS="$(echo $LDFLAGS | sed -e 's/ \{0,\}--warn-rwx-segments//g' -e 's/ \{0,\}--error-rwx-segments//g' -e 's/ \{0,\}--warn-execstack-objects//g' -e 's/ \{0,\}--error-execstack//g' -e 's/ \{0,\}-z \{0,\}memory-seal//g' -e 's/ \{0,\}-z \{0,\}sectionheader//g' -e 's/ \{0,\}-z \{0,\}pack-relative-relocs//g' -e 's/ \{0,\}-z \{0,\}ibt\(plt\)\{0,1\}//g' -e 's/ \{0,\}-z \{0,\}mark-plt//g' -e 's/ \{0,\}-z \{0,\}shstk//g')"
 		LDFLAGS+=" --icf=safe"
 		;;
 	*"lld"*|*"mold 2"*)
@@ -248,8 +339,10 @@ case "$($LD --version | tr '[:upper:]' '[:lower:]')" in
 		# ld.lld: error: target/release/artefacts/start_main.o:(.debug_names): found DWARF64, which is currently unsupported
 		# LDFLAGS+=" --debug-names"
 		# https://github.com/llvm/llvm-project/issues/165097 [CIEs Not GC'd]
-		# `ld.lld` is not actually "compatible with GNU linkers"; see: https://github.com/llvm/llvm-project/issues/233006
-		export LDFLAGS="$(echo $LDFLAGS | sed -e 's/ \{0,\}--error-execstack//g' -e 's/ \{0,\}--enable-linker-version//g')"
+		# `ld.lld` is not actually (and refuses to be) "compatible with GNU linkers"; see:
+		# - https://github.com/llvm/llvm-project/issues/233006#issuecomment-6230045577
+		# - https://github.com/llvm/llvm-project/pull/229129#issuecomment-6309380839
+		export LDFLAGS="$(echo $LDFLAGS | sed -e 's/ \{0,\}--warn-rwx-segments//g' -e 's/ \{0,\}--error-rwx-segments//g' -e 's/ \{0,\}--warn-execstack-objects//g' -e 's/ \{0,\}--error-execstack//g' -e 's/ \{0,\}--enable-linker-version//g')"
 		LDFLAGS+=" --icf=safe"
 		;;
 	*"mold"*)
@@ -259,8 +352,6 @@ case "$($LD --version | tr '[:upper:]' '[:lower:]')" in
 		exit 1
 		;;
 	*"gnu ld"*)
-		# A lot of "compatible with GNU linkers" programs do not actually support all ld.bfd options.
-		LDFLAGS+=" --enable-linker-version --error-rwx-segments"
 		if [ "$architecture" = "x86-64" ]; then
 			LDFLAGS+=" --no-gnu2-tls-tag"
 		fi
@@ -270,7 +361,7 @@ case "$($LD --version | tr '[:upper:]' '[:lower:]')" in
 		;;
 esac
 
-$LD $LDFLAGS \
+"$LD" $LDFLAGS \
 	-shared -soname libc.so.6 \
 	$OBJECT_FILES \
 	-o target/release/libc.so.6
@@ -281,14 +372,14 @@ else
 	ARFLAGS+=" rcs"
 fi
 
-$AR $ARFLAGS target/release/libc.a $OBJECT_FILES
+"$AR" $ARFLAGS target/release/libc.a $OBJECT_FILES
 
 if [ "$opt__use_ranlib" = "true" ]; then
-	$RANLIB $RANLIBFLAGS target/release/libc.a
+	"$RANLIB" $RANLIBFLAGS target/release/libc.a
 fi
 
 cp target/release/artefacts/crt1.o target/release/crt1.o
 
 if [ "$opt__strip" = "true" ]; then
-	find target -type f -not -name '*.s' -execdir $STRIP $STRIPFLAGS {} +
+	find target -type f -not -name '*.s' -execdir "$STRIP" $STRIPFLAGS {} +
 fi
