@@ -125,8 +125,8 @@ impl Display for CLIError {
 				)?;
 				write!(fmt, "\u{0002}help\u{0003} expected one of: ")?;
 				format_possible(fmt, possible_operands, "or")?;
-				writeln!(fmt)?;
 				if let Some(suggestion) = suggestion {
+					writeln!(fmt)?;
 					write!(fmt, "\u{0002}help\u{0003} try '{suggestion}' instead")?;
 				};
 				Ok(())

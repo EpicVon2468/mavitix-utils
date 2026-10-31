@@ -20,7 +20,7 @@ use std::{
 use mavitix_utils::const_println;
 
 use crate::{
-	cli::{Arch, ArgIter, CLI, Endian, OptLevel, arg::Arg as _},
+	cli::{Arch, ArgIter, CLI, DwarfVersion, Endian, OptLevel, Verbosity, arg::Arg as _},
 	errors::{CLIError, MainError},
 };
 
@@ -101,7 +101,7 @@ pub fn main_impl() -> Result<(), MainError> {
 		macro_rules! short_arg_required_val {
 			($arg_ty:ty $(,)?) => {
 				match rest.as_bytes() {
-					&[] => &try_next_as_operand!({
+					&[] => &*try_next_as_operand!({
 						err!(CLIError::ExpectedOperand {
 							arg_name: const { <$arg_ty>::SHORT_NAME.unwrap() },
 							possible_operands: <$arg_ty>::POSSIBLE_OPERANDS,
@@ -125,13 +125,26 @@ pub fn main_impl() -> Result<(), MainError> {
 				}
 			};
 		}
+		macro_rules! short_arg_no_val {
+			($arg_name:expr $(,)?) => {
+				let "" = rest else {
+					err!(CLIError::UnexpectedOperand {
+						arg_name: $arg_name,
+						actual: rest.to_owned(),
+					});
+				};
+			};
+		}
 		match second {
 			'V' => {
+				short_arg_no_val!("-V");
 				const_println!(env!("CARGO_PKG_VERSION"));
 				return Ok(());
 			},
-			'v' => cli.verbose = true,
-			'g' => cli.debug_info = true,
+			'g' => {
+				short_arg_no_val!("-g");
+				let _ = cli.debug_info();
+			},
 			'O' => {
 				let input: &str = short_arg_required_val!(OptLevel);
 				cli.opt_level = cli::arg::try_parse_short(input)?;
@@ -147,8 +160,8 @@ pub fn main_impl() -> Result<(), MainError> {
 					None => (rest, None),
 					Some((prefix, operand)) => (prefix, Some(operand)),
 				};
-				macro_rules! no_value_allowed {
-					($arg_name:literal $(,)?) => {
+				macro_rules! long_arg_no_val {
+					($arg_name:expr $(,)?) => {
 						if let Some(actual) = operand {
 							err!(CLIError::UnexpectedOperand {
 								arg_name: $arg_name,
@@ -157,11 +170,11 @@ pub fn main_impl() -> Result<(), MainError> {
 						};
 					};
 				}
-				macro_rules! get_raw_value {
+				macro_rules! long_arg_required_val {
 					($arg_ty:ty $(,)?) => {
 						match operand {
 							Some(inner) => inner,
-							None => &try_next_as_operand!({
+							None => &*try_next_as_operand!({
 								err!(CLIError::ExpectedOperand {
 									arg_name: const { <$arg_ty>::LONG_NAME.unwrap() },
 									possible_operands: <$arg_ty>::POSSIBLE_OPERANDS,
@@ -170,8 +183,19 @@ pub fn main_impl() -> Result<(), MainError> {
 						}
 					};
 				}
+				macro_rules! long_arg_optional_val {
+					($(,)?) => {
+						match operand {
+							Some(inner) => Some(inner),
+							None => 'try_next: {
+								Some(&*try_next_as_operand!(break 'try_next None))
+							},
+						}
+					};
+				}
 				match prefix {
 					"version" => {
+						long_arg_no_val!("--version");
 						const_println!(concat!(
 							env!("CARGO_PKG_NAME"),
 							' ',
@@ -180,28 +204,45 @@ pub fn main_impl() -> Result<(), MainError> {
 						return Ok(());
 					},
 					"verbose" => {
-						no_value_allowed!("--verbose");
-						cli.verbose = true;
+						long_arg_no_val!("--verbose");
+						cli.verbosity = Verbosity::Verbose;
+					},
+					"silent" => {
+						long_arg_no_val!("--silent");
+						cli.verbosity = Verbosity::Silent;
 					},
 					"debug" => {
-						no_value_allowed!("--debug");
-						cli.debug_info = true;
+						let input: Option<&str> = long_arg_optional_val!();
+						if cli::arg::parse_boolish(input, "--debug")? {
+							let _ = cli.debug_info();
+						} else {
+							cli.debug_info = None;
+						};
 					},
 					"debug-embed-source" => {
-						no_value_allowed!("--debug-embed-source");
-						cli.debug_embed_source = true;
+						let input: Option<&str> = long_arg_optional_val!();
+						cli.debug_info().embed_source =
+							cli::arg::parse_boolish(input, "--debug-embed-source")?;
+					},
+					"debug-record-args" => {
+						let input: Option<&str> = long_arg_optional_val!();
+						cli.debug_info().record_args =
+							cli::arg::parse_boolish(input, "--debug-record-args")?;
+					},
+					"debug-dwarf-version" => {
+						let input: &str = long_arg_required_val!(DwarfVersion);
+						cli.debug_info().dwarf_version = cli::arg::try_parse_long(input)?;
 					},
 					"opt-level" => {
-						let input: &str = get_raw_value!(OptLevel);
+						let input: &str = long_arg_required_val!(OptLevel);
 						cli.opt_level = cli::arg::try_parse_long(input)?;
 					},
-					// TODO: --warnings={all,none,etc.}
 					"arch" => {
-						let input: &str = get_raw_value!(Arch);
+						let input: &str = long_arg_required_val!(Arch);
 						cli.arch = cli::arg::try_parse_long(input)?;
 					},
 					"endian" => {
-						let input: &str = get_raw_value!(Endian);
+						let input: &str = long_arg_required_val!(Endian);
 						cli.endian = cli::arg::try_parse_long(input)?;
 					},
 					_ => err!(CLIError::UnrecognisedOption {
@@ -212,7 +253,7 @@ pub fn main_impl() -> Result<(), MainError> {
 							dest
 						},
 						value: match operand {
-							Some(operand) => Some(operand.to_owned()),
+							Some(inner) => Some(inner.to_owned()),
 							None => 'try_next: {
 								Some(try_next_as_operand!(break 'try_next None))
 							},

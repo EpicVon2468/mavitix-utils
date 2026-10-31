@@ -5,47 +5,6 @@ use std::{
 	str::FromStr,
 };
 
-pub const ALL_OPTIONS: &'static [&'static str] = &[
-	"-V",
-	"-v",
-	"-g",
-	"-O",
-	"--version",
-	"--verbose",
-	"--debug",
-	"--debug-embed-source",
-	"--opt-level",
-	"--arch",
-	"--endian",
-];
-
-#[derive(Debug)]
-pub struct CLI {
-	pub debug_info: bool,
-	pub debug_embed_source: bool,
-	pub verbose: bool,
-	pub files: Vec<&'static Path>,
-	pub read_from_stdin: bool,
-	pub arch: Arch,
-	pub endian: Endian,
-	pub opt_level: OptLevel,
-}
-
-impl Default for CLI {
-	fn default() -> Self {
-		CLI {
-			debug_info: false,
-			debug_embed_source: false,
-			verbose: false,
-			files: Vec::with_capacity(4),
-			read_from_stdin: false,
-			arch: const { Arch::default() },
-			endian: const { Endian::default() },
-			opt_level: const { OptLevel::default() },
-		}
-	}
-}
-
 pub mod arg {
 	use std::{fmt::Debug, str::FromStr};
 
@@ -61,15 +20,32 @@ pub mod arg {
 	}
 
 	#[inline]
+	pub fn parse_boolish(input: Option<&str>, arg_name: &'static str) -> Result<bool, CLIError> {
+		match input {
+			Some("true" | "on") | None => Ok(true),
+			Some("false" | "off") => Ok(false),
+			Some(invalid) => Err(CLIError::InvalidOperand {
+				arg_name,
+				possible_operands: &["true", "on", "false", "off"],
+				suggestion: None,
+				actual: invalid.to_owned(),
+			}),
+		}
+	}
+
+	#[inline]
+	#[must_use]
 	pub fn try_parse_long<T: const Arg>(input: &str) -> Result<T, CLIError> {
 		self::try_parse(input, true)
 	}
 
 	#[inline]
+	#[must_use]
 	pub fn try_parse_short<T: const Arg>(input: &str) -> Result<T, CLIError> {
 		self::try_parse(input, false)
 	}
 
+	#[must_use]
 	#[inline(always)]
 	fn try_parse<T: const Arg>(input: &str, is_long: bool) -> Result<T, CLIError> {
 		match T::from_str(input) {
@@ -80,6 +56,121 @@ pub mod arg {
 }
 
 use arg::Arg;
+
+pub const ALL_OPTIONS: &'static [&'static str] = &[
+	"-V",
+	"-g",
+	"-O",
+	"--version",
+	"--verbose",
+	"--silent",
+	"--debug",
+	"--debug-embed-source",
+	"--debug-record-args",
+	"--debug-dwarf-version",
+	"--opt-level",
+	"--arch",
+	"--endian",
+];
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct CLI {
+	pub debug_info: Option<DebugInfo>,
+	pub verbosity: Verbosity,
+	pub files: Vec<&'static Path>,
+	pub read_from_stdin: bool,
+	pub arch: Arch,
+	pub endian: Endian,
+	pub opt_level: OptLevel,
+}
+
+impl CLI {
+	#[must_use]
+	pub const fn debug_info(&mut self) -> &mut DebugInfo {
+		if let None = self.debug_info {
+			self.debug_info = Some(const { DebugInfo::default() });
+		};
+		// SAFETY: `self.debug_info` is always `Some(_)` at this point.
+		unsafe { self.debug_info.as_mut().unwrap_unchecked() }
+	}
+}
+
+impl Default for CLI {
+	fn default() -> Self {
+		Self {
+			debug_info: None,
+			verbosity: const { Verbosity::default() },
+			files: Vec::with_capacity(4),
+			read_from_stdin: false,
+			arch: const { Arch::default() },
+			endian: const { Endian::default() },
+			opt_level: const { OptLevel::default() },
+		}
+	}
+}
+
+#[derive(Debug)]
+#[derive_const(PartialEq, Eq)]
+pub struct DebugInfo {
+	pub embed_source: bool,
+	pub record_args: bool,
+	pub dwarf_version: DwarfVersion,
+}
+
+const impl Default for DebugInfo {
+	fn default() -> Self {
+		Self {
+			embed_source: false,
+			record_args: true,
+			dwarf_version: const { DwarfVersion::default() },
+		}
+	}
+}
+
+#[derive(Debug, Copy)]
+#[derive_const(Default, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum DwarfVersion {
+	#[default]
+	Five,
+	Six,
+}
+
+const impl Arg for DwarfVersion {
+	const LONG_NAME: Option<&'static str> = Some("--debug-dwarf-version");
+	const SHORT_NAME: Option<&'static str> = None;
+
+	const POSSIBLE_OPERANDS: &'static [&'static str] = &["5", "6", "latest", "next"];
+
+	fn suggest_from(input: &str) -> Option<&'static str> {
+		match usize::from_str(input) {
+			Ok(7..) => Some("next"),
+			_ => None,
+		}
+	}
+}
+
+const impl FromStr for DwarfVersion {
+	type Err = ();
+
+	fn from_str(r#str: &str) -> Result<Self, Self::Err> {
+		match r#str {
+			"5" => Ok(Self::Five),
+			"6" | "next" => Ok(Self::Six),
+			"latest" => Ok(Self::default()),
+			_ => Err(()),
+		}
+	}
+}
+
+#[derive(Debug, Copy)]
+#[derive_const(Default, Clone, PartialEq, Eq)]
+pub enum Verbosity {
+	Verbose,
+	#[default]
+	Normal,
+	Silent,
+}
 
 #[derive(Copy)]
 #[derive_const(Clone, PartialEq, Eq)]
@@ -214,6 +305,7 @@ const impl FromStr for OptLevel {
 	}
 }
 
+#[derive(Debug)]
 pub struct ArgIter {
 	args: Args,
 	peeked: Option<String>,
