@@ -68,6 +68,8 @@ pub const ALL_OPTIONS: &'static [&'static str] = &[
 	"--debug-embed-source",
 	"--debug-record-args",
 	"--debug-dwarf-version",
+	"--debug-dwarf64",
+	"--debug-dwarf32",
 	"--opt-level",
 	"--arch",
 	"--endian",
@@ -115,6 +117,7 @@ pub struct DebugInfo {
 	pub embed_source: bool,
 	pub record_args: bool,
 	pub dwarf_version: DwarfVersion,
+	pub dwarf64: bool,
 }
 
 const impl Default for DebugInfo {
@@ -123,6 +126,7 @@ const impl Default for DebugInfo {
 			embed_source: false,
 			record_args: true,
 			dwarf_version: const { DwarfVersion::default() },
+			dwarf64: false,
 		}
 	}
 }
@@ -159,6 +163,15 @@ const impl FromStr for DwarfVersion {
 			"6" | "next" => Ok(Self::Six),
 			"latest" => Ok(Self::default()),
 			_ => Err(()),
+		}
+	}
+}
+
+const impl Into<usize> for DwarfVersion {
+	fn into(self) -> usize {
+		match self {
+			Self::Five => 5,
+			Self::Six => 6,
 		}
 	}
 }
@@ -237,6 +250,16 @@ const impl FromStr for Arch {
 	}
 }
 
+const impl Into<object::Architecture> for Arch {
+	fn into(self) -> object::Architecture {
+		match self {
+			Self::x86_64 => object::Architecture::X86_64,
+			Self::AArch64 => object::Architecture::Aarch64,
+			Self::RiscV64 => object::Architecture::Riscv64,
+		}
+	}
+}
+
 #[derive(Debug, Copy)]
 #[derive_const(Default, Clone, PartialEq, Eq)]
 pub enum Endian {
@@ -265,6 +288,16 @@ const impl FromStr for Endian {
 			"big" => Ok(Self::Big),
 			"little" => Ok(Self::Little),
 			_ => Err(()),
+		}
+	}
+}
+
+const impl Into<object::Endianness> for Endian {
+	#[inline]
+	fn into(self) -> object::Endianness {
+		match self {
+			Self::Big => object::Endianness::Big,
+			Self::Little => object::Endianness::Little,
 		}
 	}
 }

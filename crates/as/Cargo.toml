@@ -11,5 +11,22 @@ license.workspace = true
 [dependencies.mavitix-utils]
 path = "../.."
 
+[dependencies.object]
+git = "https://github.com/gimli-rs/object"
+rev = "37688ff1933cc6ad07785d11aff5ac3e9294f2ff"
+default-features = false
+features = [
+	"write_std",
+	"elf",
+]
+
+[dependencies.gimli]
+git = "https://github.com/gimli-rs/gimli"
+rev = "478f07ad90e91bb8b061ec33ef4bd3a8448839e1"
+default-features = false
+features = [
+	"write",
+]
+
 [lints]
 workspace = true

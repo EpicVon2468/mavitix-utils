@@ -233,6 +233,14 @@ pub fn main_impl() -> Result<(), MainError> {
 						let input: &str = long_arg_required_val!(DwarfVersion);
 						cli.debug_info().dwarf_version = cli::arg::try_parse_long(input)?;
 					},
+					"debug-dwarf64" => {
+						long_arg_no_val!("--debug-dwarf64");
+						cli.debug_info().dwarf64 = true;
+					},
+					"debug-dwarf32" => {
+						long_arg_no_val!("--debug-dwarf32");
+						cli.debug_info().dwarf64 = false;
+					},
 					"opt-level" => {
 						let input: &str = long_arg_required_val!(OptLevel);
 						cli.opt_level = cli::arg::try_parse_long(input)?;
@@ -265,5 +273,6 @@ pub fn main_impl() -> Result<(), MainError> {
 		};
 	}
 	dbg!(&cli);
+	backend::write(&cli);
 	Ok(())
 }
