@@ -1,5 +1,5 @@
 use std::{
-	env::args_os,
+	env::{ArgsOs, args_os},
 	ffi::c_void,
 	hint::cold_path,
 	io::{BufWriter, Error, StdoutLock, Write as _, stdout},
@@ -16,7 +16,10 @@ pub fn main() {
 	unbuffer!();
 	let mut named_operands: Vec<&'static [u8]> = Vec::with_capacity(8);
 	let mut seen_double_dash: bool = false;
-	for os_arg in args_os().skip(1) {
+	let mut args: ArgsOs = args_os();
+	// Skip argv[0]
+	let _ = args.next();
+	for os_arg in args {
 		let arg: &[u8] = os_arg.as_bytes();
 		if seen_double_dash || arg[0] != b'-' {
 			let bytes: &'static [u8] = os_arg.leak().as_bytes();

@@ -1,5 +1,5 @@
 use std::{
-	env::args_os,
+	env::{ArgsOs, args_os},
 	ffi::{OsStr, c_char},
 	io::Error,
 	os::unix::ffi::OsStrExt as _,
@@ -12,7 +12,10 @@ pub fn main() {
 	// Mavitix extension; GNU unlink(1) only supports one file.
 	let mut files: Vec<&'static OsStr> = Vec::with_capacity(4);
 	let mut seen_double_dash: bool = false;
-	for os_arg in args_os().skip(1) {
+	let mut args: ArgsOs = args_os();
+	// Skip argv[0]
+	let _ = args.next();
+	for os_arg in args {
 		let arg: &[u8] = os_arg.as_bytes();
 		if seen_double_dash || arg[0] != b'-' {
 			files.push(os_arg.leak());
@@ -62,7 +65,10 @@ pub fn main() {
 		let mut exit_err: bool = false;
 		for file in files {
 			let ptr: *const c_char = file.as_bytes().as_ptr().cast();
-			// SAFETY: Soundness is guaranteed, errors are handled below.
+			// SAFETY:
+			// This isn't guaranteed to be safe across Rust versions.
+			// The fact this works is pure coincidence due to the fact that C's `argv` is null-terminated.
+			// If Rust changes how `std::env::args_os` works, this will segfault.
 			if unsafe { unlink(ptr) } == -1 {
 				let err: Error = Error::last_os_error();
 				eprintln!("unlink: couldn't unlink file {file:?}; {err}");

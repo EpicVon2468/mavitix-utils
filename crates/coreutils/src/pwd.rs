@@ -1,7 +1,7 @@
 #![feature(const_trait_impl, const_convert)]
 
 use std::{
-	env::args_os,
+	env::{ArgsOs, args_os},
 	ffi::{c_char, c_void},
 	hint::{cold_path, unreachable_unchecked},
 	io::Error,
@@ -38,7 +38,10 @@ pub fn main() {
 	unbuffer!();
 	let mut use_physical: bool = false;
 	let mut seen_double_dash: bool = false;
-	for os_arg in args_os().skip(1) {
+	let mut args: ArgsOs = args_os();
+	// Skip argv[0]
+	let _ = args.next();
+	for os_arg in args {
 		let arg: &[u8] = os_arg.as_bytes();
 		if seen_double_dash || arg[0] != b'-' {
 			eprintln!("pwd: ignoring non-option operand(s)");
@@ -117,6 +120,7 @@ pub fn main() {
 		}};
 	}
 	loop {
+		// SAFETY: `buf` is non-null and is `size` in length.
 		if unsafe { getcwd(buf, size) }.is_null() {
 			match errno() {
 				// SAFETY: From `getcwd(3)`: "On failure, these functions return NULL, and errno is set to indicate the error."
@@ -179,8 +183,8 @@ pub fn main() {
 		break;
 	}
 	if use_physical {
-		// SAFETY: The returned buffer is well-formed.
-		let dest: *const c_char = unsafe { realpath(buf, null_mut()) }.cast_const();
+		// SAFETY: `buf` is well-formed from previous initialisation.
+		let dest: *const c_char = unsafe { realpath(buf, null_mut()) };
 		if dest.is_null() {
 			match errno() {
 				// EIO
@@ -198,11 +202,12 @@ pub fn main() {
 			};
 		};
 		puts!(dest);
+		// SAFETY: `dest` is not used after this point.
 		unsafe {
 			free(dest as *mut c_void);
 		};
 	} else {
-		puts!(buf.cast_const());
+		puts!(buf);
 	};
 	free!();
 }

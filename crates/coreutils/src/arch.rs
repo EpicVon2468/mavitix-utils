@@ -1,5 +1,5 @@
 use std::{
-	env::{args_os, consts::ARCH},
+	env::{ArgsOs, args_os, consts::ARCH},
 	os::unix::ffi::OsStrExt as _,
 	process::exit,
 };
@@ -8,7 +8,10 @@ use mavitix_utils::{bold, const_println};
 
 pub fn main() {
 	let mut seen_double_dash: bool = false;
-	for os_arg in args_os().skip(1) {
+	let mut args: ArgsOs = args_os();
+	// Skip argv[0]
+	let _ = args.next();
+	for os_arg in args {
 		let arg: &[u8] = os_arg.as_bytes();
 		if seen_double_dash || arg[0] != b'-' {
 			eprintln!("arch: unexpected operand {os_arg:?}");

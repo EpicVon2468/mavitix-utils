@@ -60,7 +60,7 @@ pub fn main() {
 		exit(1);
 	};
 	// SAFETY: The returned buffer is well-formed.
-	if unsafe { puts(username.cast_const()) } == -1 {
+	if unsafe { puts(username) } == -1 {
 		let error: Error = Error::last_os_error();
 		cold_path();
 		eprintln!("whoami: could not print username; {error}");

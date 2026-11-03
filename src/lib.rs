@@ -95,7 +95,7 @@ pub unsafe fn realloc<T>(buf: *mut T, size: usize) -> bool {
 }
 
 pub fn errno() -> i32 {
-	// SAFETY: `__errno_location()` is always set.
+	// SAFETY: `__errno_location()` is always non-null.
 	unsafe { *__errno_location() }
 }
 

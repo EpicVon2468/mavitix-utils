@@ -4,5 +4,5 @@ use std::ffi::c_char;
 #[link(name = "c")]
 unsafe extern "C" {
 
-	pub fn getlogin() -> *mut c_char;
+	pub safe fn getlogin() -> *mut c_char;
 }

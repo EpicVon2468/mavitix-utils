@@ -1,5 +1,5 @@
 use std::{
-	env::args_os,
+	env::{ArgsOs, args_os},
 	ffi::c_char,
 	hint::{cold_path, unreachable_unchecked},
 	io::Error,
@@ -18,7 +18,10 @@ pub fn main() {
 	unbuffer!();
 	let mut silent: bool = false;
 	let mut seen_double_dash: bool = false;
-	for os_arg in args_os().skip(1) {
+	let mut args: ArgsOs = args_os();
+	// Skip args[0]
+	let _ = args.next();
+	for os_arg in args {
 		let arg: &[u8] = os_arg.as_bytes();
 		if seen_double_dash || arg[0] != b'-' {
 			eprintln!("tty: unexpected operand {os_arg:?}");
@@ -66,8 +69,7 @@ pub fn main() {
 			},
 		}
 	}
-	// SAFETY: Trusted compile-time fileno.
-	let name: *const c_char = unsafe { ttyname(0) }.cast_const();
+	let name: *const c_char = ttyname(0);
 	if name.is_null() {
 		match errno() {
 			// SAFETY: From `ttyname(3)`: "The function `ttyname()` returns a pointer to a pathname on success.  On error, NULL is returned, and errno is set to indicate the error."
@@ -111,5 +113,5 @@ pub fn main() {
 #[link(name = "c")]
 unsafe extern "C" {
 
-	pub fn ttyname(fd: i32) -> *mut c_char;
+	pub safe fn ttyname(fd: i32) -> *mut c_char;
 }
