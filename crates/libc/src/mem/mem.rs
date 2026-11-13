@@ -5,7 +5,8 @@
 
 use core::ffi::c_void;
 
-include!("../rsinclude/rpmalloc.rs");
+#[path = "../rsinclude/rpmalloc.rs"]
+pub mod rpmalloc;
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn malloc(size: usize) -> *mut c_void {

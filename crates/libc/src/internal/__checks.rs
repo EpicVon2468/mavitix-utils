@@ -15,5 +15,6 @@ const _: () = cfg_select! {
 const _: () = cfg_select! {
 	target_arch = "x86_64" => (),
 	target_arch = "aarch64" => (),
+	target_arch = "riscv64" => (),
 	_ => compile_error!("Unsupported target architecture!"),
 };

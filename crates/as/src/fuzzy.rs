@@ -1,12 +1,10 @@
 use std::{cmp::min, hint::cold_path};
 
-pub fn filter_cli_range<'a, 'b, 'c>(
+pub fn filter_cli_range<'a, 'b>(
 	input: &'a str,
 	options: &'b [&'b str],
 	limit: usize,
-) -> &'c [&'b str]
-where
-	'b: 'c, {
+) -> Vec<&'b str> {
 	let mut dest: Vec<&'b str> = Vec::with_capacity((options.len() + 2) / 2);
 	let input: &[u8] = match input.as_bytes() {
 		// &[b'-', b'-', ref input @ ..] => input,
@@ -29,20 +27,40 @@ where
 			dest.push(option);
 		};
 	}
-	dest.leak()
+	dest
 }
 
 // Evil fucking Damerau–Levenshtein Distance
 pub fn distance(first: &[u8], second: &[u8]) -> usize {
 	let first_len: usize = first.len();
 	let second_len: usize = second.len();
-	let mut dest: Vec<Vec<usize>> = vec![vec![0; second_len + 1]; first_len + 1];
+	let mut dest: Vec<Vec<usize>> = Vec::with_capacity(first_len + 1);
 
-	for i in 0..=first_len {
-		dest[i][0] = i;
+	macro_rules! initialise {
+		($elements:expr $(,)?) => {
+			let result: Result<_, _> = dest.push_within_capacity($elements);
+			cfg_select! {
+				debug_assertions => {
+					if result.is_err() {
+						unreachable!("Always within capacity; this case should be unreachable!");
+					};
+				},
+				not(debug_assertions) => {
+					// SAFETY: Always within capacity here.
+					unsafe { result.unwrap_unchecked() };
+				},
+			};
+		};
 	}
-	for j in 0..=second_len {
+
+	initialise!(vec![0; second_len + 1]);
+	for j in 1..=second_len {
 		dest[0][j] = j;
+	}
+	for i in 1..=first_len {
+		let mut elements: Vec<usize> = vec![0; second_len + 1];
+		elements[0] = i;
+		initialise!(elements);
 	}
 
 	for i in 1..=first_len {

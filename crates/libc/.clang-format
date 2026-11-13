@@ -74,7 +74,21 @@ SortUsingDeclarations: LexicographicNumeric
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
 SpaceInEmptyBraces: Never
-AttributeMacros: [__NOTHROW__, __USED__, __CONST__, __NOINLINE__, __PURE__, __PROTECTED__, __HIDDEN__, __WEAK__, __NORETURN__]
+AttributeMacros: [
+    __CALLBACK__,
+    __UNAVAILABLE__,
+    __DEPRECATED__,
+    __NOTHROW__,
+    __USED__,
+    __CONST__,
+    __INLINE__,
+    __NOINLINE__,
+    __PURE__,
+    __PROTECTED__,
+    __HIDDEN__,
+    __WEAK__,
+    __NORETURN__
+]
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowAllArgumentsOnNextLine: false
 BreakFunctionDeclarationParameters: false

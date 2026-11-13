@@ -15,9 +15,10 @@ pub fn main() {
 	let mut args: ArgsOs = args_os();
 	// Skip argv[0]
 	let _ = args.next();
-	for os_arg in args {
+	for mut os_arg in args {
 		let arg: &[u8] = os_arg.as_bytes();
 		if seen_double_dash || arg[0] != b'-' {
+			os_arg.push("\0");
 			if let None = source {
 				source = Some(os_arg.leak());
 				continue;
@@ -78,10 +79,7 @@ pub fn main() {
 	};
 	let sptr: *const c_char = source.as_bytes().as_ptr().cast();
 	let dptr: *const c_char = dest.as_bytes().as_ptr().cast();
-	// SAFETY:
-	// This isn't guaranteed to be safe across Rust versions.
-	// The fact this works is pure coincidence due to the fact that C's `argv` is null-terminated.
-	// If Rust changes how `std::env::args_os` works, this will segfault.
+	// SAFETY: `sptr` and `dptr` are null-terminated non-null arrays of bytes.
 	if unsafe { link(sptr, dptr) } == -1 {
 		let err: Error = Error::last_os_error();
 		eprintln!("link: couldn't link {source:?} and {dest:?}; {err}");

@@ -23,7 +23,7 @@ const impl From<CLIError> for MainError {
 }
 
 impl Error for MainError {
-	fn cause(&self) -> Option<&dyn Error> {
+	fn source(&self) -> Option<&(dyn Error + 'static)> {
 		match *self {
 			Self::CLI(ref inner) => Some(inner),
 		}
@@ -132,7 +132,7 @@ impl Display for CLIError {
 				Ok(())
 			},
 			Self::UnrecognisedOption { ref arg, ref value } => {
-				let closest: &'static [&'static str] = fuzzy::filter_cli_range(arg, ALL_OPTIONS, 1);
+				let closest: &[&'static str] = &fuzzy::filter_cli_range(arg, ALL_OPTIONS, 1);
 				writeln!(fmt, "unrecognised option '{}'", arg.escape_debug())?;
 				if let Some(ref value) = *value {
 					writeln!(

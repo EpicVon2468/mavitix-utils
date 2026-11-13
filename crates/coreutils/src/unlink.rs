@@ -15,9 +15,10 @@ pub fn main() {
 	let mut args: ArgsOs = args_os();
 	// Skip argv[0]
 	let _ = args.next();
-	for os_arg in args {
+	for mut os_arg in args {
 		let arg: &[u8] = os_arg.as_bytes();
 		if seen_double_dash || arg[0] != b'-' {
+			os_arg.push("\0");
 			files.push(os_arg.leak());
 			continue;
 		};
@@ -65,10 +66,7 @@ pub fn main() {
 		let mut exit_err: bool = false;
 		for file in files {
 			let ptr: *const c_char = file.as_bytes().as_ptr().cast();
-			// SAFETY:
-			// This isn't guaranteed to be safe across Rust versions.
-			// The fact this works is pure coincidence due to the fact that C's `argv` is null-terminated.
-			// If Rust changes how `std::env::args_os` works, this will segfault.
+			// SAFETY: `ptr` is null-terminated and non-null.
 			if unsafe { unlink(ptr) } == -1 {
 				let err: Error = Error::last_os_error();
 				eprintln!("unlink: couldn't unlink file {file:?}; {err}");

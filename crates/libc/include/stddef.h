@@ -9,16 +9,18 @@ extern "C" {
 
 #ifdef __PTRDIFF_TYPE__
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
-#elif defined(__x86_64__) || defined(__amd64__) || defined(__aarch64__)
+#elif __X86_64__ || __AARCH64__ || __RISCV64__
 /*
- * `ptrdiff_t` is `signed long int` for x86-64 & aarch64 on Linux.
+ * `ptrdiff_t` is `signed long int` for x86-64 & aarch64 & riscv64 on Linux.
  * I've checked these definitions against what clang says they are.
  * See:
  * - llvm-project/clang/lib/Basic/Targets/X86.h
  * - llvm-project/clang/lib/Basic/Targets/X86.cpp
  * - llvm-project/clang/lib/Basic/Targets/AArch64.h
  * - llvm-project/clang/lib/Basic/Targets/AArch64.cpp
- * (Note that AArch64 doesn't set `PtrDiffType`, defaulting to `SignedLong`).
+ * - llvm-project/clang/lib/Basic/Targets/RISCV.h
+ * - llvm-project/clang/lib/Basic/Targets/RISCV.cpp
+ * (AArch64 & RISC-V don't explicitly set `PtrDiffType`, uses default instead).
  */
 typedef signed long int ptrdiff_t;
 #endif /* ptrdiff_t */
@@ -43,20 +45,13 @@ typedef typeof_unqual(nullptr) nullptr_t;
 #define unreachable() __builtin_unreachable()
 #elif __has_builtin(__builtin_trap)
 #define unreachable() __builtin_trap()
-#elif __CLANG_LIKE__ && (defined(__x86_64__) || defined(__amd64__))
-#define unreachable() __asm__ __volatile__("ud2")
-#elif __CLANG_LIKE__ && defined(__aarch64__)
-#define unreachable() __asm__ __volatile__("udf #0")
-#elif __C11__
-
-#warning Using mavitix-libc function as a fallback for `unreachable()`!
-#warning This build may be non-portable against other libc implementations!
-
-/* We're >= C11 here, so `inline` is a valid keyword (available since C99). */
-__NORETURN__ extern inline
-void __mavitix_unreachable_impl(void);
-#define unreachable() __mavitix_unreachable_impl()
-
+#elif __has_builtin(__builtin_assume)
+#define unreachable() __builtin_assume(0)
+#else
+__NORETURN__ extern
+void __mavitix_immediate_abort(int);
+/* Abort with `EX_SOFTWARE` */
+#define unreachable() __mavitix_immediate_abort(70)
 #endif /* unreachable */
 
 #if __has_builtin(__builtin_offsetof)

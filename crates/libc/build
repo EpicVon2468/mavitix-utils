@@ -174,112 +174,6 @@ case "$($CC --version | tr '[:upper:]' '[:lower:]')" in
 esac
 LD_TYPE="$($LD --version | tr '[:upper:]' '[:lower:]')"
 
-ASFLAGS+=" -mnaked-reg --warn -mrelax-relocations=yes --divide"
-ASFLAGS+=" -gdwarf-5 -g --gsframe --gsframe-3 --gdwarf-cie-version=4"
-
-architecture="$(uname -m | sed -e 's/x86_64/x86-64/g')"
-
-if [ "$architecture" = "x86-64" ]; then
-	ASFLAGS+=" --64 -O2 -mintel64 -msyntax=intel -mmnemonic=intel -mx86-used-note=yes"
-fi
-
-CPPFLAGS+=" -fdirectives-only -nostdlib -nostdinc -std=c23"
-CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs"
-
-"$CPP" $CPPFLAGS "src/crt/crt1_$architecture.S" -o target/release/tmp/crt1.s
-"$AS" $ASFLAGS target/release/tmp/crt1.s -o target/release/artefacts/crt1.o
-
-"$CPP" $CPPFLAGS "src/info.S" -o target/release/tmp/info.s
-"$AS" $ASFLAGS target/release/tmp/info.s -o target/release/artefacts/info.o
-
-"$CPP" $CPPFLAGS src/stddef/__mavitix_unreachable_impl.S -o target/release/tmp/__mavitix_unreachable_impl.s
-"$AS" $ASFLAGS target/release/tmp/__mavitix_unreachable_impl.s -o target/release/artefacts/__mavitix_unreachable_impl.o
-
-"$CPP" $CPPFLAGS src/unistd/getuid_x86-64.S -o target/release/tmp/getuid.s
-"$AS" $ASFLAGS target/release/tmp/getuid.s -o target/release/artefacts/getuid.o
-
-"$CPP" $CPPFLAGS src/unistd/getgid_x86-64.S -o target/release/tmp/getgid.s
-"$AS" $ASFLAGS target/release/tmp/getgid.s -o target/release/artefacts/getgid.o
-
-# https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-fcf-protection
-# https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#index-fcf-protection
-# https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/cf-protection.html
-CFLAGS+=" -fcf-protection -fno-fast-math"
-CFLAGS+=" -nostdlib -nostdinc -nostartfiles -nodefaultlibs -nolibc -ffreestanding"
-CFLAGS+=" -isysteminclude -std=c23 -O3 -m64 -march=native -mtune=native -fpic"
-CFLAGS+=" -g -g3 -gdwarf-5 -gdwarf64 -fdebug-types-section"
-CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs -Wunknown-pragmas -Wno-error=unused-parameter -Wno-error=unused-variable -Wzero-as-null-pointer-constant"
-case "$CC_TYPE" in
-	"clang")
-		CFLAGS+=" -Wno-error=#warnings -Wno-error=unused-command-line-argument"
-		CFLAGS+=" -fno-knr-functions -fno-digraphs -fno-trigraphs -femit-all-decls"
-		CFLAGS+=" -gembed-source"
-		;;
-	"gcc")
-		CFLAGS+=" -Wno-error=attributes"
-		# https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html#index-gas-loc-support
-		# Surprisingly, even source-built clang 23 doesn't support this.
-		CFLAGS+=" -gas-loc-support"
-		;;
-	*)
-		;;
-esac
-
-"$CC" $CFLAGS src/stdio/__init.c -c -o target/release/artefacts/stdio__init.o
-"$CC" $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
-
-# TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
-# FIXME: https://github.com/rust-lang/rust/issues/56068
-RUSTFLAGS+=" --check-cfg=cfg(feature,values(\"verbose-ub-checks\"))"
-RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -Z panic-in-drop=immediate-abort -C link-dead-code=on"
-RUSTFLAGS+=" -C link-arg=-nostdlib -C link-arg=-nostdinc -C link-arg=-nostartfiles -C link-arg=-nodefaultlibs -C link-arg=-nolibc -C link-arg=-ffreestanding"
-RUSTFLAGS+=" -C link-arg=-fcf-protection -C link-arg=-fno-fast-math -Z cf-protection=full -C overflow-checks=off -Z trap-unreachable=on -Z extra-const-ub-checks=on -Z human-readable-cgu-names=on"
-RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3 -Z dylib-lto -Z mir-opt-level=4 -Z relax-elf-relocations=on"
-RUSTFLAGS+=" -Z llvm-writable=on -Z inline-llvm=on -Z inline-mir=on -Z verify-llvm-ir=on -Z validate-mir=on -C link-self-contained=off -Z checksum-hash-algorithm=sha256"
-RUSTFLAGS+=" -C link-arg=-g -C link-arg=-g3 -C link-arg=-gdwarf-5 -C link-arg=-gdwarf64 -C link-arg=-fdebug-types-section -g -Z dwarf-version=5 -Z embed-source=on -Z src-hash-algorithm=sha256 -Z debug-info-type-line-numbers=on -Z debuginfo-for-profiling=on -Z annotate-moves=on"
-RUSTFLAGS+=" --edition=2024 -C relocation-model=pic -C link-arg=-fpic -C relro-level=partial --emit=obj --out-dir=target/release/artefacts"
-RUSTFLAGS+=" -Funsafe_op_in_unsafe_fn -Wclippy::pedantic -Wclippy::nursery -Wclippy::suspicious -Wclippy::as_conversions -Wclippy::min_ident_chars -Wclippy::pattern_type_mismatch -Wclippy::use_self -Wclippy::unused_trait_names -Wclippy::create_dir -Fclippy::exit -Wclippy::float_cmp -Wclippy::float_cmp_const -Wclippy::while_float -Wclippy::integer_divison -Wclippy::integer_division_remainder_used -Wclippy::unreadable_literal -Wclippy::unnecessary_literal_bound -Wclippy::missing_const_for_fn -Wclippy::needless_collect -Wclippy::needless_for_each -Wclippy::as_underscore -Wclippy::branches_sharing_code -Wclippy::infinite_loop -Wclippy::linkedlist -Wclippy::pub_use -Wclippy::wildcard_imports -Wclippy::uninlined_format_args -Wclippy::equatable_if_let -Wclippy::enum_glob_use -Fclippy::panic -Fclippy::panic_in_result_fn -Fclippy::undocumented_unsafe_blocks -Fclippy::multiple_unsafe_ops_per_block -Fclippy::missing_safety_doc -Aclippy::tabs_in_doc_comments -Aclippy::unnecessary_semicolon -Aclippy::default_trait_access -Aclippy::upper_case_acronyms -Aclippy::borrowed_box"
-case "$CC_TYPE" in
-	"clang")
-		RUSTFLAGS+=" -C link-arg=-femit-all-decls"
-		;;
-	"gcc")
-		;;
-	*)
-		;;
-esac
-
-"$RUSTC" $RUSTFLAGS src/internal/__checks.rs
-rm target/release/artefacts/__checks.o
-
-"$RUSTC" $RUSTFLAGS src/stdlib/_exit.rs
-"$RUSTC" $RUSTFLAGS src/sys/utsname.rs
-"$RUSTC" $RUSTFLAGS src/unistd/symlink.rs
-"$RUSTC" $RUSTFLAGS src/ctype/classification.rs
-"$RUSTC" $RUSTFLAGS src/crt/libc_init.rs
-"$RUSTC" $RUSTFLAGS src/env/environ.rs
-"$RUSTC" $RUSTFLAGS src/gnu/libc_version.rs
-"$RUSTC" $RUSTFLAGS src/mem/mem.rs
-"$RUSTC" $RUSTFLAGS src/str/strlen.rs
-
-OBJECT_FILES="
-	target/release/artefacts/info.o
-	target/release/artefacts/__mavitix_unreachable_impl.o
-	target/release/artefacts/getuid.o
-	target/release/artefacts/getgid.o
-	target/release/artefacts/stdio__init.o
-	target/release/artefacts/start_main.o
-	target/release/artefacts/_exit.o
-	target/release/artefacts/utsname.o
-	target/release/artefacts/symlink.o
-	target/release/artefacts/classification.o
-	target/release/artefacts/libc_init.o
-	target/release/artefacts/environ.o
-	target/release/artefacts/libc_version.o
-	target/release/artefacts/mem.o
-	target/release/artefacts/strlen.o
-"
-
 case "$CC_TYPE" in
 	"clang")
 		if command -v llvm-config >/dev/null 2>&1 && LLVM_GOLD="$(llvm-config --libdir)/LLVMgold.so" && test -f "$LLVM_GOLD"; then
@@ -358,6 +252,165 @@ case "$LD_TYPE" in
 		echo "Unknown linker '$LD'; some options or flags may not be applied"
 		;;
 esac
+
+unset OBJECT_FILES
+
+ASFLAGS+=" -mnaked-reg --warn -mrelax-relocations=yes --divide"
+ASFLAGS+=" -gdwarf-5 -g --gsframe --gsframe-3 --gdwarf-cie-version=4"
+
+architecture="$(uname -m | sed -e 's/x86_64/x86-64/g')"
+
+if [ "$architecture" = "x86-64" ]; then
+	ASFLAGS+=" --64 -O2 -mintel64 -msyntax=intel -mmnemonic=intel -mx86-used-note=yes"
+fi
+
+CPPFLAGS+=" -fdirectives-only -nostdlib -nostdinc -std=c23"
+CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs"
+
+"$CPP" $CPPFLAGS "src/crt/crt1_$architecture.S" -o target/release/tmp/crt1.s
+"$AS" $ASFLAGS target/release/tmp/crt1.s -o target/release/artefacts/crt1.o
+
+"$CPP" $CPPFLAGS "src/info.S" -o target/release/tmp/info.s
+"$AS" $ASFLAGS target/release/tmp/info.s -o target/release/artefacts/info.o
+OBJECT_FILES+=" target/release/artefacts/info.o"
+
+# https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-fcf-protection
+# https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#index-fcf-protection
+# https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/cf-protection.html
+CFLAGS+=" -fcf-protection -fno-fast-math"
+CFLAGS+=" -nostdlib -nostdinc -nostartfiles -nodefaultlibs -nolibc -ffreestanding"
+CFLAGS+=" -isysteminclude -std=c23 -O3 -m64 -march=native -mtune=native -fpic"
+CFLAGS+=" -g -g3 -gdwarf-5 -gdwarf64 -fdebug-types-section"
+CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs -Wunknown-pragmas -Wno-error=unused-parameter -Wno-error=unused-variable -Wzero-as-null-pointer-constant"
+case "$CC_TYPE" in
+	"clang")
+		CFLAGS+=" -Wno-error=#warnings -Wno-error=unused-command-line-argument"
+		CFLAGS+=" -fno-knr-functions -fno-digraphs -fno-trigraphs"
+		CFLAGS+=" -gembed-source"
+		;;
+	"gcc")
+		CFLAGS+=" -Wno-error=attributes"
+		# https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html#index-gas-loc-support
+		# Surprisingly, even source-built clang 23 doesn't support this.
+		CFLAGS+=" -gas-loc-support"
+		;;
+	*)
+		;;
+esac
+
+"$CC" $CFLAGS src/stdio/__init.c -c -o target/release/artefacts/stdio__init.o
+OBJECT_FILES+=" target/release/artefacts/stdio__init.o"
+
+"$CC" $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
+OBJECT_FILES+=" target/release/artefacts/start_main.o"
+
+# TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
+# FIXME: https://github.com/rust-lang/rust/issues/56068
+RUSTFLAGS+=" --check-cfg=cfg(feature,values(\"verbose-ub-checks\"))"
+RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -Z panic-in-drop=immediate-abort -C passes=function-attrs"
+RUSTFLAGS+=" -C link-arg=-nostdlib -C link-arg=-nostdinc -C link-arg=-nostartfiles -C link-arg=-nodefaultlibs -C link-arg=-nolibc -C link-arg=-ffreestanding -C default-linker-libraries=off"
+RUSTFLAGS+=" -C link-arg=-fcf-protection -C link-arg=-fno-fast-math -Z cf-protection=full -C overflow-checks=off -Z trap-unreachable=on -Z extra-const-ub-checks=on -Z human-readable-cgu-names=on"
+RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3 -Z dylib-lto -Z mir-opt-level=4 -Z relax-elf-relocations=on"
+RUSTFLAGS+=" -Z llvm-writable=on -Z inline-llvm=on -Z inline-mir=on -Z verify-llvm-ir=on -Z validate-mir=on -C link-self-contained=off -Z checksum-hash-algorithm=sha256"
+RUSTFLAGS+=" -C link-arg=-g -C link-arg=-g3 -C link-arg=-gdwarf-5 -C link-arg=-gdwarf64 -C link-arg=-fdebug-types-section -g -Z dwarf-version=5 -Z embed-source=on -Z src-hash-algorithm=sha256 -Z debug-info-type-line-numbers=on -Z debuginfo-for-profiling=on -Z annotate-moves=on"
+RUSTFLAGS+=" --edition=2024 -C relocation-model=pic -C link-arg=-fpic -C relro-level=partial --emit=obj --out-dir=target/release/artefacts"
+RUSTFLAGS+=" -Funsafe_op_in_unsafe_fn -Wclippy::pedantic -Wclippy::nursery -Wclippy::suspicious -Wclippy::as_conversions -Wclippy::min_ident_chars -Wclippy::pattern_type_mismatch -Wclippy::use_self -Wclippy::unused_trait_names -Wclippy::create_dir -Fclippy::exit -Wclippy::float_cmp -Wclippy::float_cmp_const -Wclippy::while_float -Wclippy::integer_divison -Wclippy::integer_division_remainder_used -Wclippy::unreadable_literal -Wclippy::unnecessary_literal_bound -Wclippy::missing_const_for_fn -Wclippy::needless_collect -Wclippy::needless_for_each -Wclippy::as_underscore -Wclippy::branches_sharing_code -Wclippy::infinite_loop -Wclippy::linkedlist -Wclippy::pub_use -Wclippy::wildcard_imports -Wclippy::uninlined_format_args -Wclippy::equatable_if_let -Wclippy::enum_glob_use -Fclippy::panic -Fclippy::panic_in_result_fn -Fclippy::undocumented_unsafe_blocks -Fclippy::multiple_unsafe_ops_per_block -Fclippy::missing_safety_doc -Aclippy::tabs_in_doc_comments -Aclippy::unnecessary_semicolon -Aclippy::default_trait_access -Aclippy::upper_case_acronyms -Aclippy::borrowed_box"
+
+"$RUSTC" $RUSTFLAGS \
+	-C link-arg=-fdata-sections \
+	-C link-arg=-ffunction-sections \
+	"--check-cfg=cfg(test)" \
+	"--check-cfg=cfg(x86_no_sse2)" \
+	"--check-cfg=cfg(f16_enabled)" \
+	"--check-cfg=cfg(f128_enabled)" \
+	"--check-cfg=cfg(assert_no_panic)" \
+	"--check-cfg=cfg(target_abi_eabihf)" \
+	"--check-cfg=cfg(intrinsics_enabled)" \
+	"--check-cfg=cfg(feature, values(\"unstable-public-internals\"))" \
+	"--check-cfg=cfg(feature, values(\"compiler-builtins\"))" \
+	"--check-cfg=cfg(feature, values(\"unmangled-names\"))" \
+	"--check-cfg=cfg(feature, values(\"arch\"))" \
+	"--cfg=f128_enabled" \
+	"--cfg=intrinsics_enabled" \
+	"--cfg=feature=\"arch\"" \
+	--crate-type=lib --crate-name=libm \
+	--emit=link=target/release/artefacts/libm.rlib \
+	src/maths/compiler-builtins/libm/src/lib.rs
+
+RUSTFLAGS+=" --extern libm=target/release/artefacts/libm.rlib"
+
+# "$RUSTC" $RUSTFLAGS src/maths/acos.rs
+# "$LD" --relocatable \
+# 	target/release/artefacts/acos.o \
+# 	target/release/artefacts/libm.o \
+# 	-o target/release/tmp/acos.o
+# "$STRIP" \
+# 	--remove-section='.text.*' \
+# 	--remove-section='!.text.*cos*' \
+# 	--keep-section-symbols \
+# 	--keep-file-symbols \
+# 	target/release/artefacts/acos.o
+# mv -f target/release/tmp/acos.o target/release/artefacts/acos.o
+# OBJECT_FILES+=" target/release/artefacts/acos.o"
+
+# "$RUSTC" $RUSTFLAGS src/maths/cos.rs
+# "$LD" --relocatable \
+# 	target/release/artefacts/cos.o \
+# 	target/release/artefacts/libm.o \
+# 	-o target/release/tmp/cos.o
+# "$STRIP" \
+# 	--remove-section='.text.*' \
+# 	--remove-section='!.text.*cos*' \
+# 	--keep-section-symbols \
+# 	--keep-file-symbols \
+# 	target/release/artefacts/cos.o
+# mv -f target/release/tmp/cos.o target/release/artefacts/cos.o
+# OBJECT_FILES+=" target/release/artefacts/cos.o"
+
+"$RUSTC" $RUSTFLAGS src/internal/__checks.rs
+rm target/release/artefacts/__checks.o
+
+"$RUSTC" $RUSTFLAGS src/stdlib/_exit.rs
+OBJECT_FILES+=" target/release/artefacts/_exit.o"
+
+"$RUSTC" $RUSTFLAGS src/sys/utsname.rs
+OBJECT_FILES+=" target/release/artefacts/utsname.o"
+
+"$RUSTC" $RUSTFLAGS src/unistd/symlink.rs
+OBJECT_FILES+=" target/release/artefacts/symlink.o"
+
+"$RUSTC" $RUSTFLAGS src/ctype/classification.rs
+OBJECT_FILES+=" target/release/artefacts/classification.o"
+
+"$RUSTC" $RUSTFLAGS src/crt/libc_init.rs
+OBJECT_FILES+=" target/release/artefacts/libc_init.o"
+
+"$RUSTC" $RUSTFLAGS src/env/environ.rs
+OBJECT_FILES+=" target/release/artefacts/environ.o"
+
+"$RUSTC" $RUSTFLAGS src/gnu/libc_version.rs
+OBJECT_FILES+=" target/release/artefacts/libc_version.o"
+
+"$RUSTC" $RUSTFLAGS src/mem/mem.rs
+OBJECT_FILES+=" target/release/artefacts/mem.o"
+
+"$RUSTC" $RUSTFLAGS src/str/strlen.rs
+OBJECT_FILES+=" target/release/artefacts/strlen.o"
+
+"$RUSTC" $RUSTFLAGS src/unistd/getuid.rs
+OBJECT_FILES+=" target/release/artefacts/getuid.o"
+
+"$RUSTC" $RUSTFLAGS src/unistd/getgid.rs
+OBJECT_FILES+=" target/release/artefacts/getgid.o"
+
+"$RUSTC" $RUSTFLAGS src/immediate_abort.rs
+OBJECT_FILES+=" target/release/artefacts/mavitix_immediate_abort.o"
+
+"$RUSTC" $RUSTFLAGS src/locale/localeconv.rs
+OBJECT_FILES+=" target/release/artefacts/localeconv.o"
+
+"$RUSTC" $RUSTFLAGS src/locale/setlocale.rs
+OBJECT_FILES+=" target/release/artefacts/setlocale.o"
 
 "$LD" $LDFLAGS \
 	-shared -soname libc.so.6 \

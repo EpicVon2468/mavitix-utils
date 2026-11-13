@@ -10,7 +10,8 @@ pub mod arg {
 
 	use crate::errors::CLIError;
 
-	pub const trait Arg: Debug + const FromStr<Err = ()> + const Default {
+	pub const trait Arg:
+		Debug + const FromStr<Err = ()> + const Default + [const] PartialEq + [const] Eq {
 		const LONG_NAME: Option<&'static str>;
 		const SHORT_NAME: Option<&'static str>;
 
@@ -157,6 +158,7 @@ const impl Arg for DwarfVersion {
 const impl FromStr for DwarfVersion {
 	type Err = ();
 
+	#[inline]
 	fn from_str(r#str: &str) -> Result<Self, Self::Err> {
 		match r#str {
 			"5" => Ok(Self::Five),
@@ -212,6 +214,7 @@ const impl Arg for Arch {
 }
 
 const impl Default for Arch {
+	#[inline]
 	fn default() -> Self {
 		const {
 			match Arch::from_str(option_env!("MAVITIX_AS_DEFAULT_ARCH").unwrap_or("x86-64")) {
@@ -263,8 +266,9 @@ const impl Into<object::Architecture> for Arch {
 #[derive(Debug, Copy)]
 #[derive_const(Default, Clone, PartialEq, Eq)]
 pub enum Endian {
+	#[cfg_attr(target_endian = "big", default)]
 	Big,
-	#[default]
+	#[cfg_attr(target_endian = "little", default)]
 	Little,
 }
 

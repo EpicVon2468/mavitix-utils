@@ -6,6 +6,4 @@
 #endif
 
 /* Use definition from <internal/__defs.h>. */
-#ifdef __NORETURN__
 #define noreturn __NORETURN__
-#endif /* noreturn */

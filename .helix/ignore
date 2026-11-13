@@ -1,0 +1,17 @@
+crates/libc/src/rpmalloc
+crates/libc/src/maths/compiler-builtins/builtins-shim
+crates/libc/src/maths/compiler-builtins/builtins-test
+crates/libc/src/maths/compiler-builtins/builtins-test-intrinsics
+crates/libc/src/maths/compiler-builtins/Cargo.lock
+crates/libc/src/maths/compiler-builtins/Cargo.toml
+crates/libc/src/maths/compiler-builtins/ci
+crates/libc/src/maths/compiler-builtins/compiler-builtins
+crates/libc/src/maths/compiler-builtins/CONTRIBUTING.md
+crates/libc/src/maths/compiler-builtins/crates
+crates/libc/src/maths/compiler-builtins/etc
+crates/libc/src/maths/compiler-builtins/josh-sync.toml
+crates/libc/src/maths/compiler-builtins/libm-test
+crates/libc/src/maths/compiler-builtins/PUBLISHING.md
+crates/libc/src/maths/compiler-builtins/README.md
+crates/libc/src/maths/compiler-builtins/rust-version
+crates/libc/src/maths/compiler-builtins/triagebot.toml

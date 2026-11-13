@@ -1,3 +1,6 @@
 [submodule "crates/libc/src/rpmalloc"]
 	path = crates/libc/src/rpmalloc
 	url = https://github.com/mjansson/rpmalloc
+[submodule "crates/libc/src/maths/compiler-builtins"]
+	path = crates/libc/src/maths/compiler-builtins
+	url = https://github.com/rust-lang/compiler-builtins

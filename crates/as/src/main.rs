@@ -1,4 +1,5 @@
 #![feature(
+	vec_push_within_capacity,
 	const_trait_impl,
 	derive_const,
 	const_convert,
@@ -81,7 +82,7 @@ pub fn main_impl() -> Result<(), MainError> {
 		let (second, rest): (char, &str) = {
 			// SAFETY:
 			// The first check of the loop will catch any case where the first byte is not '-'.
-			// Thus, the length of the first character is known to be one byte at this point, and we can slice past.
+			// Therefore, the first character is '-', its length is 1 byte, and we can slice past it without bounds checks.
 			let mut chars: Chars = unsafe { arg.get_unchecked(1..) }.chars();
 			(
 				// SAFETY: Always more than a length of 1 here.

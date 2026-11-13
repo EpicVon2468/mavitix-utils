@@ -2,6 +2,10 @@
 
 #define __STDC_VERSION_STDIO_H__ 202311L
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
@@ -28,3 +32,7 @@ FILE *fdopen(int fd, const char *mode);
 
 __NOTHROW__ extern
 int fileno(FILE *stream);
+
+#ifdef __cplusplus
+}
+#endif

@@ -8,9 +8,12 @@ use core::{
 	hint::{cold_path, likely as __likely},
 };
 
-include!("../rsinclude/elf.rs");
-include!("../rsinclude/ld_syms.rs");
-include!("../rsinclude/rpmalloc.rs");
+#[path = "../rsinclude/elf.rs"]
+pub mod elf;
+#[path = "../rsinclude/ld_syms.rs"]
+pub mod ld_syms;
+#[path = "../rsinclude/rpmalloc.rs"]
+pub mod rpmalloc;
 
 unsafe extern "C" {
 
@@ -21,11 +24,11 @@ unsafe extern "C" {
 
 	pub fn __libc_fini(status: i32, fini: *mut c_void);
 
-	pub safe fn on_exit(
+	pub fn on_exit(
 		r#fn: *mut unsafe extern "C" fn(status: i32, usr_ptr: *mut c_void),
 		usr_ptr: *mut c_void,
 	) -> i32;
-	pub safe fn atexit(r#fn: *mut unsafe extern "C" fn()) -> i32;
+	pub fn atexit(r#fn: *mut unsafe extern "C" fn()) -> i32;
 }
 
 // FIXME:
@@ -38,6 +41,7 @@ static mut MAVITIX_EXECFN: *const c_char = core::ptr::null_mut();
 #[unsafe(no_mangle)]
 #[allow(nonstandard_style)]
 pub unsafe extern "C" fn __mavitix_getexecfn() -> *const c_char {
+	// SAFETY: This field is only written to once, when only one thread exists (see: `__mavitix_libc_init`).
 	return unsafe { MAVITIX_EXECFN };
 }
 
@@ -50,25 +54,46 @@ pub unsafe extern "C" fn __mavitix_libc_init(
 	fini: *mut ld_syms::fini,
 	rtld_fini: *mut ld_syms::fini,
 ) -> i32 {
+	// SAFETY:
+	// Problem(s):
+	// - Writing to a mutable static may cause undefined behaviour across threads.
+	// Excuse(s):
+	// - Callers ensure that no other threads are created at the time of calling.
 	unsafe {
 		environ = envp;
 	};
 	let mut size: usize = 0;
-	while !unsafe { envp.add(size) }.is_null() {
+	// SAFETY: Callers ensure `envp` is well-formed.
+	while !unsafe { *envp.add(size) }.is_null() {
 		size += 1;
 	}
-	let raw_auxv: *const elf::auxv = unsafe { envp.add(size + 1) } as *const elf::auxv;
+	// SAFETY: Callers ensure `envp` is well-formed.
+	let auxv: *const elf::auxv = unsafe { envp.add(size + 1) } as *const elf::auxv;
 	size = 0;
 	let mut page_size: usize = 0;
 	loop {
-		let entry: elf::auxv = unsafe { *raw_auxv.add(size) };
+		let entry: elf::auxv = unsafe { *auxv.add(size) };
 		match entry.a_type as usize {
 			elf::AT_EXECFN => {
+				// SAFETY:
+				// Problem(s):
+				// - Writing to a mutable static may cause undefined behaviour across threads.
+				// - Accessing a field of a union may cause undefined behaviour.
+				// Excuse(s):
+				// - Callers ensure that no other threads are created at the time of calling.
+				// - `AT_EXECFN` is guaranteed by spec to be initialised with the `a_ptr` field.
 				unsafe {
 					MAVITIX_EXECFN = entry.a_un.a_ptr as *const c_char;
 				};
 			},
-			elf::AT_PAGESZ => page_size = unsafe { entry.a_un.a_val } as usize,
+			elf::AT_PAGESZ => {
+				// SAFETY:
+				// Problem(s):
+				// - Accessing a field of a union may cause undefined behaviour.
+				// Excuse(s):
+				// - `AT_PAGESZ` is guaranteed by spec to be initalised with the `a_val` field.
+				page_size = unsafe { entry.a_un.a_val } as usize;
+			},
 			elf::AT_SECURE => {},
 			elf::AT_NULL => break,
 			_ => (),
@@ -77,15 +102,17 @@ pub unsafe extern "C" fn __mavitix_libc_init(
 	}
 	let mut config: rpmalloc::Config = rpmalloc::Config {
 		page_size,
+		// TODO: Is there a way to easily query huge pages & transparent huge pages?
 		enable_huge_pages: 0,
 		enable_thp: 0,
 		disable_decommit: 0,
-		page_name: const { "mavitix-libc-rpmalloc-page\0".as_ptr().cast() },
-		huge_page_name: const { "mavitix-libc-rpmalloc-huge-page\0".as_ptr().cast() },
+		page_name: const { c"mavitix-libc-rpmalloc-page".as_ptr() },
+		huge_page_name: const { c"mavitix-libc-rpmalloc-huge-page".as_ptr() },
 		unmap_on_finalise: 0,
 		disable_thp: 0,
 	};
-	if rpmalloc::initialise_config(core::ptr::null_mut(), &raw mut config) == 0 {
+	// SAFETY: `&raw mut config` is a well-formed pointer to a valid struct.
+	if unsafe { rpmalloc::initialise_config(core::ptr::null_mut(), &raw mut config) } == 0 {
 		return false as i32;
 	};
 	if __mavitix_libc__stdio_init() == 0 {
@@ -93,14 +120,17 @@ pub unsafe extern "C" fn __mavitix_libc_init(
 	};
 
 	if __likely(!rtld_fini.is_null()) {
-		// "a function pointer that the application should register with atexit"
-		if atexit(rtld_fini) == 0 {
+		// SAFETY: "a function pointer that the application should register with atexit"
+		if unsafe { atexit(rtld_fini) } == 0 {
 			cold_path();
 			return false as i32;
 		};
 	};
 	if __likely(!fini.is_null()) {
-		if on_exit(__libc_fini as _, fini as *mut c_void) == 0 {
+		// SAFETY:
+		// `__libc_fini as _` is a valid function pointer matching the function prototype.
+		// `fini` is a well-formed function pointer which lasts the length of the program.
+		if unsafe { on_exit(__libc_fini as _, fini as *mut c_void) } == 0 {
 			cold_path();
 			return false as i32;
 		};

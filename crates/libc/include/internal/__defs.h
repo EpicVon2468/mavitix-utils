@@ -1,5 +1,6 @@
 #pragma once
 #include <internal/__checks.h>
+#include <internal/__lang_versions.h>
 
 #define __MAVITIX_LIBC__ 1
 
@@ -25,81 +26,90 @@
 #define __CLANG_LIKE__ 0
 #endif
 
-#define __C89__ 1
-#define __C90__ 1
-#define __C95__ 0
-#define __C99__ 0
-#define __C11__ 0
-#define __C17__ 0
-#define __C23__ 0
+#if defined(__GNUC__) && !(defined(__clang__) || defined(__llvm__))
+#define __gcc_bad__ __extension__
+#else
+#define __gcc_bad__
+#endif
 
-#ifdef __STDC_VERSION__
+#if __has_attribute(callback)
+#define __CALLBACK__(...) __attribute__((callback(__VA_ARGS__)))
+#elif __C23__ && __has_c_attribute(clang::callback)
+#define __CALLBACK__(...) [[gnu::callback(__VA_ARGS__)]]
+#else
+#define __CALLBACK__(...)
+#endif /* __CALLBACK__ */
 
-/*
- * __STDC_VERSION__ was first defined in N325 (C95).
- * Value table:
- * C89: Undefined
- * C90: Undefined
- * C95: 199409L
- * C99: 199901L
- * C11: 201112L
- * C17: 201710L
- * C23: 202311L
- */
+#if __has_attribute(unavailable)
+#define __UNAVAILABLE__(x) __attribute__((unavailable(x)))
+#elif __C23__ && __has_c_attribute(clang::unavailable)
+#define __UNAVAILABLE__(x) [[clang::unavailable(x)]]
+#else
+#define __UNAVAILABLE__(x)
+#endif /* __UNAVAILABLE__ */
 
-#if __STDC_VERSION__ >= 199409L
-#undef __C95__
-#define __C95__ 1
-#endif /* C95 */
-
-#if __STDC_VERSION__ >= 199901L
-#undef __C99__
-#define __C99__ 1
-#endif /* C99 */
-
-#if __STDC_VERSION__ >= 201112L
-#undef __C11__
-#define __C11__ 1
-#endif /* C11 */
-
-#if __STDC_VERSION__ >= 201710L
-#undef __C17__
-#define __C17__ 1
-#endif /* C17 */
-
-#if __STDC_VERSION__ >= 202311L
-#undef __C23__
-#define __C23__ 1
-#endif /* C23 */
-
-#endif /* __STDC_VERSION__ */
+#if __has_attribute(deprecated)
+#define __DEPRECATED__(x) __attribute__((deprecated(x)))
+#elif __C23__ && __has_c_attribute(gnu::deprecated)
+#define __DEPRECATED__(x) [[gnu::deprecated(x)]]
+#elif __C23__ && __has_c_attribute(deprecated)
+#define __DEPRECATED__(x) [[deprecated(x)]]
+#else
+#define __DEPRECATED__(x)
+#endif /* __DEPRECATED__ */
 
 #if __has_attribute(nothrow)
 #define __NOTHROW__ __attribute__((nothrow))
+#elif __C23__ && __has_c_attribute(gnu::nothrow)
+#define __NOTHROW__ [[gnu::nothrow]]
+#elif __C23__ && __has_c_attribute(nothrow)
+#define __NOTHROW__ [[nothrow]]
 #else
 #define __NOTHROW__
 #endif /* __NOTHROW__ */
 
 #if __has_attribute(used)
 #define __USED__ __attribute__((used))
+#elif __C23__ && __has_c_attribute(gnu::used)
+#define __USED__ [[gnu::used]]
 #else
 #define __USED__
 #endif /* __USED__ */
 
 #if __has_attribute(const)
 #define __CONST__ __attribute__((const))
+#elif __has_attribute(__const)
+#define __CONST__ __attribute__((__const))
+#elif __C23__ && __has_c_attribute(gnu::const)
+#define __CONST__ [[gnu::const]]
+#elif __C23__ && __has_c_attribute(gnu::__const)
+#define __CONST__ [[gnu::__const]]
 #else
 #define __CONST__
 #endif /* __CONST__ */
 
+#if __C11__
+#define __INLINE__ inline
+#else
+#define __INLINE__
+#endif /* __INLINE__ */
+
 #if __has_attribute(noinline)
 #define __NOINLINE__ __attribute__((noinline))
+#elif __C23__ && __has_c_attribute(clang::noinline)
+#define __NOINLINE__ [[clang::noinline]]
+#elif __C23__ && __has_c_attribute(gnu::noinline)
+#define __NOINLINE__ [[gnu::noinline]]
+#elif __C23__ && __has_c_attribute(noinline)
+#define __NOINLINE__ [[noinline]]
 #else
 #define __NOINLINE__
 #endif /* __NOINLINE__ */
 
 #if __has_attribute(pure)
 #define __PURE__ __attribute__((pure))
+#elif __C23__ && __has_c_attribute(gnu::pure)
+#define __PURE__ [[gnu::pure]]
 #else
 #define __PURE__
 #endif /* __PURE__ */
@@ -107,6 +117,9 @@
 #if __has_attribute(visibility)
 #define __PROTECTED__ __attribute__((visibility("protected")))
 #define __HIDDEN__ __attribute__((visibility("hidden")))
+#elif __C23__ && __has_c_attribute(gnu::visibility)
+#define __PROTECTED__ [[gnu::visibility("protected")]]
+#define __HIDDEN__ [[gnu::visibility("hidden")]]
 #else
 #define __PROTECTED__
 #define __HIDDEN__
@@ -114,34 +127,22 @@
 
 #if __has_attribute(weak)
 #define __WEAK__ __attribute__((weak))
+#elif __C23__ && __has_c_attribute(gnu::weak)
+#define __WEAK__ [[gnu::weak]]
 #else
 #define __WEAK__
 #endif /* __WEAK__ */
 
-#if __C23__ && __has_c_attribute(noreturn)
-
 #if __has_attribute(noreturn)
-#define __NORETURN__ [[noreturn]] __attribute__((noreturn))
-#else
-#define __NORETURN__ [[noreturn]]
-#endif
-
-#elif __C11__
-
-#if __has_attribute(noreturn)
-#define __NORETURN__ _Noreturn __attribute__((noreturn))
-#else
-#define __NORETURN__ _Noreturn
-#endif
-
-#elif __has_attribute(noreturn)
-
 #define __NORETURN__ __attribute__((noreturn))
-
+#elif __C23__ && __has_c_attribute(gnu::noreturn)
+#define __NORETURN__ [[gnu::noreturn]]
+#elif __C23__ && __has_c_attribute(noreturn)
+#define __NORETURN__ [[noreturn]]
+#elif __C11__
+#define __NORETURN__ _Noreturn
 #else
-
 #define __NORETURN__
-
 #endif /* __NORETURN__ */
 
 #ifdef __MAVITIX_INTERNAL__
@@ -157,30 +158,34 @@ typedef int (*__main_t)(int argc, char **argv, char **envp);
 #if __C23__
 
 #if __has_c_attribute(clang::likely)
-#define _ClangLikely(x) (x) [[clang::likely]]
+#define _CAttrLikely(x) (x) [[clang::likely]]
+#elif __has_c_attribute(likely)
+#define _CAttrLikely(x) (x) [[likely]]
 #else
-#define _ClangLikely(x) (x)
+#define _CAttrLikely(x) (x)
 #endif
 
 #if __has_c_attribute(clang::unlikely)
-#define _ClangUnlikely(x) (x) [[clang::unlikely]]
+#define _CAttrUnlikely(x) (x) [[clang::unlikely]]
+#elif __has_c_attribute(unlikely)
+#define _CAttrUnlikely(x) (x) [[unlikely]]
 #else
-#define _ClangUnlikely(x) (x)
+#define _CAttrUnlikely(x) (x)
 #endif
 
 #else
 
-#define _ClangLikely(x) (x)
-#define _ClangUnlikely(x) (x)
+#define _CAttrLikely(x) (x)
+#define _CAttrUnlikely(x) (x)
 
-#endif /* _ClangLikely & _ClangUnlikely */
+#endif /* _CAttrLikely & _CAttrUnlikely */
 
 #if __has_builtin(__builtin_expect)
-#define __likely(x) _ClangLikely(__builtin_expect((x), 1))
-#define __unlikely(x) _ClangUnlikely(__builtin_expect((x), 0))
+#define __likely(x) _CAttrLikely(__builtin_expect((x), 1))
+#define __unlikely(x) _CAttrUnlikely(__builtin_expect((x), 0))
 #else
-#define __likely(x) _ClangLikely(x)
-#define __unlikely(x) _ClangUnlikely(x)
+#define __likely(x) _CAttrLikely(x)
+#define __unlikely(x) _CAttrUnlikely(x)
 #endif /* __likely & __unlikely */
 
 #endif

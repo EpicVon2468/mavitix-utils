@@ -18,7 +18,12 @@ pub extern "C" fn symlink(target: *const c_char, linkpath: *const c_char) -> i32
 				lateout("rax") result,
 				options(raw),
 			),
-			target_arch = "aarch64" => todo!(),
+			target_arch = "aarch64" => {
+				todo!("aarch64 doesn't seem to have the symlink syscall?")
+			},
+			target_arch = "riscv64" => {
+				todo!("riscv64 doesn't seem to have the symlink syscall?");
+			},
 			_ => compile_error!(),
 		};
 	};

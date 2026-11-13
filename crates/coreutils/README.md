@@ -29,6 +29,7 @@ The currently implemented utilities are as follows:
 - `nproc(1)`
 
 FIXME: Use `args[0]` or use `CARGO_BIN_NAME` for error name prefixing.  Decide which is best, potentially make a macro.
+TODO: Intercept `argc` and `argv` to avoid expensive use of `.push("\0")` to null-terminate some args.
 
 FFI note:
 

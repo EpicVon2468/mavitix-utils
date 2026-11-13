@@ -16,7 +16,17 @@ __LINKER_SYMBOL__(__init_array_end);
 __LINKER_SYMBOL__(__fini_array_start);
 __LINKER_SYMBOL__(__fini_array_end);
 
-extern
+// Apparently `callback` is only allowed once.
+// Reasoning:
+// """
+// 1. The main reason I believe is that it’s modelled after destructors, and it
+// doesn’t usually make sense to have more than one destructor for something
+// 2. This is a GCC attribute, and GCC only supports specifying it once (I
+// believe it ignores any additional ones; Clang used to do that too, but we and
+// GCC disagreed on which ones were ignored, so I updated our implementation to
+// be what GCC does in addition to adding that error)
+// """
+__CALLBACK__(main, argc, ubp_av, __) extern
 int __libc_start_main(
 	__main_t main,
 	int argc,
@@ -34,10 +44,10 @@ int __mavitix_libc_init(
 	__fini_t fini,
 	__fini_t rtld_fini
 );
-__PROTECTED__ static
-void __libc_init(__init_t _init);
+static
+void __libc_init(__init_t init);
 extern
-void __libc_fini(int status, void *_fini);
+void __libc_fini(int status, void *fini);
 
 // https://refspecs.linuxbase.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/baselib---libc-start-main-.html
 int __libc_start_main(
@@ -50,9 +60,8 @@ int __libc_start_main(
 	// Evil fucking K&R function prototype
 	void (*const)()
 ) {
-	char **argv = ubp_av;
-	char **envp = argv + argc + 1;
-	if (!__mavitix_libc_init(argc, argv, envp, fini, rtld_fini)) {
+	char **const envp = ubp_av + argc + 1;
+	if (!__mavitix_libc_init(argc, ubp_av, envp, fini, rtld_fini)) {
 		_Exit(EX_SOFTWARE);
 	};
 	__libc_init(init);
@@ -65,14 +74,14 @@ int __libc_start_main(
 		// - Dereferencing `main` if it is null would thus be UB.
 		// Excuse(s):
 		// - We perform a null check before dereference.
-		exit((*main)(argc, argv, envp));
+		exit((*main)(argc, ubp_av, envp));
 	} else {
 		_Exit(EX_SOFTWARE);
 	};
 }
 
-__PROTECTED__ static
-void __libc_init(const __init_t _init) {
+static
+void __libc_init(const __init_t init) {
 	size_t index;
 
 	{
@@ -106,15 +115,15 @@ void __libc_init(const __init_t _init) {
 		};
 	};
 
-	if __likely (_init != NULL) {
+	if __likely (init != NULL) {
 		// SAFETY:
 		// Problem(s):
 		// - Dereferencing a null ptr is Undefined Behaviour.
-		// - The `_init` parameter is not guaranteed to be non-null.
-		// - Dereferencing `_init` if it is null would thus be UB.
+		// - The `init` parameter is not guaranteed to be non-null.
+		// - Dereferencing `init` if it is null would thus be UB.
 		// Excuse(s):
 		// - We perform a null check before dereference.
-		(*_init)();
+		(*init)();
 	};
 
 	{
@@ -149,7 +158,9 @@ void __libc_init(const __init_t _init) {
 	};
 }
 
-void __libc_fini(const int, void *const _fini) {
+void __libc_fini(const int, void *const fini_param) {
+	// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83584
+	__gcc_bad__ const __fini_t fini = (__fini_t) fini_param;
 	size_t index = __fini_array_end - __fini_array_start;
 	while (index-- > 0) {
 #ifdef __MAVITIX_VERBOSE_UB_CHECKS
@@ -177,7 +188,7 @@ void __libc_fini(const int, void *const _fini) {
 #endif
 	};
 #ifdef __MAVITIX_VERBOSE_UB_CHECKS
-	if __likely (_fini != NULL) {
+	if __likely (fini != NULL) {
 		// SAFETY:
 		// Problem(s):
 		// - Dereferencing a null ptr is Undefined Behaviour.
@@ -185,9 +196,9 @@ void __libc_fini(const int, void *const _fini) {
 		// - Dereferencing `_fini` if it is null would thus be UB.
 		// Excuse(s):
 		// - We perform a null check before dereference.
-		(*((__fini_t) _fini))();
+		(*fini)();
 	};
 #else
-	(*((__fini_t) _fini))();
+	(*fini)();
 #endif
 }
