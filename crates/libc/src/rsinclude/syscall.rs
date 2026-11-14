@@ -8,6 +8,7 @@ macro_rules! syscall {
 		, $arg4:expr $(
 		, $arg5:expr
 		)?)?)?)?)?)?
+		$(; $($opt:ident),*)?
 		$(,)?
 	) => {{
 		let result: i64;
@@ -25,7 +26,7 @@ macro_rules! syscall {
 					in("r9") $arg5,
 					)?)?)?)?)?)?
 					lateout("rax") result,
-					options(raw),
+					options(raw $(, $($opt),*)?),
 				),
 				target_arch = "aarch64" => core::arch::asm!(
 					"svc #0",
@@ -38,7 +39,7 @@ macro_rules! syscall {
 					in("x5") $arg5,
 					)?)?)?)?)?)?
 					lateout("x0") result,
-					options(raw),
+					options(raw $(, $($opt),*)?),
 				),
 				target_arch = "riscv64" => core::arch::asm!(
 					"ecall",
@@ -51,7 +52,7 @@ macro_rules! syscall {
 					in("a5") $arg5,
 					)?)?)?)?)?)?
 					lateout("a0") result,
-					options(raw),
+					options(raw $(, $($opt),*)?),
 				),
 				_ => compile_error!(),
 			}

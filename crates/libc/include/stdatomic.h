@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+#if !defined(__STDC_NO_ATOMICS__)
+
 #define __STDC_VERSION_STDATOMIC_H__ 202311L
 
 #ifdef __cplusplus
@@ -180,3 +182,5 @@ void atomic_flag_clear_explicit(volatile atomic_flag *ptr, memory_order order);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* __STDC_NO_ATOMICS__ */

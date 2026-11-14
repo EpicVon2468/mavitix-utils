@@ -26,7 +26,7 @@ __NOTHROW__ extern
 int fflush(FILE *stream);
 
 __NOTHROW__ extern
-FILE *fopen(const char *restrict filename, const char *restrict mode);
+FILE *fopen(const char *__restrict__ filename, const char *__restrict__ mode);
 
 __NOTHROW__ extern
 FILE *fdopen(int fd, const char *mode);

@@ -12,11 +12,15 @@
 #define __has_c_attribute(x) 0
 #endif
 
-#if defined(__has_cpp_attribute)
+#if defined(__has_cpp_attribute) && !defined(__has_cxx_attribute)
 #define __has_cxx_attribute(x) __has_cpp_attribute(x)
-#else
+#elif !defined(__has_cxx_attribute)
 #define __has_cxx_attribute(x) 0
 #endif /* __has_cxx_attribute */
+
+#if !defined(__has_declspec_attribute)
+#define __has_declspec_attribute(x) 0
+#endif
 
 #if !defined(__has_attribute)
 #define __has_attribute(x) 0
@@ -25,6 +29,12 @@
 #if !defined(__has_builtin)
 #define __has_builtin(x) 0
 #endif
+
+#if defined(__is_identifier) && !defined(__has_keyword)
+#define __has_keyword(x) !__is_identifier(x)
+#elif !defined(__has_keyword)
+#define __has_keyword(x) 0
+#endif /* __has_keyword */
 
 #if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
 #define __CLANG_LIKE__ 1
@@ -37,6 +47,16 @@
 #else
 #define __gcc_bad__
 #endif
+
+#if __has_keyword(__restrict__)
+/* Empty branch because `__restrict__` is a keyword */
+#elif __has_keyword(__restrict)
+#define __restrict__ __restrict
+#elif __C99__ || __has_keyword(restrict)
+#define __restrict__ restrict
+#else
+#define __restrict__
+#endif /* __restrict__ */
 
 #if __has_attribute(callback)
 #define __CALLBACK__(...) __attribute__((callback(__VA_ARGS__)))
@@ -64,6 +84,8 @@
 #elif (__C23__ && __has_c_attribute(deprecated)) ||                            \
 	(__CXX11__ && __has_cxx_attribute(deprecated))
 #define __DEPRECATED__(x) [[deprecated(x)]]
+#elif __has_declspec_attribute(deprecated)
+#define __DEPRECATED__(x) __declspec(deprecated(x))
 #else
 #define __DEPRECATED__(x)
 #endif /* __DEPRECATED__ */
@@ -73,6 +95,8 @@
 #elif (__C23__ && __has_c_attribute(gnu::nothrow)) ||                          \
 	(__CXX11__ && __has_cxx_attribute(gnu::nothrow))
 #define __NOTHROW__ [[gnu::nothrow]]
+#elif __has_declspec_attribute(nothrow)
+#define __NOTHROW__ __declspec(nothrow)
 #else
 #define __NOTHROW__
 #endif /* __NOTHROW__ */
@@ -100,8 +124,12 @@
 #define __CONST__
 #endif /* __CONST__ */
 
-#if __C11__ || defined(__cplusplus)
+#if __C11__ || defined(__cplusplus) || __has_keyword(inline)
 #define __INLINE__ inline
+#elif __has_keyword(__inline__)
+#define __INLINE__ __inline__
+#elif __has_keyword(__inline)
+#define __INLINE__ __inline
 #else
 #define __INLINE__
 #endif /* __INLINE__ */
@@ -117,6 +145,8 @@
 #elif (__C23__ && __has_c_attribute(msvc::noinline)) ||                        \
 	(__CXX11__ && __has_cxx_attribute(msvc::noinline))
 #define __NOINLINE__ [[msvc::noinline]]
+#elif __has_declspec_attribute(noinline)
+#define __NOINLINE__ __declspec(noinline)
 #else
 #define __NOINLINE__
 #endif /* __NOINLINE__ */
@@ -161,7 +191,9 @@
 #define __NORETURN__ [[noreturn]]
 #elif __C23__ && __has_c_attribute(_Noreturn)
 #define __NORETURN__ [[_Noreturn]]
-#elif __C11__
+#elif __has_declspec_attribute(noreturn)
+#define __NORETURN__ __declspec(noreturn)
+#elif __C11__ || __has_keyword(_Noreturn)
 #define __NORETURN__ _Noreturn
 #else
 #define __NORETURN__
