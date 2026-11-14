@@ -20,7 +20,7 @@ asm_prelude_syscall! {
 	"getegid"; cfg_select! {
 		// https://syscall.sh/x64/getegid/
 		target_arch = "x86_64" => "0x6C",
-		// https://syscall.sh/x64/getegid/
+		// https://syscall.sh/arm64/getegid/
 		target_arch = "aarch64" => "#0xB1",
 		// https://syscall.sh/riscv64/getegid/
 		target_arch = "riscv64" => "0xB1",

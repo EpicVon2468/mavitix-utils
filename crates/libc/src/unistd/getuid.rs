@@ -20,7 +20,7 @@ asm_prelude_syscall! {
 	"geteuid"; cfg_select! {
 		// https://syscall.sh/x64/geteuid/
 		target_arch = "x86_64" => "0x6B",
-		// https://syscall.sh/x64/geteuid/
+		// https://syscall.sh/arm64/geteuid/
 		target_arch = "aarch64" => "#0xAF",
 		// https://syscall.sh/riscv64/geteuid/
 		target_arch = "riscv64" => "0xAF",
