@@ -1,3 +1,4 @@
+#pragma once
 #include <internal/__defs.h>
 
 #define __STDC_VERSION_STDIO_H__ 202311L

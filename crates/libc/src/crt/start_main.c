@@ -50,6 +50,7 @@ extern
 void __libc_fini(int status, void *fini);
 
 // https://refspecs.linuxbase.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/baselib---libc-start-main-.html
+extern
 int __libc_start_main(
 	const __main_t main,
 	const int argc,
@@ -158,6 +159,7 @@ void __libc_init(const __init_t init) {
 	};
 }
 
+extern
 void __libc_fini(const int, void *const fini_param) {
 	// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83584
 	__gcc_bad__ const __fini_t fini = (__fini_t) fini_param;

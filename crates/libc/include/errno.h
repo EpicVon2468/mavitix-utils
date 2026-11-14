@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+/* #include <linux/errno.h> */
+
 __CONST__ __NOTHROW__ extern
 int *__errno_location(void);
 

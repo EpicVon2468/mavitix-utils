@@ -9,6 +9,7 @@ FILE *stdin = NULL;
 FILE *stdout = NULL;
 FILE *stderr = NULL;
 
+extern
 int __mavitix_libc__stdio_init(void) {
 	// FIXME:
 	// This isn't needed or normal, it's a temporary solution because I haven't
@@ -27,6 +28,7 @@ int __mavitix_libc__stdio_init(void) {
 	return true;
 }
 
+extern
 int __mavitix_libc__stdio_fini(void) {
 	// SANITY(unusual):
 	// `fclose` automagically flushes the stream(s).

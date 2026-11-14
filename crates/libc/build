@@ -304,6 +304,9 @@ OBJECT_FILES+=" target/release/artefacts/stdio__init.o"
 "$CC" $CFLAGS src/crt/start_main.c -c -o target/release/artefacts/start_main.o
 OBJECT_FILES+=" target/release/artefacts/start_main.o"
 
+"$CC" $CFLAGS src/errno.c -c -o target/release/artefacts/errno.o
+OBJECT_FILES+=" target/release/artefacts/errno.o"
+
 # TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
 # FIXME: https://github.com/rust-lang/rust/issues/56068
 RUSTFLAGS+=" --check-cfg=cfg(feature,values(\"verbose-ub-checks\"))"
@@ -370,14 +373,14 @@ RUSTFLAGS+=" --extern libm=target/release/artefacts/libm.rlib"
 "$RUSTC" $RUSTFLAGS src/internal/__checks.rs
 rm target/release/artefacts/__checks.o
 
+"$RUSTC" $RUSTFLAGS src/immediate_abort.rs
+OBJECT_FILES+=" target/release/artefacts/mavitix_immediate_abort.o"
+
 "$RUSTC" $RUSTFLAGS src/stdlib/_exit.rs
 OBJECT_FILES+=" target/release/artefacts/_exit.o"
 
 "$RUSTC" $RUSTFLAGS src/sys/utsname.rs
 OBJECT_FILES+=" target/release/artefacts/utsname.o"
-
-"$RUSTC" $RUSTFLAGS src/unistd/symlink.rs
-OBJECT_FILES+=" target/release/artefacts/symlink.o"
 
 "$RUSTC" $RUSTFLAGS src/ctype/classification.rs
 OBJECT_FILES+=" target/release/artefacts/classification.o"
@@ -397,18 +400,17 @@ OBJECT_FILES+=" target/release/artefacts/mem.o"
 "$RUSTC" $RUSTFLAGS src/str/strlen.rs
 OBJECT_FILES+=" target/release/artefacts/strlen.o"
 
+"$RUSTC" $RUSTFLAGS src/unistd/symlink.rs
+OBJECT_FILES+=" target/release/artefacts/symlink.o"
 "$RUSTC" $RUSTFLAGS src/unistd/getuid.rs
 OBJECT_FILES+=" target/release/artefacts/getuid.o"
-
 "$RUSTC" $RUSTFLAGS src/unistd/getgid.rs
 OBJECT_FILES+=" target/release/artefacts/getgid.o"
-
-"$RUSTC" $RUSTFLAGS src/immediate_abort.rs
-OBJECT_FILES+=" target/release/artefacts/mavitix_immediate_abort.o"
+"$RUSTC" $RUSTFLAGS src/unistd/syscall.rs
+OBJECT_FILES+=" target/release/artefacts/syscall.o"
 
 "$RUSTC" $RUSTFLAGS src/locale/localeconv.rs
 OBJECT_FILES+=" target/release/artefacts/localeconv.o"
-
 "$RUSTC" $RUSTFLAGS src/locale/setlocale.rs
 OBJECT_FILES+=" target/release/artefacts/setlocale.o"
 

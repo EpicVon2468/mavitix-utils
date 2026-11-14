@@ -12,6 +12,12 @@
 #define __has_c_attribute(x) 0
 #endif
 
+#if defined(__has_cpp_attribute)
+#define __has_cxx_attribute(x) __has_cpp_attribute(x)
+#else
+#define __has_cxx_attribute(x) 0
+#endif /* __has_cxx_attribute */
+
 #if !defined(__has_attribute)
 #define __has_attribute(x) 0
 #endif
@@ -34,15 +40,17 @@
 
 #if __has_attribute(callback)
 #define __CALLBACK__(...) __attribute__((callback(__VA_ARGS__)))
-#elif __C23__ && __has_c_attribute(clang::callback)
-#define __CALLBACK__(...) [[gnu::callback(__VA_ARGS__)]]
+#elif (__C23__ && __has_c_attribute(clang::callback)) ||                       \
+	(__CXX11__ && __has_cxx_attribute(clang::callback))
+#define __CALLBACK__(...) [[clang::callback(__VA_ARGS__)]]
 #else
 #define __CALLBACK__(...)
 #endif /* __CALLBACK__ */
 
 #if __has_attribute(unavailable)
 #define __UNAVAILABLE__(x) __attribute__((unavailable(x)))
-#elif __C23__ && __has_c_attribute(clang::unavailable)
+#elif (__C23__ && __has_c_attribute(clang::unavailable)) ||                    \
+	(__CXX11__ && __has_cxx_attribute(clang::callback))
 #define __UNAVAILABLE__(x) [[clang::unavailable(x)]]
 #else
 #define __UNAVAILABLE__(x)
@@ -50,9 +58,11 @@
 
 #if __has_attribute(deprecated)
 #define __DEPRECATED__(x) __attribute__((deprecated(x)))
-#elif __C23__ && __has_c_attribute(gnu::deprecated)
+#elif (__C23__ && __has_c_attribute(gnu::deprecated)) ||                       \
+	(__CXX11__ && __has_cxx_attribute(gnu::deprecated))
 #define __DEPRECATED__(x) [[gnu::deprecated(x)]]
-#elif __C23__ && __has_c_attribute(deprecated)
+#elif (__C23__ && __has_c_attribute(deprecated)) ||                            \
+	(__CXX11__ && __has_cxx_attribute(deprecated))
 #define __DEPRECATED__(x) [[deprecated(x)]]
 #else
 #define __DEPRECATED__(x)
@@ -60,17 +70,17 @@
 
 #if __has_attribute(nothrow)
 #define __NOTHROW__ __attribute__((nothrow))
-#elif __C23__ && __has_c_attribute(gnu::nothrow)
+#elif (__C23__ && __has_c_attribute(gnu::nothrow)) ||                          \
+	(__CXX11__ && __has_cxx_attribute(gnu::nothrow))
 #define __NOTHROW__ [[gnu::nothrow]]
-#elif __C23__ && __has_c_attribute(nothrow)
-#define __NOTHROW__ [[nothrow]]
 #else
 #define __NOTHROW__
 #endif /* __NOTHROW__ */
 
 #if __has_attribute(used)
 #define __USED__ __attribute__((used))
-#elif __C23__ && __has_c_attribute(gnu::used)
+#elif (__C23__ && __has_c_attribute(gnu::used)) ||                             \
+	(__CXX11__ && __has_cxx_attribute(gnu::used))
 #define __USED__ [[gnu::used]]
 #else
 #define __USED__
@@ -80,15 +90,17 @@
 #define __CONST__ __attribute__((const))
 #elif __has_attribute(__const)
 #define __CONST__ __attribute__((__const))
-#elif __C23__ && __has_c_attribute(gnu::const)
+#elif (__C23__ && __has_c_attribute(gnu::const)) ||                            \
+	(__CXX11__ && __has_cxx_attribute(gnu::const))
 #define __CONST__ [[gnu::const]]
-#elif __C23__ && __has_c_attribute(gnu::__const)
+#elif (__C23__ && __has_c_attribute(gnu::__const)) ||                          \
+	(__CXX11__ && __has_cxx_attribute(gnu::__const))
 #define __CONST__ [[gnu::__const]]
 #else
 #define __CONST__
 #endif /* __CONST__ */
 
-#if __C11__
+#if __C11__ || defined(__cplusplus)
 #define __INLINE__ inline
 #else
 #define __INLINE__
@@ -96,19 +108,23 @@
 
 #if __has_attribute(noinline)
 #define __NOINLINE__ __attribute__((noinline))
-#elif __C23__ && __has_c_attribute(clang::noinline)
+#elif (__C23__ && __has_c_attribute(clang::noinline)) ||                       \
+	(__CXX11__ && __has_cxx_attribute(clang::noinline))
 #define __NOINLINE__ [[clang::noinline]]
-#elif __C23__ && __has_c_attribute(gnu::noinline)
+#elif (__C23__ && __has_c_attribute(gnu::noinline)) ||                         \
+	(__CXX11__ && __has_cxx_attribute(gnu::noinline))
 #define __NOINLINE__ [[gnu::noinline]]
-#elif __C23__ && __has_c_attribute(noinline)
-#define __NOINLINE__ [[noinline]]
+#elif (__C23__ && __has_c_attribute(msvc::noinline)) ||                        \
+	(__CXX11__ && __has_cxx_attribute(msvc::noinline))
+#define __NOINLINE__ [[msvc::noinline]]
 #else
 #define __NOINLINE__
 #endif /* __NOINLINE__ */
 
 #if __has_attribute(pure)
 #define __PURE__ __attribute__((pure))
-#elif __C23__ && __has_c_attribute(gnu::pure)
+#elif (__C23__ && __has_c_attribute(gnu::pure)) ||                             \
+	(__CXX11__ && __has_cxx_attribute(gnu::pure))
 #define __PURE__ [[gnu::pure]]
 #else
 #define __PURE__
@@ -117,7 +133,8 @@
 #if __has_attribute(visibility)
 #define __PROTECTED__ __attribute__((visibility("protected")))
 #define __HIDDEN__ __attribute__((visibility("hidden")))
-#elif __C23__ && __has_c_attribute(gnu::visibility)
+#elif (__C23__ && __has_c_attribute(gnu::visibility)) ||                       \
+	(__CXX11__ && __has_cxx_attribute(gnu::visibility))
 #define __PROTECTED__ [[gnu::visibility("protected")]]
 #define __HIDDEN__ [[gnu::visibility("hidden")]]
 #else
@@ -127,7 +144,8 @@
 
 #if __has_attribute(weak)
 #define __WEAK__ __attribute__((weak))
-#elif __C23__ && __has_c_attribute(gnu::weak)
+#elif (__C23__ && __has_c_attribute(gnu::weak)) ||                             \
+	(__CXX11__ && __has_cxx_attribute(gnu::weak))
 #define __WEAK__ [[gnu::weak]]
 #else
 #define __WEAK__
@@ -135,15 +153,43 @@
 
 #if __has_attribute(noreturn)
 #define __NORETURN__ __attribute__((noreturn))
-#elif __C23__ && __has_c_attribute(gnu::noreturn)
+#elif (__C23__ && __has_c_attribute(gnu::noreturn)) ||                         \
+	(__CXX11__ && __has_cxx_attribute(gnu::noreturn))
 #define __NORETURN__ [[gnu::noreturn]]
-#elif __C23__ && __has_c_attribute(noreturn)
+#elif (__C23__ && __has_c_attribute(noreturn)) ||                              \
+	(__CXX11__ && __has_cxx_attribute(noreturn))
 #define __NORETURN__ [[noreturn]]
+#elif __C23__ && __has_c_attribute(_Noreturn)
+#define __NORETURN__ [[_Noreturn]]
 #elif __C11__
 #define __NORETURN__ _Noreturn
 #else
 #define __NORETURN__
 #endif /* __NORETURN__ */
+
+#if __C23__ && __has_c_attribute(clang::likely)
+#define _AttrLikely(x) (x) [[clang::likely]]
+#elif __CXX11__ && __has_cxx_attribute(likely)
+#define _AttrLikely(x) (x) [[likely]]
+#else
+#define _AttrLikely(x) (x)
+#endif /* _AttrLikely */
+
+#if __C23__ && __has_c_attribute(clang::unlikely)
+#define _AttrUnlikely(x) (x) [[clang::unlikely]]
+#elif __CXX11__ && __has_cxx_attribute(unlikely)
+#define _AttrUnlikely(x) (x) [[unlikely]]
+#else
+#define _AttrUnlikely(x) (x)
+#endif /* _AttrUnlikely */
+
+#if __has_builtin(__builtin_expect)
+#define __likely(x) _AttrLikely(__builtin_expect((x), 1))
+#define __unlikely(x) _AttrUnlikely(__builtin_expect((x), 0))
+#else
+#define __likely(x) _AttrLikely(x)
+#define __unlikely(x) _AttrUnlikely(x)
+#endif /* __likely & __unlikely */
 
 #ifdef __MAVITIX_INTERNAL__
 
@@ -154,38 +200,5 @@
 typedef void (*__init_t)(void);
 typedef void (*__fini_t)(void);
 typedef int (*__main_t)(int argc, char **argv, char **envp);
-
-#if __C23__
-
-#if __has_c_attribute(clang::likely)
-#define _CAttrLikely(x) (x) [[clang::likely]]
-#elif __has_c_attribute(likely)
-#define _CAttrLikely(x) (x) [[likely]]
-#else
-#define _CAttrLikely(x) (x)
-#endif
-
-#if __has_c_attribute(clang::unlikely)
-#define _CAttrUnlikely(x) (x) [[clang::unlikely]]
-#elif __has_c_attribute(unlikely)
-#define _CAttrUnlikely(x) (x) [[unlikely]]
-#else
-#define _CAttrUnlikely(x) (x)
-#endif
-
-#else
-
-#define _CAttrLikely(x) (x)
-#define _CAttrUnlikely(x) (x)
-
-#endif /* _CAttrLikely & _CAttrUnlikely */
-
-#if __has_builtin(__builtin_expect)
-#define __likely(x) _CAttrLikely(__builtin_expect((x), 1))
-#define __unlikely(x) _CAttrUnlikely(__builtin_expect((x), 0))
-#else
-#define __likely(x) _CAttrLikely(x)
-#define __unlikely(x) _CAttrUnlikely(x)
-#endif /* __likely & __unlikely */
 
 #endif

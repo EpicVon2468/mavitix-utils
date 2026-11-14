@@ -46,7 +46,7 @@ __NORETURN__ extern
 void _exit(int status);
 
 __NOTHROW__ extern
-long fpathconf(int desc, int name);
+long int fpathconf(int desc, int name);
 
 __NOTHROW__ extern
 char *getcwd(char *buf, size_t size);
@@ -67,7 +67,7 @@ int linkat(
 );
 
 __NOTHROW__ extern
-long pathconf(const char *path, int name);
+long int pathconf(const char *path, int name);
 
 __NOTHROW__ extern
 int symlink(const char *target, const char *linkpath);
@@ -86,6 +86,9 @@ int unlinkat(int fd, const char *path, int flags);
 
 __NOTHROW__ extern
 int getopt(int argc, char *const argv[], const char *optstr);
+
+__NOTHROW__ extern
+long int syscall(long int number, ...);
 
 extern char *optarg;
 extern int opterr, optind, optopt;

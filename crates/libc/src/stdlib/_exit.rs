@@ -5,6 +5,7 @@
 include!("../rsinclude/global_asm.rs");
 
 unsafe extern "C" {
+
 	pub safe fn __mavitix_immediate_abort(code: i32) -> !;
 }
 
