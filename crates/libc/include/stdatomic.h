@@ -5,10 +5,6 @@
 
 #define __STDC_VERSION_STDATOMIC_H__ 202311L
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef enum memory_order {
 	memory_order_relaxed,
 	memory_order_consume,
@@ -178,9 +174,5 @@ __NOTHROW__ extern
 void atomic_flag_clear(volatile atomic_flag *ptr);
 __NOTHROW__ extern
 void atomic_flag_clear_explicit(volatile atomic_flag *ptr, memory_order order);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __STDC_NO_ATOMICS__ */

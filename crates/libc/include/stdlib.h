@@ -3,15 +3,11 @@
 
 #define __STDC_VERSION_STDLIB_H__ 202311L
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define EXIT_FAILURE 1
 
 #define EXIT_SUCCESS 0
 
-#include <internal/__null.h>   /* NULL */
+#define NULL __nullptr__
 #include <internal/__size_t.h> /* size_t */
 
 __NOTHROW__ extern
@@ -54,7 +50,3 @@ __NOTHROW__ extern
 int on_exit(void (*fn)(int status, void *usr_ptr), void *usr_ptr);
 __NOTHROW__ extern
 int atexit(void (*fn)(void));
-
-#ifdef __cplusplus
-}
-#endif

@@ -19,13 +19,21 @@
 #endif /* __RISCV64__ */
 
 #if !(defined(__linux__) || defined(__linux))
-#error Unsupported operating system!
+#error "Unsupported operating system!"
 #endif
 
 #if !defined(__LP64__)
-#error Unsupported target pointer width!
+#error "Unsupported target pointer width!"
 #endif
 
 #if !__X86_64__ && !__AARCH64__ && !__RISCV64__
-#error Unsupported target architecture!
+#error "Unsupported target architecture!"
 #endif
+
+#ifdef __cplusplus
+#ifdef __MAVITIX_FORBID_CXX
+#error "libc headers used in C++ compilation when C++ is unsupported!"
+#else
+#warning "libc headers used in C++ compilation when C++ is unsupported!"
+#endif
+#endif /* C++ */

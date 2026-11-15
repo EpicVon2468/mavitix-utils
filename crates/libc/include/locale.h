@@ -2,7 +2,7 @@
 #include <internal/__defs.h>
 
 #include <internal/__locale_t.h> /* locale_t */
-#include <internal/__null.h>	 /* NULL */
+#define NULL __nullptr__
 
 /*
  * NOTE:

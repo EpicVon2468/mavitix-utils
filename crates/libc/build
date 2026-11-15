@@ -71,19 +71,6 @@ mkdir -p target/release
 mkdir -p target/release/tmp
 mkdir -p target/release/artefacts
 
-if [ -z "$CPP" ]; then
-	for __CPP__ in "cpp" "clang-cpp"; do
-		if command -v "$__CPP__" >/dev/null 2>&1; then
-			CPP="$__CPP__"
-			break
-		fi
-	done
-	unset __CPP__
-	if [ -z "$CPP" ]; then
-		echo "Couldn't find C pre-processor; terminating..."
-		exit 1
-	fi
-fi
 if [ -z "$AS" ]; then
 	if command -v as >/dev/null 2>&1; then
 		AS="as"
@@ -269,14 +256,9 @@ if [ "$architecture" = "x86-64" ]; then
 	ASFLAGS+=" --64 -O2 -mintel64 -msyntax=intel -mmnemonic=intel -mx86-used-note=yes"
 fi
 
-CPPFLAGS+=" -fdirectives-only -nostdlib -nostdinc -std=c23"
-CPPFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs"
+"$AS" $ASFLAGS "src/crt/crt1_$architecture.S" -o target/release/artefacts/crt1.o
 
-"$CPP" $CPPFLAGS "src/crt/crt1_$architecture.S" -o target/release/tmp/crt1.s
-"$AS" $ASFLAGS target/release/tmp/crt1.s -o target/release/artefacts/crt1.o
-
-"$CPP" $CPPFLAGS "src/info.S" -o target/release/tmp/info.s
-"$AS" $ASFLAGS target/release/tmp/info.s -o target/release/artefacts/info.o
+"$AS" $ASFLAGS src/info.S -o target/release/artefacts/info.o
 OBJECT_FILES+=" target/release/artefacts/info.o"
 
 # https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-fcf-protection
@@ -286,7 +268,7 @@ CFLAGS+=" -fcf-protection -fno-fast-math"
 CFLAGS+=" -nostdlib -nostdinc -nostartfiles -nodefaultlibs -nolibc -ffreestanding"
 CFLAGS+=" -isysteminclude -std=c23 -O3 -m64 -march=native -mtune=native -fpic"
 CFLAGS+=" -g -g3 -gdwarf-5 -gdwarf64 -fdebug-types-section"
-CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs -Wunknown-pragmas -Wno-error=unused-parameter -Wno-error=unused-variable -Wzero-as-null-pointer-constant"
+CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs -Wunknown-pragmas -Wno-error=unused-parameter -Wno-error=unused-variable -Wzero-as-null-pointer-constant -D__MAVITIX_FORBID_CXX"
 case "$CC_TYPE" in
 	"clang")
 		CFLAGS+=" -Wno-error=#warnings -Wno-error=unused-command-line-argument"

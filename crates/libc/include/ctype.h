@@ -2,10 +2,6 @@
 #include <internal/__defs.h>
 #include <internal/__locale_t.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define EOF -1
 
 /* Classification */
@@ -123,7 +119,3 @@ __NOTHROW__ extern
 int toascii(int ch) {
 	return ch & 0x7F;
 }
-
-#ifdef __cplusplus
-}
-#endif

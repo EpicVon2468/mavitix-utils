@@ -5,10 +5,6 @@
  * https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/sys_utsname.h.html
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define SYS_NMLN 65
 
 struct utsname {
@@ -22,7 +18,3 @@ struct utsname {
 
 __NOTHROW__ extern
 int uname(struct utsname *name);
-
-#ifdef __cplusplus
-}
-#endif

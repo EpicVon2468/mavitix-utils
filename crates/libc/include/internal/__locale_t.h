@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdint.h>
 
 typedef enum __language_t {

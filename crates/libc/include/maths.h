@@ -4,10 +4,6 @@
 #define __STDC_VERSION_MATH_H__ 202311L
 #define __STDC_VERSION_MATHS_H__ 202311L
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if __has_builtin(__builtin_inff)
 #define INFINITY __builtin_inff()
 #else
@@ -89,7 +85,3 @@ __NOTHROW__ extern
 float tanf(float value);
 __NOTHROW__ extern
 long double tanl(long double value);
-
-#ifdef __cplusplus
-}
-#endif

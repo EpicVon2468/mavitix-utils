@@ -3,10 +3,6 @@
 
 #define __STDC_VERSION_STDDEF_H__ 202311L
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef __PTRDIFF_TYPE__
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
 #elif __X86_64__ || __AARCH64__ || __RISCV64__
@@ -31,11 +27,11 @@ typedef signed long int ptrdiff_t;
 typedef long double max_align_t;
 #endif /* max_align_t */
 
-#if __C23__
-typedef typeof_unqual(nullptr) nullptr_t;
+#ifdef __typeof__
+typedef __typeof__(nullptr) nullptr_t;
 #endif /* nullptr_t */
 
-#include <internal/__null.h> /* NULL */
+#define NULL __nullptr__
 
 /*
  * Mavitix libc extension: `unreachable()` (or at least a stub) is provided for
@@ -67,7 +63,3 @@ void __mavitix_immediate_abort(int);
  */
 #define offsetof(type, member_designator) ((size_t) ( (char *)&((type *)(0))->member_designator - (char *)0 ))
 #endif /* offsetof */
-
-#ifdef __cplusplus
-}
-#endif
