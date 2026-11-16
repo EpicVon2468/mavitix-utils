@@ -1,31 +1,35 @@
 #![no_std]
 #![crate_name = "symlink"]
 #![crate_type = "cdylib"]
+#![feature(likely_unlikely, ffi_const)]
 
-use core::{arch::asm, ffi::c_char};
+use core::ffi::c_char;
+
+include!("../rsinclude/syscall.rs");
 
 #[unsafe(no_mangle)]
 pub extern "C" fn symlink(target: *const c_char, linkpath: *const c_char) -> i32 {
-	let result: i32;
-	// SAFETY:
-	unsafe {
+	cfg_select! {
+		// https://syscall.sh/x64/symlink/
+		target_arch = "x86_64" => syscall!(0x58, target, linkpath) as i32,
+		_ => symlinkat(target, -100, linkpath),
+	}
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn symlinkat(target: *const c_char, newdirfd: i32, linkpath: *const c_char) -> i32 {
+	syscall!(
 		cfg_select! {
-			target_arch = "x86_64" => asm!(
-				"mov rax, 0x58",
-				"syscall",
-				in("rdi") target,
-				in("rsi") linkpath,
-				lateout("rax") result,
-				options(raw),
-			),
-			target_arch = "aarch64" => {
-				todo!("aarch64 doesn't seem to have the symlink syscall?")
-			},
-			target_arch = "riscv64" => {
-				todo!("riscv64 doesn't seem to have the symlink syscall?");
-			},
+			// https://syscall.sh/x64/symlinkat/
+			target_arch = "x86_64" => 0x10A,
+			// https://syscall.sh/arm64/symlinkat/
+			target_arch = "aarch64" => 0x24,
+			// https://syscall.sh/riscv64/symlinkat/
+			target_arch = "riscv64" => 0x24,
 			_ => compile_error!(),
-		};
-	};
-	return result;
+		},
+		target,
+		newdirfd,
+		linkpath,
+	) as i32
 }

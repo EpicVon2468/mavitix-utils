@@ -16,3 +16,4 @@ A mostly-compliant libc implementation.
 - Functions in the `{__,}isCHARACTERISTIC_l` set are implemented as symbol aliases to `isCHARACTERISTIC`; the `locale_t` parameter is ignored.
 - The buildscript aggressively optimises for the host machine.  Cross-compilation is a work-in-progress.
 - POSIX IPv6 support is not likely to be added.
+- The localisation categories `LC_PAPER`, `LC_MEASUREMENT`, and `LC_IDENTIFICATION` are not supported.

@@ -7,18 +7,24 @@ pub const LC_COLLATE: i32 = 3;
 pub const LC_MONETARY: i32 = 4;
 pub const LC_MESSAGES: i32 = 5;
 pub const LC_ALL: i32 = 6;
-pub const LC_PAPER: i32 = 7;
 pub const LC_NAME: i32 = 8;
 pub const LC_ADDRESS: i32 = 9;
 pub const LC_TELEPHONE: i32 = 10;
-pub const LC_MEASUREMENT: i32 = 11;
-pub const LC_IDENTIFICATION: i32 = 12;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Locale {
 	pub language: Language,
 	pub territory: Territory,
+}
+
+const impl Default for Locale {
+	fn default() -> Self {
+		Self {
+			language: Language::English,
+			territory: Territory::None,
+		}
+	}
 }
 
 impl Locale {
