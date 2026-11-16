@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 /*
  * This link is very annoying to find, so hold my beer:
  * https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/basedefs/unistd.h.html
@@ -88,3 +90,5 @@ long int syscall(long int number, ...);
 
 extern char *optarg;
 extern int opterr, optind, optopt;
+
+__EXT_CXX_END__

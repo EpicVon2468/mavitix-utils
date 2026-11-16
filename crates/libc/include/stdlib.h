@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 #define __STDC_VERSION_STDLIB_H__ 202311L
 
 #define EXIT_FAILURE 1
@@ -50,3 +52,5 @@ __NOTHROW__ extern
 int on_exit(void (*fn)(int status, void *usr_ptr), void *usr_ptr);
 __NOTHROW__ extern
 int atexit(void (*fn)(void));
+
+__EXT_CXX_END__

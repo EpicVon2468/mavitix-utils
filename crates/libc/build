@@ -68,7 +68,7 @@ done
 
 rm -rf target
 mkdir -p target/release
-mkdir -p target/release/tmp
+# mkdir -p target/release/tmp
 mkdir -p target/release/artefacts
 
 if [ -z "$AS" ]; then
@@ -266,7 +266,7 @@ OBJECT_FILES+=" target/release/artefacts/info.o"
 # https://doc.rust-lang.org/nightly/unstable-book/compiler-flags/cf-protection.html
 CFLAGS+=" -fcf-protection -fno-fast-math"
 CFLAGS+=" -nostdlib -nostdinc -nostartfiles -nodefaultlibs -nolibc -ffreestanding"
-CFLAGS+=" -isysteminclude -std=c23 -O3 -m64 -march=native -mtune=native -fpic"
+CFLAGS+=" -isysteminclude -isystem/usr/include -isystem/usr/include/$(uname -m)-linux-gnu -std=c23 -O3 -m64 -march=native -mtune=native -fpic"
 CFLAGS+=" -g -g3 -gdwarf-5 -gdwarf64 -fdebug-types-section"
 CFLAGS+=" -Wpedantic -Wextra -Wall -Werror -Wundef -Wtrigraphs -Wunknown-pragmas -Wno-error=unused-parameter -Wno-error=unused-variable -Wzero-as-null-pointer-constant -D__MAVITIX_FORBID_CXX"
 case "$CC_TYPE" in
@@ -388,6 +388,8 @@ OBJECT_FILES+=" target/release/artefacts/mem.o"
 
 "$RUSTC" $RUSTFLAGS src/str/strlen.rs
 OBJECT_FILES+=" target/release/artefacts/strlen.o"
+"$RUSTC" $RUSTFLAGS src/str/strerror.rs
+OBJECT_FILES+=" target/release/artefacts/strerror.o"
 
 "$RUSTC" $RUSTFLAGS src/unistd/symlink.rs
 OBJECT_FILES+=" target/release/artefacts/symlink.o"

@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 #include <stdint.h>
 
 /*
@@ -998,3 +1000,5 @@ typedef struct {
 		void (*a_fnc)();
 	} a_un;
 } auxv_t;
+
+__EXT_CXX_END__

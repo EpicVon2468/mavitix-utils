@@ -1,6 +1,10 @@
 -nostdlib
 -nostdinc
 -isysteminclude
+-isystem/usr/include
+-isystem/usr/include/x86_64-linux-gnu
+-isystem/usr/include/aarch64-linux-gnu
+-isystem/usr/include/riscv64-linux-gnu
 -std=c23
 -Wpedantic
 -Wextra

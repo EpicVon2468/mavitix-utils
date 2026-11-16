@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 #define __STDC_VERSION_MATH_H__ 202311L
 #define __STDC_VERSION_MATHS_H__ 202311L
 
@@ -85,3 +87,5 @@ __NOTHROW__ extern
 float tanf(float value);
 __NOTHROW__ extern
 long double tanl(long double value);
+
+__EXT_CXX_END__

@@ -11,6 +11,7 @@ A mostly-compliant libc implementation.
 ## Notable Differences:
 
 - The `setlocale` function returns `const char *` instead of `char *`.
+- The `strerror` function returns `const char *` instead of `char *`.
 - The `toascii` function is attributed with `unavailable` and/or `deprecated` if available.
 - Functions in the `{__,}isCHARACTERISTIC_l` set are implemented as symbol aliases to `isCHARACTERISTIC`; the `locale_t` parameter is ignored.
 - The buildscript aggressively optimises for the host machine.  Cross-compilation is a work-in-progress.

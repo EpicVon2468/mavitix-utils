@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 #include <internal/__locale_t.h> /* locale_t */
 #define NULL __nullptr__
 
@@ -46,3 +48,5 @@ struct lconv {
 
 __PURE__ __NOTHROW__ extern
 struct lconv *localeconv(void);
+
+__EXT_CXX_END__

@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 #define __STDC_VERSION_STDDEF_H__ 202311L
 
 #ifdef __PTRDIFF_TYPE__
@@ -63,3 +65,5 @@ void __mavitix_immediate_abort(int);
  */
 #define offsetof(type, member_designator) ((size_t) ( (char *)&((type *)(0))->member_designator - (char *)0 ))
 #endif /* offsetof */
+
+__EXT_CXX_END__

@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 #if !defined(alloca)
 
 #if __has_builtin(__builtin_alloca)
@@ -12,3 +14,5 @@ void *alloca(size_t size);
 #endif
 
 #endif /* alloca */
+
+__EXT_CXX_END__

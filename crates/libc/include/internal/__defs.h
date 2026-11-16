@@ -10,19 +10,19 @@
 
 #if !defined(__has_c_attribute)
 #define __has_c_attribute(x) 0
-#endif
+#endif /* __has_c_attribute */
 
 #if !defined(__has_declspec_attribute)
 #define __has_declspec_attribute(x) 0
-#endif
+#endif /* __has_declspec_attribute */
 
 #if !defined(__has_attribute)
 #define __has_attribute(x) 0
-#endif
+#endif /* __has_attribute */
 
 #if !defined(__has_builtin)
 #define __has_builtin(x) 0
-#endif
+#endif /* __has_builtin */
 
 #if defined(__is_identifier) && !defined(__has_keyword)
 #define __has_keyword(x) !__is_identifier(x)
@@ -30,17 +30,41 @@
 #define __has_keyword(x) 0
 #endif /* __has_keyword */
 
+#if !defined(__has_warning)
+#define __has_warning(x) 0
+#endif /* __has_warning */
+
 #if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
 #define __CLANG_LIKE__ 1
 #else
 #define __CLANG_LIKE__ 0
-#endif
+#endif /* __CLANG_LIKE__ */
 
 #if defined(__GNUC__) && !(defined(__clang__) || defined(__llvm__))
 #define __gcc_bad__ __extension__
 #else
 #define __gcc_bad__
-#endif
+#endif /* __gcc_bad__ */
+
+#if __has_warning("-Wincompatible-library-redeclaration") && __CLANG_LIKE__
+#define __INCOMPAT_LIB_REDECL__ 1
+#else
+#define __INCOMPAT_LIB_REDECL__ 0
+#endif /* __INCOMPAT_LIB_REDECL__ */
+
+/*
+ * The "complicated" relationship between libc++ and libc [paraphrased]:
+ * 1. Currently, libc++'s <cstddef> includes libc++'s own <stddef.h>.
+ * 2. Currently, libc++'s <stddef.h> unconditionally includes libc's <stddef.h>.
+ * 3. libc++'s <stddef.h> also defines nullptr_t as decltype(nullptr).
+ */
+#ifdef __cplusplus
+#define __EXT_CXX_BEGIN__ extern "C" {
+#define __EXT_CXX_END__ }
+#else
+#define __EXT_CXX_BEGIN__
+#define __EXT_CXX_END__
+#endif /* __EXT_CXX_BEGIN__ & __EXT_CXX_END__ */
 
 #if __has_keyword(__restrict__)
 #define __restrict__ __restrict__

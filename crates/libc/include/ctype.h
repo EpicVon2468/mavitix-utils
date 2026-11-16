@@ -1,5 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
+
+__EXT_CXX_BEGIN__
+
 #include <internal/__locale_t.h>
 
 #define EOF -1
@@ -119,3 +122,5 @@ __NOTHROW__ extern
 int toascii(int ch) {
 	return ch & 0x7F;
 }
+
+__EXT_CXX_END__

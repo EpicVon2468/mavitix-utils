@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 /*
  * https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/sys_utsname.h.html
  */
@@ -18,3 +20,5 @@ struct utsname {
 
 __NOTHROW__ extern
 int uname(struct utsname *name);
+
+__EXT_CXX_END__

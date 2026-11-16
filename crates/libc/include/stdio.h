@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 #define __STDC_VERSION_STDIO_H__ 202311L
 
 #define STDIN_FILENO 0
@@ -29,3 +31,5 @@ FILE *fdopen(int fd, const char *mode);
 
 __NOTHROW__ extern
 int fileno(FILE *stream);
+
+__EXT_CXX_END__

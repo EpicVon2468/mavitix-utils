@@ -23,17 +23,14 @@
 #endif
 
 #if !defined(__LP64__)
-#error "Unsupported target pointer width!"
+/* https://archive.opengroup.org/public/tech/aspen/lp64_wp.htm */
+#error "Unsupported 64-bit programming model!"
 #endif
 
 #if !__X86_64__ && !__AARCH64__ && !__RISCV64__
 #error "Unsupported target architecture!"
 #endif
 
-#ifdef __cplusplus
-#ifdef __MAVITIX_FORBID_CXX
-#error "libc headers used in C++ compilation when C++ is unsupported!"
-#else
-#warning "libc headers used in C++ compilation when C++ is unsupported!"
-#endif
+#if defined(__cplusplus) && defined(__MAVITIX_FORBID_CXX)
+#error "libc headers used in C++ compilation when C++ is forbidden!"
 #endif /* C++ */

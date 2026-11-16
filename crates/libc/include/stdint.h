@@ -1,6 +1,8 @@
 #pragma once
 #include <internal/__defs.h>
 
+__EXT_CXX_BEGIN__
+
 #define __STDC_VERSION_STDINT_H__ 202311L
 
 #ifdef __INT8_TYPE__
@@ -101,3 +103,5 @@ typedef unsigned long int uintptr_t;
 #define SIZE_WIDTH 16
 #define WCHAR_WIDTH 8
 #define WINT_WIDTH 16
+
+__EXT_CXX_END__
