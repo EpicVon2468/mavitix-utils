@@ -119,7 +119,7 @@ int __tolower_l(int ch, locale_t __ignored);
 __UNAVAILABLE__("Use of `toascii` is strictly prohibited")
 __DEPRECATED__("Use of `toascii` is highly discouraged") __CONST__ __INLINE__
 __NOTHROW__ extern
-int toascii(int ch) {
+int toascii(const int ch) {
 	return ch & 0x7F;
 }
 

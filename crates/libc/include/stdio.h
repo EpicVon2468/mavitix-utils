@@ -32,4 +32,11 @@ FILE *fdopen(int fd, const char *mode);
 __NOTHROW__ extern
 int fileno(FILE *stream);
 
+__UNAVAILABLE__("Use of `gets` is strictly prohibited")
+__DEPRECATED__("Use of `gets` is highly discouraged") __CONST__ __INLINE__
+__NOTHROW__ extern
+char *gets(char *const) {
+	return __nullptr__;
+}
+
 __EXT_CXX_END__

@@ -6,6 +6,20 @@ __EXT_CXX_BEGIN__
 #include <internal/__locale_t.h> /* locale_t */
 #define NULL __nullptr__
 
+#define LC_CTYPE 0
+#define LC_NUMERIC 1
+#define LC_TIME 2
+#define LC_COLLATE 3
+#define LC_MONETARY 4
+#define LC_MESSAGES 5
+#define LC_ALL 6
+#define LC_PAPER 7
+#define LC_NAME 8
+#define LC_ADDRESS 9
+#define LC_TELEPHONE 10
+#define LC_MEASUREMENT 11
+#define LC_IDENTIFICATION 12
+
 /*
  * NOTE:
  * This function's prototype is different under Mavitix libc.
@@ -16,20 +30,20 @@ __EXT_CXX_BEGIN__
  * modified to return `const char *` instead of `char *`.
  */
 __NOTHROW__ extern
-const char *setlocale(int category, const char *locale);
+const char *setlocale(int category, const char *__nullable__ locale);
 
 /* ABI compat */
 struct lconv {
-	char *decimal_point;
-	char *thousands_sep;
-	char *grouping;
-	char *int_curr_symbol;
-	char *currency_symbol;
-	char *mon_decimal_point;
-	char *mon_thousands_sep;
-	char *mon_grouping;
-	char *positive_sign;
-	char *negative_sign;
+	const char *decimal_point;
+	const char *thousands_sep;
+	const char *grouping;
+	const char *int_curr_symbol;
+	const char *currency_symbol;
+	const char *mon_decimal_point;
+	const char *mon_thousands_sep;
+	const char *mon_grouping;
+	const char *positive_sign;
+	const char *negative_sign;
 	char int_frac_digits;
 	char frac_digits;
 	char p_cs_precedes;
@@ -46,7 +60,7 @@ struct lconv {
 	char int_n_sign_posn;
 };
 
-__PURE__ __NOTHROW__ extern
-struct lconv *localeconv(void);
+__RETURNS_NONNULL__ __NOTHROW__ extern
+const struct lconv *localeconv(void);
 
 __EXT_CXX_END__

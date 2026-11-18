@@ -34,6 +34,14 @@
 #define __has_warning(x) 0
 #endif /* __has_warning */
 
+#if !defined(__has_feature)
+#define __has_feature(x) 0
+#endif /* __has_feature */
+
+#if !defined(__has_extension)
+#define __has_extension(x) __has_feature(x)
+#endif /* __has_extension */
+
 #if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
 #define __CLANG_LIKE__ 1
 #else
@@ -94,6 +102,26 @@
 #define __typeof__(x) __typeof(x)
 #endif /* __typeof__ */
 
+#if __has_keyword(_Nonnull)
+#define __nonnull__ _Nonnull
+#else
+#define __nonnull__
+#endif /* __nonnull__ */
+
+#if __has_keyword(_Nullable)
+#define __nullable__ _Nullable
+#else
+#define __nullable__
+#endif /* __nullable__ */
+
+#if __has_attribute(returns_nonnull)
+#define __RETURNS_NONNULL__ __attribute__((returns_nonnull))
+#elif __C23__ && __has_c_attribute(gnu::returns_nonnull)
+#define __RETURNS_NONNULL__ [[gnu::returns_nonnull]]
+#else
+#define __RETURNS_NONNULL__
+#endif /* __RETURNS_NONNULL__ */
+
 #if __has_attribute(callback)
 #define __CALLBACK__(...) __attribute__((callback(__VA_ARGS__)))
 #elif __C23__ && __has_c_attribute(clang::callback)
@@ -103,21 +131,45 @@
 #endif /* __CALLBACK__ */
 
 #if __has_attribute(unavailable)
+#if __has_extension(attribute_unavailable_with_message)
 #define __UNAVAILABLE__(x) __attribute__((unavailable(x)))
+#else
+#define __UNAVAILABLE__(x) __attribute__((unavailable))
+#endif /* __attribute__((unavailable)) */
 #elif __C23__ && __has_c_attribute(clang::unavailable)
+#if __has_extension(attribute_unavailable_with_message)
 #define __UNAVAILABLE__(x) [[clang::unavailable(x)]]
+#else
+#define __UNAVAILABLE__(x) [[clang::unavailable]]
+#endif /* [[clang::unavailable]] */
 #else
 #define __UNAVAILABLE__(x)
 #endif /* __UNAVAILABLE__ */
 
 #if __has_attribute(deprecated)
+#if __has_extension(attribute_deprecated_with_message)
 #define __DEPRECATED__(x) __attribute__((deprecated(x)))
+#else
+#define __DEPRECATED__(x) __attribute__((deprecated))
+#endif /* __attribute__((deprecated)) */
 #elif __C23__ && __has_c_attribute(gnu::deprecated)
+#if __has_extension(attribute_deprecated_with_message)
 #define __DEPRECATED__(x) [[gnu::deprecated(x)]]
+#else
+#define __DEPRECATED__(x) [[gnu::deprecated]]
+#endif /* [[gnu::deprecated]] */
 #elif __C23__ && __has_c_attribute(deprecated)
+#if __has_extension(attribute_deprecated_with_message)
 #define __DEPRECATED__(x) [[deprecated(x)]]
+#else
+#define __DEPRECATED__(x) [[deprecated]]
+#endif /* [[deprecated]] */
 #elif __has_declspec_attribute(deprecated)
+#if __has_extension(attribute_deprecated_with_message)
 #define __DEPRECATED__(x) __declspec(deprecated(x))
+#else
+#define __DEPRECATED__(x) __declspec(deprecated)
+#endif /* __declspec(deprecated) */
 #else
 #define __DEPRECATED__(x)
 #endif /* __DEPRECATED__ */

@@ -32,6 +32,13 @@ pub const EMLINK: i32 = 31;
 pub const EPIPE: i32 = 32;
 pub const EDOM: i32 = 33;
 pub const ERANGE: i32 = 34;
+pub const EDEADLK: i32 = 35;
+pub const ENAMETOOLONG: i32 = 36;
+pub const ENOLCK: i32 = 37;
+pub const ENOSYS: i32 = 38;
+pub const ENOTEMPTY: i32 = 39;
+pub const ELOOP: i32 = 40;
+pub const EREMOTEIO: i32 = 121;
 
 unsafe extern "C" {
 

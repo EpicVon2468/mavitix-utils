@@ -1,15 +1,37 @@
 #![no_std]
 #![crate_name = "strerror"]
 #![crate_type = "cdylib"]
-#![feature(ffi_const)]
+#![feature(const_trait_impl, const_default, ffi_const)]
 
 use core::ffi::c_char;
 
+include!("../rsinclude/global_asm.rs");
+
 #[path = "../rsinclude/errno.rs"]
 pub mod errno;
+#[path = "../rsinclude/locale.rs"]
+pub mod locale;
+
+use locale::{__mavitix_get_lc_messages, Language, Locale};
 
 #[unsafe(no_mangle)]
-pub const extern "C" fn strerror(errnum: i32) -> *const c_char {
+pub const unsafe extern "C" fn strerror_l(errnum: i32, locale: *const Locale) -> *const c_char {
+	match unsafe { *locale }.language {
+		Language::English => strerror_en(errnum),
+		Language::Japanese => strerror_ja(errnum),
+	}
+}
+
+symbol_alias!(strerror_l, "__strerror_l");
+
+#[unsafe(no_mangle)]
+pub extern "C" fn strerror(errnum: i32) -> *const c_char {
+	let tmp: Locale = __mavitix_get_lc_messages();
+	unsafe { strerror_l(errnum, &raw const tmp) }
+}
+
+#[inline]
+pub const fn strerror_en(errnum: i32) -> *const c_char {
 	return match errnum {
 		errno::EPERM => c"Operation not permitted",
 		errno::ENOENT => c"No such file or directory",
@@ -44,8 +66,28 @@ pub const extern "C" fn strerror(errnum: i32) -> *const c_char {
 		errno::EMLINK => c"Too many links",
 		errno::EPIPE => c"Broken pipe",
 		errno::EDOM => c"Maths argument out of domain of function",
-		errno::ERANGE => c"Maths result not representable",
-		_ => c"Unknown error",
+		errno::ERANGE => c"Exceeded range",
+		errno::EDEADLK => c"Resource deadlock would occur",
+		errno::ENAMETOOLONG => c"File name too long",
+		errno::ENOLCK => c"No record locks available",
+		errno::ENOSYS => c"Invalid system call number",
+		errno::ENOTEMPTY => c"Directory not empty",
+		errno::ELOOP => c"Too many symbolic links encountered",
+		errno::EREMOTEIO => c"Remote I/O error",
+		_ => c"Unknown error code",
+	}
+	.as_ptr();
+}
+
+#[inline]
+pub const fn strerror_ja(errnum: i32) -> *const c_char {
+	return match errnum {
+		errno::EIO => c"入出力エラー",
+		// Not 100% certain about the end of this one.
+		errno::EEXIST => c"ファイルあるです",
+		errno::ENOTTY => c"タイプライターではないです",
+		errno::EREMOTEIO => c"リモート入出力エラー",
+		_ => c"未知エラーコードです",
 	}
 	.as_ptr();
 }

@@ -75,6 +75,7 @@ SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
 SpaceInEmptyBraces: Never
 AttributeMacros: [
+    __RETURNS_NONNULL__,
     __CALLBACK__,
     __UNAVAILABLE__,
     __DEPRECATED__,

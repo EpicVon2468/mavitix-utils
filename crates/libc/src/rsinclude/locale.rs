@@ -39,11 +39,11 @@ impl Locale {
 			}
 			.as_ptr(),
 			Language::Japanese => match self.territory {
-				Territory::None => c"jp.UTF-8",
-				Territory::AU => c"jp_AU.UTF-8",
-				Territory::GB => c"jp_GB.UTF-8",
-				Territory::JP => c"jp_JP.UTF-8",
-				Territory::NZ => c"jp_NZ.UTF-8",
+				Territory::None => c"ja.UTF-8",
+				Territory::AU => c"ja_AU.UTF-8",
+				Territory::GB => c"ja_GB.UTF-8",
+				Territory::JP => c"ja_JP.UTF-8",
+				Territory::NZ => c"ja_NZ.UTF-8",
 			}
 			.as_ptr(),
 		}
@@ -65,4 +65,25 @@ pub enum Territory {
 	GB,
 	JP,
 	NZ,
+}
+
+unsafe extern "C" {
+
+	pub safe fn __mavitix_get_lc_address() -> Locale;
+
+	pub safe fn __mavitix_get_lc_collate() -> Locale;
+
+	pub safe fn __mavitix_get_lc_ctype() -> Locale;
+
+	pub safe fn __mavitix_get_lc_messages() -> Locale;
+
+	pub safe fn __mavitix_get_lc_monetary() -> Locale;
+
+	pub safe fn __mavitix_get_lc_name() -> Locale;
+
+	pub safe fn __mavitix_get_lc_numeric() -> Locale;
+
+	pub safe fn __mavitix_get_lc_telephone() -> Locale;
+
+	pub safe fn __mavitix_get_lc_time() -> Locale;
 }

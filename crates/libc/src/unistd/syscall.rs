@@ -15,6 +15,10 @@ pub unsafe extern "C" fn syscall(number: i64, args: ...) -> i64 {
 
 symbol_alias!(syscall, "__syscall");
 
+// TODO:
+// When `cfg(feature = "verbose-ub-checks")`, use something like syscall.sh
+// to get the number of arguments for any given `number`, then do verbose matching
+// via macro code or something to avoid ever actually invoking undefined behaviour.
 #[inline(always)]
 fn __mavitix_syscall(number: i64, mut args: VaList<'_>) -> i64 {
 	// SAFETY: This can invoke undefined behaviour; no mitigations are present nor possible.

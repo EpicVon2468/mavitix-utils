@@ -5,7 +5,7 @@ __EXT_CXX_BEGIN__
 
 #include <linux/errno.h>
 
-__CONST__ __NOTHROW__ extern
+__RETURNS_NONNULL__ __CONST__ __NOTHROW__ extern
 int *__errno_location(void);
 
 #define errno (*__errno_location())

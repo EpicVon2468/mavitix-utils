@@ -3,8 +3,7 @@
 #include <internal/rpmalloc.h>
 
 #include <elf.h>
-#include <stddef.h>
-#include <stdio.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sysexits.h>
@@ -64,6 +63,10 @@ int __libc_start_main(
 	char **const envp = ubp_av + argc + 1;
 	if (!__mavitix_libc_init(argc, ubp_av, envp, fini, rtld_fini)) {
 		_Exit(EX_SOFTWARE);
+	};
+	const char *const localise = getenv("__MAVITIX_LOCALISE_ON_INIT");
+	if (localise != NULL && strcmp(localise, "1") == 0) {
+		setlocale(LC_ALL, "");
 	};
 	__libc_init(init);
 

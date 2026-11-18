@@ -41,8 +41,9 @@ void _exit(int status);
 __NORETURN__ extern
 void _Exit(int status);
 
+/* "The string pointed to shall not be modified by the program" */
 __NOTHROW__ extern
-char *getenv(const char *name);
+const char *getenv(const char *name);
 __NOTHROW__ extern
 int setenv(const char *name, const char *value, int overwrite);
 __NOTHROW__ extern

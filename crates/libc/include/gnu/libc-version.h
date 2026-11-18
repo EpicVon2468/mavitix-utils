@@ -1,9 +1,7 @@
 #pragma once
 #include <internal/__defs.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__EXT_CXX_BEGIN__
 
 /*
  * Fun fact!  Linux Standard Base Core says you need these extensions to be
@@ -29,11 +27,9 @@ extern "C" {
  * """
  */
 
-__PURE__ __NOINLINE__ __NOTHROW__ extern
+__RETURNS_NONNULL__ __PURE__ __NOINLINE__ __NOTHROW__ extern
 const char *gnu_get_libc_release(void);
-__PURE__ __NOINLINE__ __NOTHROW__ extern
+__RETURNS_NONNULL__ __PURE__ __NOINLINE__ __NOTHROW__ extern
 const char *gnu_get_libc_version(void);
 
-#ifdef __cplusplus
-}
-#endif
+__EXT_CXX_END__
