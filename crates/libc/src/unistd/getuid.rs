@@ -2,28 +2,30 @@
 #![crate_name = "getuid"]
 #![crate_type = "cdylib"]
 
-include!("../rsinclude/global_asm.rs");
+include!("../rsinclude/syscall.rs");
 
-asm_prelude_syscall! {
-	"getuid"; cfg_select! {
+#[unsafe(no_mangle)]
+pub extern "C" fn getuid() -> u32 {
+	syscall_nofail!(cfg_select! {
 		// https://syscall.sh/x64/getuid/
-		target_arch = "x86_64" => "0x66",
+		target_arch = "x86_64" => 0x66,
 		// https://syscall.sh/arm64/getuid/
-		target_arch = "aarch64" => "#0xAE",
+		target_arch = "aarch64" => 0xAE,
 		// https://syscall.sh/riscv64/getuid/
-		target_arch = "riscv64" => "0xAE",
+		target_arch = "riscv64" => 0xAE,
 		_ => compile_error!(),
-	},
+	}) as u32
 }
 
-asm_prelude_syscall! {
-	"geteuid"; cfg_select! {
+#[unsafe(no_mangle)]
+pub extern "C" fn geteuid() -> u32 {
+	syscall_nofail!(cfg_select! {
 		// https://syscall.sh/x64/geteuid/
-		target_arch = "x86_64" => "0x6B",
+		target_arch = "x86_64" => 0x6B,
 		// https://syscall.sh/arm64/geteuid/
-		target_arch = "aarch64" => "#0xAF",
+		target_arch = "aarch64" => 0xAF,
 		// https://syscall.sh/riscv64/geteuid/
-		target_arch = "riscv64" => "0xAF",
+		target_arch = "riscv64" => 0xAF,
 		_ => compile_error!(),
-	},
+	}) as u32
 }

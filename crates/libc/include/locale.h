@@ -20,6 +20,8 @@ __EXT_CXX_BEGIN__
 #define LC_MEASUREMENT 11
 #define LC_IDENTIFICATION 12
 
+#define LC_GLOBAL_LOCALE ((locale_t) -1L)
+
 /*
  * NOTE:
  * This function's prototype is different under Mavitix libc.
@@ -62,5 +64,21 @@ struct lconv {
 
 __RETURNS_NONNULL__ __NOTHROW__ extern
 const struct lconv *localeconv(void);
+
+__NOTHROW__ extern
+locale_t newlocale(int category_mask, const char *locale, locale_t base);
+
+__NOTHROW__ extern
+locale_t duplocale(locale_t locobj);
+
+__NOTHROW__ extern
+locale_t uselocale(locale_t newloc);
+
+/*
+ * TODO: May have to refactor `locale_t` given what this specification says.
+ * https://pubs.opengroup.org/onlinepubs/9799919799/functions/getlocalename_l.html
+ */
+__NOTHROW__ extern
+const char *getlocalename_l(int category, locale_t locobj);
 
 __EXT_CXX_END__

@@ -32,15 +32,29 @@ impl Locale {
 		match self.language {
 			Language::English => match self.territory {
 				Territory::None => c"C.UTF-8",
+				Territory::AQ => c"en_AQ.UTF-8",
 				Territory::AU => c"en_AU.UTF-8",
+				Territory::DE => c"en_DE.UTF-8",
 				Territory::GB => c"en_GB.UTF-8",
 				Territory::JP => c"en_JP.UTF-8",
 				Territory::NZ => c"en_NZ.UTF-8",
 			}
 			.as_ptr(),
+			Language::German => match self.territory {
+				Territory::None => c"de.UTF-8",
+				Territory::AQ => c"de_AQ.UTF-8",
+				Territory::AU => c"de_AU.UTF-8",
+				Territory::DE => c"de_DE.UTF-8",
+				Territory::GB => c"de_GB.UTF-8",
+				Territory::JP => c"de_JP.UTF-8",
+				Territory::NZ => c"de_NZ.UTF-8",
+			}
+			.as_ptr(),
 			Language::Japanese => match self.territory {
 				Territory::None => c"ja.UTF-8",
+				Territory::AQ => c"ja_AQ.UTF-8",
 				Territory::AU => c"ja_AU.UTF-8",
+				Territory::DE => c"ja_DE.UTF-8",
 				Territory::GB => c"ja_GB.UTF-8",
 				Territory::JP => c"ja_JP.UTF-8",
 				Territory::NZ => c"ja_NZ.UTF-8",
@@ -54,6 +68,7 @@ impl Locale {
 #[derive(Debug, Copy, Clone)]
 pub enum Language {
 	English,
+	German,
 	Japanese,
 }
 
@@ -61,7 +76,9 @@ pub enum Language {
 #[derive(Debug, Copy, Clone)]
 pub enum Territory {
 	None,
+	AQ,
 	AU,
+	DE,
 	GB,
 	JP,
 	NZ,

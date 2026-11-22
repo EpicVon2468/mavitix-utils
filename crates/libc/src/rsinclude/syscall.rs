@@ -1,4 +1,47 @@
+#[allow(unused_macros)]
 macro_rules! syscall {
+	(
+		$number:expr $(
+		, $arg0:expr $(
+		, $arg1:expr $(
+		, $arg2:expr $(
+		, $arg3:expr $(
+		, $arg4:expr $(
+		, $arg5:expr
+		)?)?)?)?)?)?
+		$(; $($opt:ident),*)?
+		$(,)?
+	) => {{
+		let result: i64 = syscall_nofail!(
+			$number $(
+			, $arg0 $(
+			, $arg1 $(
+			, $arg2 $(
+			, $arg3 $(
+			, $arg4 $(
+			, $arg5
+			)?)?)?)?)?)?
+			$(; $($opt,)*)?
+		);
+		if core::hint::unlikely(result as u64 > const { -4096i64 as u64 }) {
+			unsafe extern "C" {
+
+				#[unsafe(ffi_const)]
+				pub safe fn __errno_location() -> *mut i32;
+			}
+
+			// SAFETY: `__errno_location()` is always non-null.
+			unsafe {
+				*__errno_location() = -result as i32;
+			};
+			-1
+		} else {
+			result
+		}
+	}};
+}
+
+macro_rules! syscall_nofail {
 	(
 		$number:expr $(
 		, $arg0:expr $(
@@ -55,22 +98,8 @@ macro_rules! syscall {
 					options(raw $(, $($opt),*)?),
 				),
 				_ => compile_error!(),
-			}
-		};
-		if core::hint::unlikely(result as u64 > const { -4096i64 as u64 }) {
-			unsafe extern "C" {
-
-				#[unsafe(ffi_const)]
-				pub safe fn __errno_location() -> *mut i32;
-			}
-
-			// SAFETY: `__errno_location()` is always non-null.
-			unsafe {
-				*__errno_location() = -result as i32;
 			};
-			-1
-		} else {
-			result
-		}
+		};
+		result
 	}};
 }

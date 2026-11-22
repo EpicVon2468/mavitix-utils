@@ -37,8 +37,6 @@ void abort(void);
 __NORETURN__ extern
 void exit(int status);
 __NORETURN__ extern
-void _exit(int status);
-__NORETURN__ extern
 void _Exit(int status);
 
 /* "The string pointed to shall not be modified by the program" */

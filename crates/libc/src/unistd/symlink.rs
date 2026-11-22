@@ -8,16 +8,20 @@ use core::ffi::c_char;
 include!("../rsinclude/syscall.rs");
 
 #[unsafe(no_mangle)]
-pub extern "C" fn symlink(target: *const c_char, linkpath: *const c_char) -> i32 {
+pub unsafe extern "C" fn symlink(target: *const c_char, linkpath: *const c_char) -> i32 {
 	cfg_select! {
 		// https://syscall.sh/x64/symlink/
 		target_arch = "x86_64" => syscall!(0x58, target, linkpath) as i32,
-		_ => symlinkat(target, -100, linkpath),
+		_ => unsafe { symlinkat(target, -100, linkpath) },
 	}
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn symlinkat(target: *const c_char, newdirfd: i32, linkpath: *const c_char) -> i32 {
+pub unsafe extern "C" fn symlinkat(
+	target: *const c_char,
+	newdirfd: i32,
+	linkpath: *const c_char,
+) -> i32 {
 	syscall!(
 		cfg_select! {
 			// https://syscall.sh/x64/symlinkat/

@@ -16,6 +16,7 @@ use locale::{__mavitix_get_lc_monetary, __mavitix_get_lc_numeric, Territory};
 // https://lh.2xlibre.net/locale/en_GB/
 // https://lh.2xlibre.net/locale/ja_JP/
 // https://lh.2xlibre.net/locale/en_NZ/
+// https://lh.2xlibre.net/locale/de_DE/
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct lconv {
@@ -78,18 +79,20 @@ pub extern "C" fn localeconv() -> *const lconv {
 		let territory: Territory = __mavitix_get_lc_numeric().territory;
 		LCONV.decimal_point = match territory {
 			Territory::AU | Territory::GB | Territory::JP | Territory::NZ => c".",
-			Territory::None => c"",
+			Territory::DE => c",",
+			Territory::AQ | Territory::None => c"",
 		}
 		.as_ptr();
 		LCONV.thousands_sep = match territory {
 			Territory::AU | Territory::GB | Territory::JP | Territory::NZ => c",",
-			Territory::None => c"",
+			Territory::DE => c".",
+			Territory::AQ | Territory::None => c"",
 		}
 		.as_ptr();
 		LCONV.grouping = match territory {
-			Territory::AU | Territory::GB | Territory::NZ => c"3;3",
+			Territory::AU | Territory::DE | Territory::GB | Territory::NZ => c"3;3",
 			Territory::JP => c"3",
-			Territory::None => c"",
+			Territory::AQ | Territory::None => c"",
 		}
 		.as_ptr();
 	};
@@ -97,79 +100,93 @@ pub extern "C" fn localeconv() -> *const lconv {
 		let territory: Territory = __mavitix_get_lc_monetary().territory;
 		LCONV.int_curr_symbol = match territory {
 			Territory::AU => c"AUD ",
+			Territory::DE => c"EUR ",
 			Territory::GB => c"GBP ",
 			Territory::JP => c"JPY ",
 			Territory::NZ => c"NZD ",
-			Territory::None => c"",
+			Territory::AQ | Territory::None => c"",
 		}
 		.as_ptr();
 		LCONV.currency_symbol = match territory {
 			Territory::AU | Territory::NZ => c"$",
+			Territory::DE => c"€",
 			Territory::GB => c"£",
 			Territory::JP => c"￥",
-			Territory::None => c"",
+			Territory::AQ | Territory::None => c"",
 		}
 		.as_ptr();
 		LCONV.mon_decimal_point = match territory {
 			Territory::AU | Territory::GB | Territory::JP | Territory::NZ => c".",
-			Territory::None => c"",
+			Territory::DE => c",",
+			Territory::AQ | Territory::None => c"",
 		}
 		.as_ptr();
 		LCONV.mon_thousands_sep = match territory {
 			Territory::AU | Territory::GB | Territory::JP | Territory::NZ => c",",
-			Territory::None => c"",
+			Territory::DE => c".",
+			Territory::AQ | Territory::None => c"",
 		}
 		.as_ptr();
 		LCONV.mon_grouping = match territory {
-			Territory::AU | Territory::GB | Territory::NZ => c"3;3",
+			Territory::AU | Territory::DE | Territory::GB | Territory::NZ => c"3;3",
 			Territory::JP => c"3",
-			Territory::None => c"",
+			Territory::AQ | Territory::None => c"",
 		}
 		.as_ptr();
 		LCONV.positive_sign = match territory {
-			Territory::AU | Territory::GB | Territory::JP | Territory::NZ | Territory::None => c"",
+			Territory::AQ
+			| Territory::AU
+			| Territory::DE
+			| Territory::GB
+			| Territory::JP
+			| Territory::NZ
+			| Territory::None => c"",
 		}
 		.as_ptr();
 		LCONV.negative_sign = match territory {
-			Territory::AU | Territory::GB | Territory::JP | Territory::NZ => c"-",
-			Territory::None => c"",
+			Territory::AU | Territory::DE | Territory::GB | Territory::JP | Territory::NZ => c"-",
+			Territory::AQ | Territory::None => c"",
 		}
 		.as_ptr();
 		LCONV.int_frac_digits = match territory {
-			Territory::AU | Territory::GB | Territory::NZ => b'2' as c_char,
+			Territory::AU | Territory::DE | Territory::GB | Territory::NZ => b'2' as c_char,
 			Territory::JP => b'0' as c_char,
-			Territory::None => c_char::MAX,
+			Territory::AQ | Territory::None => c_char::MAX,
 		};
 		LCONV.frac_digits = match territory {
-			Territory::AU | Territory::GB | Territory::NZ => b'2' as c_char,
+			Territory::AU | Territory::DE | Territory::GB | Territory::NZ => b'2' as c_char,
 			Territory::JP => b'0' as c_char,
-			Territory::None => c_char::MAX,
+			Territory::AQ | Territory::None => c_char::MAX,
 		};
 		LCONV.p_cs_precedes = match territory {
 			Territory::AU | Territory::GB | Territory::JP | Territory::NZ => b'1' as c_char,
-			Territory::None => c_char::MAX,
+			Territory::DE => b'0' as c_char,
+			Territory::AQ | Territory::None => c_char::MAX,
 		};
 		LCONV.p_sep_by_space = match territory {
 			Territory::AU | Territory::GB | Territory::JP | Territory::NZ => b'0' as c_char,
-			Territory::None => c_char::MAX,
+			Territory::DE => b'1' as c_char,
+			Territory::AQ | Territory::None => c_char::MAX,
 		};
 		LCONV.n_cs_precedes = match territory {
 			Territory::AU | Territory::GB | Territory::JP | Territory::NZ => b'1' as c_char,
-			Territory::None => c_char::MAX,
+			Territory::DE => b'0' as c_char,
+			Territory::AQ | Territory::None => c_char::MAX,
 		};
 		LCONV.n_sep_by_space = match territory {
 			Territory::AU | Territory::GB | Territory::JP | Territory::NZ => b'0' as c_char,
-			Territory::None => c_char::MAX,
+			Territory::DE => b'1' as c_char,
+			Territory::AQ | Territory::None => c_char::MAX,
 		};
 		LCONV.p_sign_posn = match territory {
-			Territory::AU | Territory::GB | Territory::NZ => b'1' as c_char,
+			Territory::AU | Territory::DE | Territory::GB | Territory::NZ => b'1' as c_char,
 			Territory::JP => b'4' as c_char,
-			Territory::None => c_char::MAX,
+			Territory::AQ | Territory::None => c_char::MAX,
 		};
 		LCONV.n_sign_posn = match territory {
-			Territory::AU | Territory::GB | Territory::NZ => b'1' as c_char,
+			Territory::AU | Territory::DE | Territory::GB | Territory::NZ => b'1' as c_char,
 			Territory::JP => b'4' as c_char,
-			Territory::None => c_char::MAX,
+			Territory::AQ | Territory::None => c_char::MAX,
 		};
 	};
 	&raw const LCONV

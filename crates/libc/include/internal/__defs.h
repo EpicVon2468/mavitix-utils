@@ -4,7 +4,6 @@
 
 #define __MAVITIX_LIBC__ 1
 
-#define _POSIX_SOURCE 1
 #define _POSIX_C_SOURCE 202405L
 #define _XOPEN_SOURCE 800
 

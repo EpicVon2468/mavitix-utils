@@ -18,6 +18,7 @@ use locale::{__mavitix_get_lc_messages, Language, Locale};
 pub const unsafe extern "C" fn strerror_l(errnum: i32, locale: *const Locale) -> *const c_char {
 	match unsafe { *locale }.language {
 		Language::English => strerror_en(errnum),
+		Language::German => strerror_de(errnum),
 		Language::Japanese => strerror_ja(errnum),
 	}
 }
@@ -77,6 +78,11 @@ pub const fn strerror_en(errnum: i32) -> *const c_char {
 		_ => c"Unknown error code",
 	}
 	.as_ptr();
+}
+
+#[inline]
+pub const fn strerror_de(errnum: i32) -> *const c_char {
+	return strerror_en(errnum);
 }
 
 #[inline]

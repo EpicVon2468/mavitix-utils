@@ -393,12 +393,18 @@ OBJECT_FILES+=" target/release/artefacts/strerror.o"
 
 "$RUSTC" $RUSTFLAGS src/unistd/symlink.rs
 OBJECT_FILES+=" target/release/artefacts/symlink.o"
+"$RUSTC" $RUSTFLAGS src/unistd/link.rs
+OBJECT_FILES+=" target/release/artefacts/link.o"
+"$RUSTC" $RUSTFLAGS src/unistd/unlink.rs
+OBJECT_FILES+=" target/release/artefacts/unlink.o"
 "$RUSTC" $RUSTFLAGS src/unistd/getuid.rs
 OBJECT_FILES+=" target/release/artefacts/getuid.o"
 "$RUSTC" $RUSTFLAGS src/unistd/getgid.rs
 OBJECT_FILES+=" target/release/artefacts/getgid.o"
 "$RUSTC" $RUSTFLAGS src/unistd/syscall.rs
 OBJECT_FILES+=" target/release/artefacts/syscall.o"
+"$RUSTC" $RUSTFLAGS src/unistd/pathconf.rs
+OBJECT_FILES+=" target/release/artefacts/pathconf.o"
 
 "$RUSTC" $RUSTFLAGS src/locale/localeconv.rs
 OBJECT_FILES+=" target/release/artefacts/localeconv.o"

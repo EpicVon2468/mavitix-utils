@@ -5,7 +5,7 @@
 
 use core::{
 	ffi::c_char,
-	hint::{assert_unchecked, cold_path, unreachable_unchecked},
+	hint::{cold_path, unreachable_unchecked},
 };
 
 #[path = "../rsinclude/errno.rs"]
@@ -216,6 +216,7 @@ pub unsafe extern "C" fn setlocale(category: i32, mut locale: *const c_char) -> 
 				LC_ADDRESS,
 				LC_TELEPHONE,
 			] {
+				// SAFETY: `locale` is a well-formed, null-terminated, empty C string.
 				if unsafe { setlocale(category, locale) }.is_null() {
 					einval!();
 				};
@@ -251,6 +252,7 @@ pub unsafe extern "C" fn setlocale(category: i32, mut locale: *const c_char) -> 
 		if locale.is_null() {
 			locale = c"C.UTF-8".as_ptr();
 		};
+		// SAFETY: `locale` is a well-formed, null-terminated C string.
 		len = unsafe { strlen(locale) };
 	};
 	// SANITY(unusual):
@@ -272,11 +274,25 @@ pub unsafe extern "C" fn setlocale(category: i32, mut locale: *const c_char) -> 
 			&[b'_', first, second, ref codeset @ ..]
 				if let b"" | b".utf8" | b".UTF-8" = codeset =>
 			{
-				// SAFETY: The constructed territory passed has a length of 2.
-				if !unsafe { parse_territory(&mut locale_info.territory, &[first, second]) } {
+				if !parse_territory(&mut locale_info.territory, &[first, second]) {
 					einval!();
 				};
 				locale_info.language = Language::English;
+			},
+			_ => einval!(),
+		},
+		&[b'd', b'e', ref rest @ ..] => match rest {
+			b"" | b".utf8" | b".UTF-8" => {
+				locale_info.language = Language::German;
+				locale_info.territory = Territory::None;
+			},
+			&[b'_', first, second, ref codeset @ ..]
+				if let b"" | b".utf8" | b".UTF-8" = codeset =>
+			{
+				if !parse_territory(&mut locale_info.territory, &[first, second]) {
+					einval!();
+				};
+				locale_info.language = Language::German;
 			},
 			_ => einval!(),
 		},
@@ -288,8 +304,7 @@ pub unsafe extern "C" fn setlocale(category: i32, mut locale: *const c_char) -> 
 			&[b'_', first, second, ref codeset @ ..]
 				if let b"" | b".utf8" | b".UTF-8" = codeset =>
 			{
-				// SAFETY: The constructed territory passed has a length of 2.
-				if !unsafe { parse_territory(&mut locale_info.territory, &[first, second]) } {
+				if !parse_territory(&mut locale_info.territory, &[first, second]) {
 					einval!();
 				};
 				locale_info.language = Language::Japanese;
@@ -301,17 +316,15 @@ pub unsafe extern "C" fn setlocale(category: i32, mut locale: *const c_char) -> 
 	return locale_info.to_c_str();
 }
 
-unsafe fn parse_territory(territory: &mut Territory, territory_bytes: &[u8]) -> bool {
-	// SAFETY: Callers must ensure this condition.
-	unsafe {
-		assert_unchecked(territory_bytes.len() == 2);
-	};
-	match territory_bytes {
-		b"AU" => *territory = Territory::AU,
-		b"GB" => *territory = Territory::GB,
-		b"JP" => *territory = Territory::JP,
-		b"NZ" => *territory = Territory::NZ,
-		b"US" | b"IL" => {
+fn parse_territory(territory: &mut Territory, territory_bytes: &[u8; 2]) -> bool {
+	*territory = match territory_bytes {
+		b"AQ" => Territory::AQ,
+		b"AU" => Territory::AU,
+		b"DE" => Territory::DE,
+		b"GB" => Territory::GB,
+		b"JP" => Territory::JP,
+		b"NZ" => Territory::NZ,
+		b"AE" | b"IL" | b"US" => {
 			cold_path();
 			// EX_CONFIG
 			__mavitix_immediate_abort(78);
