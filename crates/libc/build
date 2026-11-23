@@ -193,7 +193,7 @@ esac
 
 # https://research.google/pubs/safe-icf-pointer-safe-and-unwinding-aware-identical-code-folding-in-gold/
 # https://sourceware.org/binutils/docs/ld.html
-LDFLAGS+=" -O3 --relax -nostdlib -z lazy -z relro -z memory-seal -z global -z text -z combreloc -z unique -z nodelete -z sectionheader -z initfirst --warn-rwx-segments --error-rwx-segments --warn-execstack --warn-execstack-objects --error-execstack --eh-frame-hdr --enable-new-dtags --build-id --demangle --gc-sections --enable-linker-version"
+LDFLAGS+=" -O3 --relax -nostdlib -z lazy -z relro -z memory-seal -z global -z text -z combreloc -z unique -z nodelete -z sectionheader -z initfirst --warn-rwx-segments --error-rwx-segments --warn-execstack --warn-execstack-objects --error-execstack --eh-frame-hdr --enable-new-dtags --build-id --demangle --gc-sections --enable-linker-version -Bsymbolic -Bsymbolic-functions"
 if [ "$architecture" = "x86-64" ]; then
 	LDFLAGS+=" -z pack-relative-relocs -z mark-plt"
 	if [ "$opt__ibt_plt" = "true" ]; then
@@ -314,47 +314,21 @@ if [ "$opt__build_libm" = "true" ]; then
 		"--check-cfg=cfg(assert_no_panic)" \
 		"--check-cfg=cfg(target_abi_eabihf)" \
 		"--check-cfg=cfg(intrinsics_enabled)" \
+		"--check-cfg=cfg(optimizations_enabled)" \
 		"--check-cfg=cfg(feature, values(\"unstable-public-internals\"))" \
 		"--check-cfg=cfg(feature, values(\"compiler-builtins\"))" \
 		"--check-cfg=cfg(feature, values(\"unmangled-names\"))" \
 		"--check-cfg=cfg(feature, values(\"arch\"))" \
 		"--cfg=f128_enabled" \
 		"--cfg=intrinsics_enabled" \
+		"--cfg=optimizations_enabled" \
 		"--cfg=feature=\"arch\"" \
+		"--cfg=feature=\"unmangled-names\"" \
+		"--cfg=feature=\"compiler-builtins\"" \
+		"--cfg=feature=\"unstable-public-internals\"" \
 		--crate-type=lib --crate-name=libm \
-		--emit=link=target/release/artefacts/libm.rlib \
 		src/maths/compiler-builtins/libm/src/lib.rs
 fi
-
-RUSTFLAGS+=" --extern libm=target/release/artefacts/libm.rlib"
-
-# "$RUSTC" $RUSTFLAGS src/maths/acos.rs
-# "$LD" --relocatable \
-# 	target/release/artefacts/acos.o \
-# 	target/release/artefacts/libm.o \
-# 	-o target/release/tmp/acos.o
-# "$STRIP" \
-# 	--remove-section='.text.*' \
-# 	--remove-section='!.text.*cos*' \
-# 	--keep-section-symbols \
-# 	--keep-file-symbols \
-# 	target/release/artefacts/acos.o
-# mv -f target/release/tmp/acos.o target/release/artefacts/acos.o
-# OBJECT_FILES+=" target/release/artefacts/acos.o"
-
-# "$RUSTC" $RUSTFLAGS src/maths/cos.rs
-# "$LD" --relocatable \
-# 	target/release/artefacts/cos.o \
-# 	target/release/artefacts/libm.o \
-# 	-o target/release/tmp/cos.o
-# "$STRIP" \
-# 	--remove-section='.text.*' \
-# 	--remove-section='!.text.*cos*' \
-# 	--keep-section-symbols \
-# 	--keep-file-symbols \
-# 	target/release/artefacts/cos.o
-# mv -f target/release/tmp/cos.o target/release/artefacts/cos.o
-# OBJECT_FILES+=" target/release/artefacts/cos.o"
 
 "$RUSTC" $RUSTFLAGS src/internal/__checks.rs
 rm target/release/artefacts/__checks.o
@@ -386,6 +360,8 @@ OBJECT_FILES+=" target/release/artefacts/libc_version.o"
 "$RUSTC" $RUSTFLAGS src/mem/mem.rs
 OBJECT_FILES+=" target/release/artefacts/mem.o"
 
+"$RUSTC" $RUSTFLAGS src/str/memcpy.rs
+OBJECT_FILES+=" target/release/artefacts/memcpy.o"
 "$RUSTC" $RUSTFLAGS src/str/strlen.rs
 OBJECT_FILES+=" target/release/artefacts/strlen.o"
 "$RUSTC" $RUSTFLAGS src/str/strerror.rs
@@ -405,6 +381,10 @@ OBJECT_FILES+=" target/release/artefacts/getgid.o"
 OBJECT_FILES+=" target/release/artefacts/syscall.o"
 "$RUSTC" $RUSTFLAGS src/unistd/pathconf.rs
 OBJECT_FILES+=" target/release/artefacts/pathconf.o"
+"$RUSTC" $RUSTFLAGS src/unistd/sync.rs
+OBJECT_FILES+=" target/release/artefacts/sync.o"
+"$RUSTC" $RUSTFLAGS src/unistd/fsync.rs
+OBJECT_FILES+=" target/release/artefacts/fsync.o"
 
 "$RUSTC" $RUSTFLAGS src/locale/localeconv.rs
 OBJECT_FILES+=" target/release/artefacts/localeconv.o"

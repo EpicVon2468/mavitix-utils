@@ -9,6 +9,9 @@ __EXT_CXX_BEGIN__
 #include <internal/__size_t.h>
 
 __NOTHROW__ extern
+void *memcpy(void *__nonnull__ dst, const void *__nonnull__ src, size_t len);
+
+__NOTHROW__ extern
 char *strdup(const char *__nonnull__ str);
 
 __NOTHROW__ extern
@@ -24,9 +27,9 @@ int strncmp(
 	size_t len
 );
 
-#if __INCOMPAT_LIB_REDECL__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wincompatible-library-redeclaration"
+#if __INCOMPAT_LIB_REDECL__ && __has_builtin(strerror)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-library-redeclaration"
 #endif
 
 /* "The array pointed to shall not be modified by the program." */
@@ -39,8 +42,8 @@ const char *strerror_l(int errnum, locale_t locale);
 __RETURNS_NONNULL__ __NOTHROW__ extern
 const char *__strerror_l(int errnum, locale_t locale);
 
-#if __INCOMPAT_LIB_REDECL__
-#pragma clang diagnostic pop
+#if __INCOMPAT_LIB_REDECL__ && __has_builtin(strerror)
+#pragma GCC diagnostic pop
 #endif
 
 __EXT_CXX_END__

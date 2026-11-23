@@ -41,7 +41,8 @@
 #define __has_extension(x) __has_feature(x)
 #endif /* __has_extension */
 
-#if defined(__clang__) || defined(__llvm__) || defined(__GNUC__)
+#if defined(__clang__) || defined(__llvm__) || defined(__GNUC__) ||            \
+	defined(__slimcc__)
 #define __CLANG_LIKE__ 1
 #else
 #define __CLANG_LIKE__ 0

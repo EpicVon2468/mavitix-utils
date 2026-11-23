@@ -10,7 +10,21 @@ __EXT_CXX_BEGIN__
  * I can't get a straight answer out of anyone as to whether these are 'correct'
  * definitions or not.
  */
-#if __has_keyword(__builtin_va_list)
+/*
+ * No compiler I know of implements `__has_builtin` to return true for this
+ * type, but I'll leave this just in case.  It seems to be rather difficult to
+ * query for this specific feature, and it's probably a bit late to request
+ * standardisation.
+ * The following compilers definitely implement this type:
+ * - `clang` (`__clang__`)
+ * - `gcc` (`__GNUC__`)
+ * - `slimcc` (`__slimcc__`)
+ * Clang can be queried with `__has_keyword` (AKA `!__is_identifier`), but
+ * `defined(__GNUC__)` cannot be used, as there is a long history of compilers
+ * pretending to be GCC when they aren't always fully compliant.
+ */
+#if __has_keyword(__builtin_va_list) || __has_builtin(__builtin_va_list) ||    \
+	defined(__slimcc__)
 /* GCC doesn't provide `__is_identifier`, so this never passes for GCC. */
 typedef __builtin_va_list va_list;
 #elif __X86_64__
