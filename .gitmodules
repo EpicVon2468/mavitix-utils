@@ -4,3 +4,4 @@
 [submodule "crates/libc/src/maths/compiler-builtins"]
 	path = crates/libc/src/maths/compiler-builtins
 	url = https://github.com/rust-lang/compiler-builtins
+	branch = main
