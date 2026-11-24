@@ -1,4 +1,4 @@
-#![feature(const_default, const_trait_impl, ffi_const, extern_types)]
+#![feature(const_default, const_trait_impl, ffi_const, ffi_pure, extern_types)]
 
 use std::ffi::{c_char, c_void};
 
@@ -116,10 +116,11 @@ unsafe extern "C" {
 	#[link_name = "realloc"]
 	pub fn raw_realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
 
-	pub fn memcpy(dest: *mut c_void, src: *const c_void, n: usize) -> *mut c_void;
+	pub fn memcpy(dst: *mut c_void, src: *const c_void, len: usize) -> *mut c_void;
 
 	pub fn free(ptr: *mut c_void);
 
+	#[unsafe(ffi_pure)]
 	pub fn strlen(r#str: *const c_char) -> usize;
 
 	#[unsafe(ffi_const)]

@@ -10,11 +10,10 @@ pub const unsafe extern "C" fn strlen(mut r#str: *const c_char) -> usize {
 	loop {
 		// SAFETY: Callers ensure input is well-formed.
 		if unsafe { *r#str } == 0 {
-			break;
+			// SAFETY:
+			return unsafe { r#str.offset_from_unsigned(start) };
 		};
 		// SAFETY: Callers ensure input is well-formed.
-		unsafe { r#str = r#str.add(1) };
+		r#str = unsafe { r#str.add(1) };
 	}
-	// SAFETY:
-	return unsafe { r#str.offset_from_unsigned(start) };
 }

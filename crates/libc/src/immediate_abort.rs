@@ -17,6 +17,7 @@ pub extern "C" fn __mavitix_immediate_abort(code: i32) -> ! {
 			target_arch = "aarch64" => 0x5D,
 			// https://syscall.sh/riscv64/exit/
 			target_arch = "riscv64" => 0x5D,
+			_ => compile_error!(),
 		},
 		code,
 	);

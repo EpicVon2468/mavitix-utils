@@ -76,7 +76,11 @@ __EXT_CXX_BEGIN__
 
 typedef unsigned int uid_t;
 typedef unsigned int gid_t;
-#include <internal/__size_t.h> /* size_t */
+#include <internal/__size_t.h>
+#include <internal/__ssize_t.h>
+
+__NOTHROW__ extern
+ssize_t write(int fd, const void *buf, size_t len);
 
 __NORETURN__ extern
 void _exit(int status);

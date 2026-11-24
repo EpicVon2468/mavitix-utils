@@ -18,19 +18,35 @@ extern FILE *stdout;
 extern FILE *stderr;
 
 __NOTHROW__ extern
-int fclose(FILE *stream);
+int fileno(FILE *__nonnull__ stream);
 
 __NOTHROW__ extern
-int fflush(FILE *stream);
+int printf(const char *__restrict__ __nonnull__ fmt, ...);
 
 __NOTHROW__ extern
-FILE *fopen(const char *__restrict__ filename, const char *__restrict__ mode);
+int fprintf(
+	FILE *__restrict__ __nonnull__ stream,
+	const char *__restrict__ __nonnull__ fmt,
+	...
+);
 
 __NOTHROW__ extern
-FILE *fdopen(int fd, const char *mode);
+int dprintf(int fd, const char *__restrict__ __nonnull__ fmt, ...);
 
 __NOTHROW__ extern
-int fileno(FILE *stream);
+int fclose(FILE *__nonnull__ stream);
+
+__NOTHROW__ extern
+int fflush(FILE *__nonnull__ stream);
+
+__NOTHROW__ extern
+FILE *fopen(
+	const char *__restrict__ __nonnull__ filename,
+	const char *__restrict__ __nonnull__ mode
+);
+
+__NOTHROW__ extern
+FILE *fdopen(int fd, const char *__nonnull__ mode);
 
 __UNAVAILABLE__("Use of `gets` is strictly prohibited")
 __DEPRECATED__("Use of `gets` is highly discouraged") __CONST__ __INLINE__

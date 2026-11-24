@@ -1,7 +1,7 @@
 #![no_std]
 #![crate_name = "setlocale"]
 #![crate_type = "cdylib"]
-#![feature(derive_const, const_default, const_trait_impl, ffi_const)]
+#![feature(derive_const, const_default, const_trait_impl, ffi_const, ffi_pure)]
 
 use core::{
 	ffi::c_char,
@@ -31,6 +31,7 @@ use locale::{
 
 unsafe extern "C" {
 
+	#[unsafe(ffi_pure)]
 	pub fn strlen(r#str: *const c_char) -> usize;
 
 	pub fn getenv(name: *const c_char) -> *const c_char;

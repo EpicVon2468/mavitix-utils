@@ -8,13 +8,13 @@ __EXT_CXX_BEGIN__
 #include <internal/__locale_t.h>
 #include <internal/__size_t.h>
 
-__NOTHROW__ extern
+__RETURNS_NONNULL__ __NOTHROW__ extern
 void *memcpy(void *__nonnull__ dst, const void *__nonnull__ src, size_t len);
 
 __NOTHROW__ extern
 char *strdup(const char *__nonnull__ str);
 
-__NOTHROW__ extern
+__PURE__ __NOTHROW__ extern
 size_t strlen(const char *__nonnull__ str);
 
 __NOTHROW__ extern

@@ -333,6 +333,9 @@ fi
 "$RUSTC" $RUSTFLAGS src/internal/__checks.rs
 rm target/release/artefacts/__checks.o
 
+"$RUSTC" $RUSTFLAGS src/stdio/printf.rs
+OBJECT_FILES+=" target/release/artefacts/printf.o"
+
 "$RUSTC" $RUSTFLAGS src/immediate_abort.rs
 OBJECT_FILES+=" target/release/artefacts/mavitix_immediate_abort.o"
 
@@ -367,6 +370,8 @@ OBJECT_FILES+=" target/release/artefacts/strlen.o"
 "$RUSTC" $RUSTFLAGS src/str/strerror.rs
 OBJECT_FILES+=" target/release/artefacts/strerror.o"
 
+"$RUSTC" $RUSTFLAGS src/unistd/write.rs
+OBJECT_FILES+=" target/release/artefacts/write.o"
 "$RUSTC" $RUSTFLAGS src/unistd/symlink.rs
 OBJECT_FILES+=" target/release/artefacts/symlink.o"
 "$RUSTC" $RUSTFLAGS src/unistd/link.rs
