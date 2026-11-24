@@ -365,6 +365,10 @@ OBJECT_FILES+=" target/release/artefacts/mem.o"
 
 "$RUSTC" $RUSTFLAGS src/str/memcpy.rs
 OBJECT_FILES+=" target/release/artefacts/memcpy.o"
+"$RUSTC" $RUSTFLAGS src/str/memmove.rs
+OBJECT_FILES+=" target/release/artefacts/memmove.o"
+"$RUSTC" $RUSTFLAGS src/str/memset.rs
+OBJECT_FILES+=" target/release/artefacts/memset.o"
 "$RUSTC" $RUSTFLAGS src/str/strlen.rs
 OBJECT_FILES+=" target/release/artefacts/strlen.o"
 "$RUSTC" $RUSTFLAGS src/str/strerror.rs

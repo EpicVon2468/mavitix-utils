@@ -11,6 +11,12 @@ __EXT_CXX_BEGIN__
 __RETURNS_NONNULL__ __NOTHROW__ extern
 void *memcpy(void *__nonnull__ dst, const void *__nonnull__ src, size_t len);
 
+__RETURNS_NONNULL__ __NOTHROW__ extern
+void *memmove(void *__nonnull__ dst, const void *__nonnull__ src, size_t len);
+
+__RETURNS_NONNULL__ __NOTHROW__ extern
+void *memset(void *__nonnull__ dst, int value, size_t len);
+
 __NOTHROW__ extern
 char *strdup(const char *__nonnull__ str);
 
