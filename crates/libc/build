@@ -374,6 +374,8 @@ OBJECT_FILES+=" target/release/artefacts/strlen.o"
 "$RUSTC" $RUSTFLAGS src/str/strerror.rs
 OBJECT_FILES+=" target/release/artefacts/strerror.o"
 
+"$RUSTC" $RUSTFLAGS src/unistd/read.rs
+OBJECT_FILES+=" target/release/artefacts/read.o"
 "$RUSTC" $RUSTFLAGS src/unistd/write.rs
 OBJECT_FILES+=" target/release/artefacts/write.o"
 "$RUSTC" $RUSTFLAGS src/unistd/symlink.rs

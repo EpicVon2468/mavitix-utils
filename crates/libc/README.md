@@ -27,3 +27,4 @@ Only 64-bit processors are supported, and only under the `LP64` programming mode
 - `localedef` support won't be added unless the specification is changed to require it.
 - The localisation categories `LC_PAPER`, `LC_MEASUREMENT`, and `LC_IDENTIFICATION` are not supported.
 - Language codes can be arbitrarily used alongside territory codes without restriction.
+- The UNIX-style `num$` syntax for the `printf` family of functions is unlikely to be supported due to incredibly high technical complexity.

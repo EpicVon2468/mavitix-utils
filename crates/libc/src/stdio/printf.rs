@@ -17,6 +17,8 @@ unsafe extern "C" {
 
 	pub safe fn fileno(stream: *mut FILE) -> i32;
 
+	pub fn atoi(r#str: *const c_char) -> i32;
+
 	#[must_use]
 	pub fn write(fd: i32, buf: *const c_void, count: usize) -> isize;
 }
@@ -36,19 +38,20 @@ impl Buffer {
 		}
 	}
 
-	fn push(&mut self, item: u8) -> bool {
+	fn push(&mut self, item: u8) -> (bool, usize) {
 		if self.index < 512 {
 			self.inner[self.index] = item;
 			self.index += 1;
-			true
+			(true, 0)
 		} else {
-			self.flush()
+			let flushed: usize = self.index;
+			(self.flush(), flushed)
 		}
 	}
 
 	fn flush(&mut self) -> bool {
-		// SAFETY: `self.inner.as_ptr()` is a non-null pointer of at least 512 bytes in length.
-		if unsafe { write_all(self.fd, self.inner.as_ptr(), 512) } {
+		// SAFETY: `self.inner.as_ptr()` is a non-null pointer of at least 512 (the maximum value of `self.index`) bytes in length.
+		if unsafe { write_all(self.fd, self.inner.as_ptr(), self.index) } {
 			self.index = 0;
 			self.inner = [0; _];
 			true
@@ -59,14 +62,14 @@ impl Buffer {
 }
 
 unsafe fn write_all(fd: i32, ptr: *const u8, len: usize) -> bool {
-	let mut completion: usize = 0;
+	let mut flushed: usize = 0;
 	loop {
-		let result: isize = unsafe { write(fd, ptr.add(completion).cast(), len - completion) };
+		let result: isize = unsafe { write(fd, ptr.add(flushed) as *const c_void, len - flushed) };
 		if result == -1 {
 			return false;
 		};
-		completion += result as usize;
-		if completion >= len {
+		flushed += result as usize;
+		if flushed >= len {
 			return true;
 		};
 	}
@@ -102,6 +105,7 @@ macro_rules! einval {
 
 #[inline(always)]
 unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) -> i32 {
+	let mut total: usize = 0;
 	if fmt.is_null() {
 		einval!();
 	};
@@ -115,25 +119,92 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 			Some(ch)
 		}
 	}
+	macro_rules! push {
+		($ch:expr $(,)?) => {{
+			let (ok, flushed): (bool, usize) = buf.push($ch);
+			total += flushed;
+			if !ok {
+				return -1;
+			};
+		}};
+	}
 	loop {
 		match next(&mut fmt) {
 			Some(b'%') => {
-				let Some(ch) = next(&mut fmt) else {
+				let Some(mut ch): Option<u8> = next(&mut fmt) else {
 					einval!();
+				};
+				let mut _precision: i32 = 0;
+				match ch {
+					b'.' => {
+						let mut precision_bytes: [u8; 24] = [0; _];
+						let mut index: usize = 0;
+						loop {
+							let Some(next): Option<u8> = next(&mut fmt) else {
+								einval!();
+							};
+							match next {
+								b'0'..b'9' => {
+									if index < 23 {
+										precision_bytes[index] = next;
+										index += 1;
+									} else {
+										// Too many characters in precision format.
+										einval!();
+									};
+								},
+								b'$' => {
+									// UNIX `num$` syntax is too complex to support.
+									einval!();
+								},
+								_ => {
+									ch = next;
+									break;
+								},
+							};
+						}
+						if index != 0 {
+							_precision = unsafe { atoi(precision_bytes.as_ptr() as *const c_char) };
+						};
+					},
+					_ => (),
 				};
 				match ch {
 					b'%' => {
-						if !buf.push(ch) {
-							return -1;
-						};
+						push!(ch);
 						continue;
 					},
-					b's' => {
+					b'n' => {
+						let arg: *mut i32 = unsafe { args.next_arg() };
+						if arg.is_null() {
+							einval!();
+						};
+						unsafe { *arg = total as i32 };
+						continue;
+					},
+					b's' | b'p' => {
+						total += buf.index;
 						if !buf.flush() {
 							return -1;
 						};
-						let arg: *const c_char = unsafe { args.next_arg() };
-						let len: usize = unsafe { strlen(arg) };
+						let mut arg: *const c_char = cfg_select! {
+							// Satiate miri
+							any(feature = "verbose-ub-checks", miri) => unsafe {
+								if ch == b's' {
+									args.next_arg::<*const c_char>()
+								} else {
+									args.next_arg::<*const c_void>() as *const c_char
+								}
+							},
+							_ => unsafe { args.next_arg::<*const c_char>() },
+						};
+						let len: usize = if arg.is_null() {
+							arg = c"(null)".as_ptr();
+							6
+						} else {
+							unsafe { strlen(arg) }
+						};
+						total += len;
 						if !unsafe { write_all(fd, arg as *const u8, len) } {
 							return -1;
 						};
@@ -143,17 +214,15 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 				};
 			},
 			Some(ch) => {
-				if !buf.push(ch) {
-					return -1;
-				};
+				push!(ch);
+				continue;
 			},
-			None => {
-				break;
-			},
+			None => break,
 		};
 	}
+	total += buf.index;
 	if !buf.flush() {
 		return -1;
 	};
-	return 0;
+	total as i32
 }

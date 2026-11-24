@@ -80,6 +80,9 @@ typedef unsigned int gid_t;
 #include <internal/__ssize_t.h>
 
 __NOTHROW__ extern
+ssize_t read(int fd, const void *buf, size_t len);
+
+__NOTHROW__ extern
 ssize_t write(int fd, const void *buf, size_t len);
 
 __NORETURN__ extern
