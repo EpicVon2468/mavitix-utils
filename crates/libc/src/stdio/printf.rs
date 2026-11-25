@@ -182,6 +182,39 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 						unsafe { *arg = total as i32 };
 						continue;
 					},
+					b'd' | b'i' => {
+						total += buf.index;
+						if !buf.flush() {
+							return -1;
+						};
+						let mut arg: i32 = unsafe { args.next_arg() };
+						let mut num_buf: [u8; 20] = [0; _];
+						let negative: bool = if arg < 0 {
+							arg = -arg;
+							true
+						} else {
+							false
+						};
+						let mut offset: usize = 0;
+						loop {
+							num_buf[offset] = (arg % 10) as u8 + b'0';
+							offset += 1;
+							arg /= 10;
+							if arg == 0 {
+								break;
+							};
+						}
+						if negative {
+							push!(b'-');
+						};
+						loop {
+							offset -= 1;
+							push!(num_buf[offset]);
+							if offset == 0 {
+								break;
+							};
+						}
+					},
 					b's' | b'p' => {
 						total += buf.index;
 						if !buf.flush() {
