@@ -1,7 +1,6 @@
 #![no_std]
 #![crate_name = "mavitix_immediate_abort"]
 #![crate_type = "cdylib"]
-#![feature(likely_unlikely, ffi_const)]
 
 use core::hint::unreachable_unchecked;
 
@@ -9,7 +8,7 @@ include!("rsinclude/syscall.rs");
 
 #[unsafe(no_mangle)]
 pub extern "C" fn __mavitix_immediate_abort(code: i32) -> ! {
-	syscall!(
+	syscall_nofail!(
 		cfg_select! {
 			// https://syscall.sh/x64/exit/
 			target_arch = "x86_64" => 0x3C,

@@ -12,7 +12,11 @@ pub unsafe extern "C" fn symlink(target: *const c_char, linkpath: *const c_char)
 	cfg_select! {
 		// https://syscall.sh/x64/symlink/
 		target_arch = "x86_64" => syscall!(0x58, target, linkpath) as i32,
-		_ => unsafe { symlinkat(target, -100, linkpath) },
+		_ => unsafe {
+			const AT_FDCWD: i32 = -100;
+
+			symlinkat(target, AT_FDCWD, linkpath)
+		},
 	}
 }
 

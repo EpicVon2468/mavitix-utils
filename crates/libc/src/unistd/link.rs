@@ -12,7 +12,11 @@ pub unsafe extern "C" fn link(oldpath: *const c_char, newpath: *const c_char) ->
 	cfg_select! {
 		// https://syscall.sh/x64/link/
 		target_arch = "x86_64" => syscall!(0x56, oldpath, newpath) as i32,
-		_ => unsafe { linkat(-100, oldpath, -100, newpath, 0) },
+		_ => unsafe {
+			const AT_FDCWD: i32 = -100;
+
+			linkat(AT_FDCWD, oldpath, AT_FDCWD, newpath, 0)
+		},
 	}
 }
 

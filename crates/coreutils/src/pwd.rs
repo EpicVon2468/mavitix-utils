@@ -108,7 +108,6 @@ pub fn main() {
 	let buf: *mut c_char = match unsafe { malloc::<c_char>(size) } {
 		Some(buf) => buf,
 		None => {
-			cold_path();
 			let error: Error = Error::last_os_error();
 			unreachable!("pwd: failed to allocate memory; {error}");
 		},
@@ -122,9 +121,9 @@ pub fn main() {
 	loop {
 		// SAFETY: `buf` is non-null and is `size` in length.
 		if unsafe { getcwd(buf, size) }.is_null() {
+			// TODO: Use `strerror` instead?
 			match errno() {
-				// SAFETY: From `getcwd(3)`: "On failure, these functions return NULL, and errno is set to indicate the error."
-				0 => unsafe { unreachable_unchecked() },
+				0 => unreachable!(),
 				// ENOENT
 				2 => {
 					free!();
@@ -139,7 +138,6 @@ pub fn main() {
 				},
 				// EFAULT
 				14 => {
-					cold_path();
 					free!();
 					unreachable!("pwd: unreachable; buffer was considered invalid");
 				},
@@ -153,16 +151,10 @@ pub fn main() {
 				34 => {
 					size *= 2;
 					if size > PATH_MAX {
-						// SANITY(unusual):
-						// Looping this many times and still not having enough space is incredibly abnormal.
-						cold_path();
 						eprintln!("pwd: working directory exceeded PATH_MAX");
 						exit(1);
 					};
 					if unsafe { !realloc(buf, size) } {
-						// SANITY(unusual):
-						// If `realloc` isn't working, you have bigger problems.
-						cold_path();
 						let error: Error = Error::last_os_error();
 						// SANITY(dangling + ptr):
 						// Leave `buf` dangling as its contents are UB on failure.
@@ -173,7 +165,6 @@ pub fn main() {
 					continue;
 				},
 				unexpected => {
-					cold_path();
 					free!();
 					let error: Error = Error::from_raw_os_error(unexpected as _);
 					unreachable!("pwd: unexpected error; {error}");
@@ -194,7 +185,6 @@ pub fn main() {
 					exit(1);
 				},
 				unexpected => {
-					cold_path();
 					free!();
 					let error: Error = Error::from_raw_os_error(unexpected as _);
 					unreachable!("pwd: unexpected error; {error}");

@@ -12,7 +12,11 @@ pub unsafe extern "C" fn unlink(path: *const c_char) -> i32 {
 	cfg_select! {
 		// https://syscall.sh/x64/unlink/
 		target_arch = "x86_64" => syscall!(0x57, path) as i32,
-		_ => unsafe { unlinkat(-100, path, 0) },
+		_ => unsafe {
+			const AT_FDCWD: i32 = -100;
+
+			unlinkat(AT_FDCWD, path, 0)
+		},
 	}
 }
 

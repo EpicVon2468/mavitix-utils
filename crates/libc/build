@@ -294,7 +294,7 @@ OBJECT_FILES+=" target/release/artefacts/start_main.o"
 # TODO: `-Z implicit-sysroot-deps=no` means the build-std stuff for `$(uname -m)-unknown-linux-none` could potentially work
 # FIXME: https://github.com/rust-lang/rust/issues/56068
 RUSTFLAGS+=" --check-cfg=cfg(feature,values(\"verbose-ub-checks\"))"
-RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -Z panic-in-drop=immediate-abort -C passes=function-attrs"
+RUSTFLAGS+=" -Z unstable-options -C debug-assertions=no -C panic=immediate-abort -Z panic-in-drop=immediate-abort -C passes=function-attrs,mem2reg,memcpyopt,sink,sccp,dce,instcombine,instsimplify"
 RUSTFLAGS+=" -C link-arg=-nostdlib -C link-arg=-nostdinc -C link-arg=-nostartfiles -C link-arg=-nodefaultlibs -C link-arg=-nolibc -C link-arg=-ffreestanding -C default-linker-libraries=off"
 RUSTFLAGS+=" -C link-arg=-fcf-protection -C link-arg=-fno-fast-math -Z cf-protection=full -C overflow-checks=off -Z trap-unreachable=on -Z extra-const-ub-checks=on -Z human-readable-cgu-names=on"
 RUSTFLAGS+=" -C target-cpu=native -Z tune-cpu=native -C lto=fat -C codegen-units=1 -C opt-level=3 -C link-arg=-O3 -C link-arg=-Wl,-O3 -Z dylib-lto -Z mir-opt-level=4 -Z relax-elf-relocations=on"
@@ -378,6 +378,10 @@ OBJECT_FILES+=" target/release/artefacts/strerror.o"
 OBJECT_FILES+=" target/release/artefacts/read.o"
 "$RUSTC" $RUSTFLAGS src/unistd/write.rs
 OBJECT_FILES+=" target/release/artefacts/write.o"
+"$RUSTC" $RUSTFLAGS src/unistd/rmdir.rs
+OBJECT_FILES+=" target/release/artefacts/rmdir.o"
+"$RUSTC" $RUSTFLAGS src/unistd/getcwd.rs
+OBJECT_FILES+=" target/release/artefacts/getcwd.o"
 "$RUSTC" $RUSTFLAGS src/unistd/symlink.rs
 OBJECT_FILES+=" target/release/artefacts/symlink.o"
 "$RUSTC" $RUSTFLAGS src/unistd/link.rs

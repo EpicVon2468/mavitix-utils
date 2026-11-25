@@ -85,17 +85,35 @@ ssize_t read(int fd, const void *buf, size_t len);
 __NOTHROW__ extern
 ssize_t write(int fd, const void *buf, size_t len);
 
+__NOTHROW__ extern
+int close(int fd);
+
+__NOTHROW__ extern
+int rmdir(const char *__nonnull__ path);
+
 __NORETURN__ extern
 void _exit(int status);
 
 __NOTHROW__ extern
 char *getcwd(char *buf, size_t size);
 
+__UNAVAILABLE__("Use of `getwd` is strictly prohibited")
+__DEPRECATED__("Use of `getwd` is highly discouraged") __CONST__ __INLINE__
+__NOTHROW__ extern
+char *getwd(char *const) {
+	return __nullptr__;
+}
+
 __NOTHROW__ extern
 int isatty(int fd);
 
 __NOTHROW__ extern
 char *ttyname(int fd);
+
+__NOTHROW__ extern
+int symlink(const char *target, const char *linkpath);
+__NOTHROW__ extern
+int symlinkat(const char *target, int newdirfd, const char *linkpath);
 
 __NOTHROW__ extern
 int link(const char *oldpath, const char *newpath);
@@ -107,11 +125,6 @@ int linkat(
 	const char *newpath,
 	int flags
 );
-
-__NOTHROW__ extern
-int symlink(const char *target, const char *linkpath);
-__NOTHROW__ extern
-int symlinkat(const char *target, int newdirfd, const char *linkpath);
 
 __NOTHROW__ extern
 int unlink(const char *path);
