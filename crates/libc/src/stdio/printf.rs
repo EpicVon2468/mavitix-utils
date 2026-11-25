@@ -79,12 +79,12 @@ unsafe fn write_all(fd: i32, ptr: *const u8, len: usize) -> bool {
 pub unsafe extern "C" fn printf(fmt: *const c_char, args: ...) -> i32 {
 	const STDOUT_FILENO: i32 = 1;
 
-	unsafe { dprintf(STDOUT_FILENO, fmt, args) }
+	unsafe { __mavitix_printf(STDOUT_FILENO, fmt as *const u8, args) }
 }
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn fprintf(stream: *mut FILE, fmt: *const c_char, args: ...) -> i32 {
-	unsafe { dprintf(fileno(stream), fmt, args) }
+	unsafe { __mavitix_printf(fileno(stream), fmt as *const u8, args) }
 }
 
 #[unsafe(no_mangle)]
@@ -103,7 +103,7 @@ macro_rules! einval {
 	}};
 }
 
-#[inline(always)]
+#[inline(never)]
 unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) -> i32 {
 	let mut total: usize = 0;
 	if fmt.is_null() {
@@ -182,6 +182,31 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 						unsafe { *arg = total as i32 };
 						continue;
 					},
+					b'u' => {
+						total += buf.index;
+						if !buf.flush() {
+							return -1;
+						};
+						let mut arg: u32 = unsafe { args.next_arg() };
+						let mut num_buf: [u8; 20] = [0; _];
+						let mut offset: usize = 0;
+						loop {
+							num_buf[offset] = (arg % 10) as u8 + b'0';
+							offset += 1;
+							arg /= 10;
+							if arg == 0 {
+								break;
+							};
+						}
+						loop {
+							offset -= 1;
+							push!(num_buf[offset]);
+							if offset == 0 {
+								break;
+							};
+						}
+						continue;
+					},
 					b'd' | b'i' => {
 						total += buf.index;
 						if !buf.flush() {
@@ -214,6 +239,7 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 								break;
 							};
 						}
+						continue;
 					},
 					b's' | b'p' => {
 						total += buf.index;
