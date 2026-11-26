@@ -52,4 +52,9 @@ const char *__strerror_l(int errnum, locale_t locale);
 #pragma GCC diagnostic pop
 #endif
 
+__RETURNS_NONNULL__ __NOTHROW__ extern
+const char *strerrorname_np(int errnum);
+__RETURNS_NONNULL__ __NOTHROW__ extern
+const char *strerrordesc_np(int errnum);
+
 __EXT_CXX_END__

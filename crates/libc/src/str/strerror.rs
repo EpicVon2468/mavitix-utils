@@ -17,7 +17,7 @@ use locale::{__mavitix_get_lc_messages, Language, Locale};
 #[unsafe(no_mangle)]
 pub const unsafe extern "C" fn strerror_l(errnum: i32, locale: *const Locale) -> *const c_char {
 	match unsafe { *locale }.language {
-		Language::English => strerror_en(errnum),
+		Language::English => __mavitix_strerror_en(errnum),
 		Language::German => strerror_de(errnum),
 		Language::Japanese => strerror_ja(errnum),
 	}
@@ -31,8 +31,11 @@ pub extern "C" fn strerror(errnum: i32) -> *const c_char {
 	unsafe { strerror_l(errnum, &raw const tmp) }
 }
 
-#[inline]
-pub const fn strerror_en(errnum: i32) -> *const c_char {
+symbol_alias!(__mavitix_strerror_en, "strerrordesc_np");
+
+#[inline(never)]
+#[unsafe(no_mangle)]
+pub const extern "C" fn __mavitix_strerror_en(errnum: i32) -> *const c_char {
 	return match errnum {
 		errno::EPERM => c"Operation not permitted",
 		errno::ENOENT => c"No such file or directory",
@@ -81,12 +84,12 @@ pub const fn strerror_en(errnum: i32) -> *const c_char {
 }
 
 #[inline]
-pub const fn strerror_de(errnum: i32) -> *const c_char {
-	return strerror_en(errnum);
+const fn strerror_de(errnum: i32) -> *const c_char {
+	return __mavitix_strerror_en(errnum);
 }
 
 #[inline]
-pub const fn strerror_ja(errnum: i32) -> *const c_char {
+const fn strerror_ja(errnum: i32) -> *const c_char {
 	return match errnum {
 		errno::EIO => c"入出力エラー",
 		// Not 100% certain about the end of this one.

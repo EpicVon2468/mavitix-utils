@@ -15,7 +15,7 @@ unsafe extern "C" {
 	#[unsafe(ffi_pure)]
 	pub fn strlen(r#str: *const c_char) -> usize;
 
-	pub safe fn fileno(stream: *mut FILE) -> i32;
+	pub fn fileno(stream: *mut FILE) -> i32;
 
 	pub fn atoi(r#str: *const c_char) -> i32;
 
@@ -128,13 +128,22 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 			};
 		}};
 	}
-	loop {
-		match next(&mut fmt) {
-			Some(b'%') => {
+	while let Some(ch) = next(&mut fmt) {
+		match ch {
+			b'%' => {
 				let Some(mut ch): Option<u8> = next(&mut fmt) else {
 					einval!();
 				};
-				let mut _precision: i32 = 0;
+				let mut alternate_form: bool = false;
+				let mut always_sign: bool = false;
+				let mut precision: i32 = 0;
+				loop {
+					match ch {
+						b'#' => alternate_form = true,
+						b'+' => always_sign = true,
+						_ => break,
+					};
+				}
 				match ch {
 					b'.' => {
 						let mut precision_bytes: [u8; 24] = [0; _];
@@ -164,7 +173,7 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 							};
 						}
 						if index != 0 {
-							_precision = unsafe { atoi(precision_bytes.as_ptr() as *const c_char) };
+							precision = unsafe { atoi(precision_bytes.as_ptr() as *const c_char) };
 						};
 					},
 					_ => (),
@@ -176,9 +185,6 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 					},
 					b'n' => {
 						let arg: *mut i32 = unsafe { args.next_arg() };
-						if arg.is_null() {
-							einval!();
-						};
 						unsafe { *arg = total as i32 };
 						continue;
 					},
@@ -231,6 +237,8 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 						}
 						if negative {
 							push!(b'-');
+						} else if always_sign {
+							push!(b'+');
 						};
 						loop {
 							offset -= 1;
@@ -272,11 +280,10 @@ unsafe fn __mavitix_printf(fd: i32, mut fmt: *const u8, mut args: VaList<'_>) ->
 					_ => einval!(),
 				};
 			},
-			Some(ch) => {
+			_ => {
 				push!(ch);
 				continue;
 			},
-			None => break,
 		};
 	}
 	total += buf.index;

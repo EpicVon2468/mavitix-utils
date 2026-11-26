@@ -5,4 +5,5 @@ Licensed under "MIT OR Apache-2.0"
 The following files have specific licences attached for some or all of their contents.
 A copy of any relevant licences will be attached in a comment at the top of their respective files.
 
-- crates/libc/src/ctype/classification.rs
+- crates/libc/src/ctype/classification.rs [based upon: musl-libc; licence: MIT]
+- crates/libc/src/str/strlen.rs [based upon: cosmopolitan-libc; licence: ISC]

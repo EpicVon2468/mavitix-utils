@@ -10,7 +10,7 @@ unsafe extern "C" {
 
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn memmove(dst: *mut u8, src: *const u8, len: usize) -> *mut u8 {
-	if src.addr() <= dst.addr() {
+	if src as usize <= dst as usize {
 		return unsafe { memcpy(dst, src, len) };
 	};
 	let mut offset: usize = 0;
