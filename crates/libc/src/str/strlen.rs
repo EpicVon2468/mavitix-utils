@@ -2,7 +2,7 @@
 #![crate_name = "strlen"]
 #![crate_type = "cdylib"]
 
-// The SSE2 and AVX2 implementations of `strlen` in this file are based upon cosmopolitan-libc's implementation(s).
+// The x86-64 implementation of `strlen` in this file is based upon cosmopolitan-libc's implementation(s).
 // You can view their licence at https://github.com/jart/cosmopolitan/blob/master/LICENSE.
 // At the time of writing, the notice was:
 // -----------------------------------------------------------------------
@@ -27,66 +27,60 @@
 use core::ffi::c_char;
 
 cfg_select! {
-	target_feature = "avx2" => {
+	target_arch = "x86_64" => {
 		#[unsafe(no_mangle)]
 		pub unsafe extern "C" fn strlen(r#str: *const c_char) -> usize {
-			use core::arch::x86_64::{
-				__m256i,
-				_mm256_cmpeq_epi8,
-				_mm256_loadu_si256,
-				_mm256_movemask_epi8,
-				_mm256_setzero_si256,
+			cfg_select! {
+				all(target_feature = "avx512f", target_feature = "avx512bw") => {
+					use core::arch::x86_64::{
+						__m512i as __simd_ivec,
+						_mm512_cmpeq_epi8 as __cmpeq_epi8,
+						_mm512_loadu_si512 as __loadu_si,
+						_mm512_movemask_epi8 as __movemask_epi8,
+						_mm512_setzero_si512 as __setzero_si,
+					};
+
+					const NEG_BITS: isize = -64_isize;
+					const POS_BITS: isize = 63_isize;
+				},
+				target_feature = "avx2" => {
+					use core::arch::x86_64::{
+						__m256i as __simd_ivec,
+						_mm256_cmpeq_epi8 as __cmpeq_epi8,
+						_mm256_loadu_si256 as __loadu_si,
+						_mm256_movemask_epi8 as __movemask_epi8,
+						_mm256_setzero_si256 as __setzero_si,
+					};
+
+					const NEG_BITS: isize = -32_isize;
+					const POS_BITS: isize = 31_isize;
+				},
+				// sse2 is x86-64-v1
+				target_feature = "sse2" => {
+					use core::arch::x86_64::{
+						__m128i as __simd_ivec,
+						_mm_cmpeq_epi8 as __cmpeq_epi8,
+						_mm_loadu_si128 as __loadu_si,
+						_mm_movemask_epi8 as __movemask_epi8,
+						_mm_setzero_si128 as __setzero_si,
+					};
+
+					const NEG_BITS: isize = -16_isize;
+					const POS_BITS: isize = 15_isize;
+				},
 			};
 
-			let zeroed_vector: __m256i = unsafe { _mm256_setzero_si256() };
-			let mut vector: *mut __m256i = (r#str as isize & -32_isize) as *mut __m256i;
-			let skew: isize = r#str as isize & 31_isize;
-			let mut mask: u32 = unsafe {
-				_mm256_movemask_epi8(_mm256_cmpeq_epi8(_mm256_loadu_si256(vector), zeroed_vector))
-			} as u32;
+			let zeroed_vector: __simd_ivec = unsafe { __setzero_si() };
+			let mut vector: *mut __simd_ivec = (r#str as isize & NEG_BITS) as *mut __simd_ivec;
+			let skew: isize = r#str as isize & POS_BITS;
+			let mut mask: u32 =
+				unsafe { __movemask_epi8(__cmpeq_epi8(__loadu_si(vector), zeroed_vector)) } as u32;
 			mask >>= skew;
 			mask <<= skew;
 			while mask == 0 {
 				mask = unsafe {
-					_mm256_movemask_epi8(_mm256_cmpeq_epi8(
-						_mm256_loadu_si256({
-							vector = vector.add(1);
-							vector
-						}),
-						zeroed_vector,
-					))
-				} as u32;
-			}
-			unsafe {
-				(vector as *const c_char)
-					.add(mask.trailing_zeros() as usize)
-					.offset_from_unsigned(r#str)
-			}
-		}
-	},
-	target_feature = "sse2" => {
-		#[unsafe(no_mangle)]
-		pub unsafe extern "C" fn strlen(r#str: *const c_char) -> usize {
-			use core::arch::x86_64::{
-				__m128i,
-				_mm_cmpeq_epi8,
-				_mm_loadu_si128,
-				_mm_movemask_epi8,
-				_mm_setzero_si128,
-			};
-
-			let zeroed_vector: __m128i = unsafe { _mm_setzero_si128() };
-			let mut vector: *mut __m128i = (r#str as isize & -16_isize) as *mut __m128i;
-			let skew: isize = r#str as isize & 15_isize;
-			let mut mask: u32 = unsafe {
-				_mm_movemask_epi8(_mm_cmpeq_epi8(_mm_loadu_si128(vector), zeroed_vector))
-			} as u32;
-			mask >>= skew;
-			mask <<= skew;
-			while mask == 0 {
-				mask = unsafe {
-					_mm_movemask_epi8(_mm_cmpeq_epi8(
-						_mm_loadu_si128({
+					__movemask_epi8(__cmpeq_epi8(
+						__loadu_si({
 							vector = vector.add(1);
 							vector
 						}),
