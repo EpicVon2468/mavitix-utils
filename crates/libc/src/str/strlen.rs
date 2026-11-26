@@ -34,11 +34,17 @@ cfg_select! {
 				all(target_feature = "avx512f", target_feature = "avx512bw") => {
 					use core::arch::x86_64::{
 						__m512i as __simd_ivec,
-						_mm512_cmpeq_epi8 as __cmpeq_epi8,
+						_mm512_cmpeq_epi8_mask as __cmpeq_epi8,
 						_mm512_loadu_si512 as __loadu_si,
-						_mm512_movemask_epi8 as __movemask_epi8,
 						_mm512_setzero_si512 as __setzero_si,
 					};
+
+					type __mask = u64;
+
+					#[inline(always)]
+					fn __movemask_epi8(mask: core::arch::x86_64::__mmask64) -> __mask {
+						return mask as __mask;
+					}
 
 					const NEG_BITS: isize = -64_isize;
 					const POS_BITS: isize = 63_isize;
@@ -51,6 +57,8 @@ cfg_select! {
 						_mm256_movemask_epi8 as __movemask_epi8,
 						_mm256_setzero_si256 as __setzero_si,
 					};
+
+					type __mask = u32;
 
 					const NEG_BITS: isize = -32_isize;
 					const POS_BITS: isize = 31_isize;
@@ -65,6 +73,8 @@ cfg_select! {
 						_mm_setzero_si128 as __setzero_si,
 					};
 
+					type __mask = u32;
+
 					const NEG_BITS: isize = -16_isize;
 					const POS_BITS: isize = 15_isize;
 				},
@@ -73,8 +83,9 @@ cfg_select! {
 			let zeroed_vector: __simd_ivec = unsafe { __setzero_si() };
 			let mut vector: *mut __simd_ivec = (r#str as isize & NEG_BITS) as *mut __simd_ivec;
 			let skew: isize = r#str as isize & POS_BITS;
-			let mut mask: u32 =
-				unsafe { __movemask_epi8(__cmpeq_epi8(__loadu_si(vector), zeroed_vector)) } as u32;
+			let mut mask: __mask =
+				unsafe { __movemask_epi8(__cmpeq_epi8(__loadu_si(vector), zeroed_vector)) }
+					as __mask;
 			mask >>= skew;
 			mask <<= skew;
 			while mask == 0 {
@@ -86,7 +97,7 @@ cfg_select! {
 						}),
 						zeroed_vector,
 					))
-				} as u32;
+				} as __mask;
 			}
 			unsafe {
 				(vector as *const c_char)
