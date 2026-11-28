@@ -1,0 +1,27 @@
+cargo-features = [
+	"different-binary-name",
+]
+
+[package]
+name = "ld_so"
+version = "0.0.0-git"
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "ld_so"
+filename = "ld-linux.so"
+path = "src/main.rs"
+test = true
+doctest = true
+bench = true
+doc = true
+proc-macro = false
+harness = true
+
+[lints]
+workspace = true

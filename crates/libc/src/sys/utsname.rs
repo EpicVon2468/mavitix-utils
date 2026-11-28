@@ -5,15 +5,13 @@
 
 include!("../rsinclude/syscall.rs");
 
-// SAFETY: The function declarations given below are in line with the header files of `libc`.
-#[link(name = "c")]
 unsafe extern "C" {
 
 	pub type utsname;
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn uname(name: *mut utsname) -> i32 {
+pub unsafe extern "C" fn uname(name: *mut utsname) -> i32 {
 	syscall!(
 		cfg_select! {
 			// https://syscall.sh/x64/uname/

@@ -41,6 +41,7 @@ members = [
 	"crates/colonthree",
 	"crates/coreutils",
 	"crates/fetch",
+	"crates/ld_so",
 	"crates/as",
 	".",
 ]

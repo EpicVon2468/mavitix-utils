@@ -1,6 +1,7 @@
 #![no_std]
 #![crate_name = "strlen"]
 #![crate_type = "cdylib"]
+#![allow(non_camel_case_types)]
 
 // The x86-64 implementation of `strlen` in this file is based upon cosmopolitan-libc's implementation(s).
 // You can view their licence at https://github.com/jart/cosmopolitan/blob/master/LICENSE.
@@ -34,6 +35,7 @@ cfg_select! {
 				all(target_feature = "avx512f", target_feature = "avx512bw") => {
 					use core::arch::x86_64::{
 						__m512i as __simd_ivec,
+						__mmask64,
 						_mm512_cmpeq_epi8_mask as __cmpeq_epi8,
 						_mm512_loadu_si512 as __loadu_si,
 						_mm512_setzero_si512 as __setzero_si,
@@ -42,7 +44,7 @@ cfg_select! {
 					type __mask = u64;
 
 					#[inline(always)]
-					fn __movemask_epi8(mask: core::arch::x86_64::__mmask64) -> __mask {
+					fn __movemask_epi8(mask: __mmask64) -> __mask {
 						return mask as __mask;
 					}
 
